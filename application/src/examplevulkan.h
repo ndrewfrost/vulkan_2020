@@ -8,6 +8,9 @@
 
 #pragma once
 
+#define VMA_IMPLEMENTATION
+#include "..//external/vk_mem_alloc.h"
+
 class ExampleVulkan
 {
 public:
@@ -49,7 +52,7 @@ public:
     vk::DescriptorSetLayout m_descPoolLayout;
     vk::DescriptorSet       m_descriptorSet;
 
-    //app::Allocator          m_alloc;
+    VmaAllocator            m_allocator;
     vk::Device              m_device;
     vk::PhysicalDevice      m_physicalDevice;
     vk::Extent2D            m_size;

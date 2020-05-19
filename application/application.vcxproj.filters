@@ -8,6 +8,9 @@
     <Filter Include="Source Files\vks">
       <UniqueIdentifier>{ece1d380-61c7-46a0-92ea-b60b3311748d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="External">
+      <UniqueIdentifier>{3230e05f-cc5d-4495-a6f9-36aa11156334}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -36,8 +39,8 @@
     <ClInclude Include="src\examplevulkan.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\allocator.hpp">
-      <Filter>Source Files\vks</Filter>
+    <ClInclude Include="external\vk_mem_alloc.h">
+      <Filter>External</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
