@@ -10,6 +10,17 @@
 
 #define VMA_IMPLEMENTATION
 #include "..//external/vk_mem_alloc.h"
+#include "vulkan/vulkan.hpp"
+
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_inverse.hpp"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+ ///////////////////////////////////////////////////////////////////////////
+ // ExampleVulkan
+ ///////////////////////////////////////////////////////////////////////////
 
 class ExampleVulkan
 {
@@ -17,8 +28,8 @@ public:
 
     void init(const vk::Device& device, 
               const vk::PhysicalDevice& physicalDevice,
+              const vk::Instance& instance,
               uint32_t graphicsFamilyIdx,
-              uint32_t presentFamilyIdx,
               const vk::Extent2D& size);
 
     void destroy();
@@ -55,6 +66,7 @@ public:
     VmaAllocator            m_allocator;
     vk::Device              m_device;
     vk::PhysicalDevice      m_physicalDevice;
+    vk::Instance            m_instance;
     vk::Extent2D            m_size;
     uint32_t                m_graphicsIdx{0};
 

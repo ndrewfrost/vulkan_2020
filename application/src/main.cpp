@@ -168,7 +168,9 @@ int main(int argc, char* argv[])
         // Nvidea Example
         ExampleVulkan exampleVulkan;
         exampleVulkan.init(vulkanBase.getDevice(), vulkanBase.getPhysicalDevice(), 
-                           vulkanBase.getGraphicsQueueFamily(), vulkanBase.getSize());
+                           vulkanBase.getInstance(), vulkanBase.getGraphicsQueueFamily(), 
+                           vulkanBase.getSize());
+
                
         // main loop
         while (!glfwWindowShouldClose(window))
@@ -179,6 +181,18 @@ int main(int argc, char* argv[])
                 vulkanBase.onWindowResize(g_winWidth, g_winHeight);
                 g_resizeRequest = false;
             }
+
+            // ImGui Frame
+
+            // Simple Window
+
+            // Render the scene
+
+            // Begin render pass
+
+            // rendering scene
+
+            // rendering UI
 
         }
 
