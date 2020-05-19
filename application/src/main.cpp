@@ -27,6 +27,7 @@
 
 #include "vulkanbase.hpp"
 #include "camera.h"
+#include "examplevulkan.h"
 
 static int g_winWidth  = 800;
 static int g_winHeight = 600;
@@ -165,8 +166,10 @@ int main(int argc, char* argv[])
         setupImGUI(vulkanBase, window);
 
         // Nvidea Example
-        //ExampleVulkan exampleVulkan;
-
+        ExampleVulkan exampleVulkan;
+        exampleVulkan.init(vulkanBase.getDevice(), vulkanBase.getPhysicalDevice(), 
+                           vulkanBase.getGraphicsQueueFamily(), vulkanBase.getSize());
+               
         // main loop
         while (!glfwWindowShouldClose(window))
         {

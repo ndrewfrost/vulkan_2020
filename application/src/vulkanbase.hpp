@@ -432,9 +432,14 @@ public:
     //--------------------------------------------------------------------------------------------------
     // Collection of get methods
     //
-    vk::Instance getInstance() { return m_instance; }
-    vk::Device getDevice() { return m_device; }
+    vk::Instance        getInstance() { return m_instance; }
+    vk::Device          getDevice() { return m_device; }
+    vk::PhysicalDevice  getPhysicalDevice() { return m_physicalDevice; }
+    
+    uint32_t            getGraphicsQueueFamily() { return m_graphicsQueueIdx; }
+    uint32_t            getPresentQueueFamily() { return m_presentQueueIdx; }
 
+    vk::Extent2D        getSize() { return m_size; }
 
 protected:
     //--------------------------------------------------------------------------------------------------

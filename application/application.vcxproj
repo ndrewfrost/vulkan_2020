@@ -26,6 +26,7 @@
   <ItemGroup>
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\context.hpp" />
+    <ClInclude Include="src\examplevulkan.h" />
     <ClInclude Include="src\swapchain.hpp" />
     <ClInclude Include="src\vulkanbase.hpp" />
   </ItemGroup>
