@@ -107,3 +107,5 @@ protected:
 }; // class Camera
 
 } // namespace tools
+
+#define CameraView tools::Camera::Singleton()
