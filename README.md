@@ -4,6 +4,8 @@ Learning vulkan raytracing from https://nvpro-samples.github.io/vk_raytracing_tu
 
 ## Getting Started
 
+TODO
+
 ## Third-Party Dependencies
 
 - [vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator): Vulkan Memory Allocator
@@ -22,4 +24,4 @@ Learning vulkan raytracing from https://nvpro-samples.github.io/vk_raytracing_tu
 
 - [SaschaWillems](https://github.com/SaschaWillems/Vulkan): Vulkan Tutorials by Willems
 
--[VkTutorial](https://vulkan-tutorial.com/Overview): First vulkan tutorial
+- [VkTutorial](https://vulkan-tutorial.com/Overview): First vulkan tutorial
