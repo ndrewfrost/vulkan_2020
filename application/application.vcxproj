@@ -24,6 +24,7 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\allocator.hpp" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\context.hpp" />
     <ClInclude Include="src\examplevulkan.h" />

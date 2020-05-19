@@ -36,5 +36,8 @@
     <ClInclude Include="src\examplevulkan.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\allocator.hpp">
+      <Filter>Source Files\vks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
