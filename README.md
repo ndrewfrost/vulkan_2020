@@ -1,6 +1,6 @@
 # Ray Tracing Vulkan
 
-Learning vulkan raytracing from [Vulkan raytracing](https://nvpro-samples.github.io/vk_raytracing_tutorial_KHR/vkrt_tutorial.md.htm)
+Learning vulkan raytracing from [Vulkan raytracing](https://developer.nvidia.com/rtx/raytracing/vkray)
 
 ## Getting Started
 
