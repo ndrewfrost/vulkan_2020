@@ -16,6 +16,18 @@ namespace tools {
 ///////////////////////////////////////////////////////////////////////////
 // Camera
 ///////////////////////////////////////////////////////////////////////////
+//
+//  The camera object can 
+//  - Orbit        (LMB)
+//  - Pan          (LMB + CTRL  | MMB)
+//  - Dolly        (LMB + SHIFT | RMB)
+//  - Look Around  (LMB + ALT   | LMB + CTRL + SHIFT)
+//  - Trackball
+//
+//  In 3 modes
+//  - Examine, Fly, Walk
+//
+///////////////////////////////////////////////////////////////////////////
 
 class Camera
 {
@@ -33,13 +45,19 @@ public:
     
     Actions mouseMove(int x, int y, const Inputs& inputs);
 
-    void setLookAt();
+    void setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up);
 
-    void setWindowSize();
+    void setWindowSize(int w, int h);
 
     void setMousePosition(int x, int y);
 
-    void getLookAt() const;
+    static Camera& Singleton()
+    {
+        static Camera camera;
+        return camera;
+    }
+
+    void getLookAt(glm::vec3& eye, glm::vec3& center, glm::vec3& up) const;
 
     void setMode(Modes mode);
 
@@ -71,15 +89,15 @@ protected:
 private:
     void update();
 
-    void pan();
+    void pan(float dx, float dy);
 
-    void orbit();
+    void orbit(float dx, float dy, bool invert = false);
 
-    void dolly();
+    void dolly(float dx, float dy);
 
-    void tackball();
+    void trackball(int x, int y);
 
-    double projectOnToTBSphere();
+    double projectOntoTBSphere(const glm::vec2& p);
 
 protected:
     // Camera Position
