@@ -1,6 +1,6 @@
 # Ray Tracing Vulkan
 
-Learning vulkan raytracing from https://nvpro-samples.github.io/vk_raytracing_tutorial_KHR/vkrt_tuto_intersection.md.html.
+Learning vulkan raytracing from [Vulkan raytracing](https://nvpro-samples.github.io/vk_raytracing_tutorial_KHR/vkrt_tutorial.md.htm)
 
 ## Getting Started
 
