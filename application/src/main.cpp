@@ -50,7 +50,7 @@ static void onErrorCallback(int error, const char* description)
 //
 static void onScrollCallback(GLFWwindow * window, double xOffset, double yOffset) 
 {
-
+    CameraView.wheel(static_cast<int>(yOffset));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -70,7 +70,18 @@ static void onKeyCallback(GLFWwindow* window, int key, int scancode, int action,
 //
 static void onMouseMoveCallback(GLFWwindow* window, double mouseX, double mouseY) 
 {
+    using tools::Camera;
+    Camera::Inputs inputs;
+    inputs.lmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    inputs.mmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
+    inputs.rmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    if (!inputs.lmb && !inputs.rmb && !inputs.mmb) return;  // no mouse button pressed
+    
+    inputs.ctrl  = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+    inputs.shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+    inputs.alt   = glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
 
+    CameraView.mouseMove(static_cast<int>(mouseX), static_cast<int>(mouseY), inputs);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -78,7 +89,9 @@ static void onMouseMoveCallback(GLFWwindow* window, double mouseX, double mouseY
 //
 static void onMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) 
 {
-
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    CameraView.setMousePosition(static_cast<int>(xpos), static_cast<int>(ypos));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -86,7 +99,10 @@ static void onMouseButtonCallback(GLFWwindow* window, int button, int action, in
 //
 static void onResizeCallback(GLFWwindow* window, int w, int h) 
 {
-
+    CameraView.setWindowSize(w, h);
+    g_resizeRequest = true;
+    g_winHeight     = h;
+    g_winWidth      = w;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -139,6 +155,8 @@ int main(int argc, char* argv[])
         glfwSetFramebufferSizeCallback(window, onResizeCallback);
 
         // Setup Camera
+        CameraView.setWindowSize(g_winWidth, g_winHeight);
+        CameraView.setLookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
         // Setup Vulkan 
         if (!glfwVulkanSupported())
