@@ -55,6 +55,28 @@ public:
 
     void updateUniformBuffer();
 
+    // OBJ Model
+    struct objModel
+    {
+        uint32_t  nbIndices{ 0 };
+        uint32_t  nbVertices{ 0 };
+        //appBuffer vertexBuffer;   // Device buffer of all vertex
+        //appBuffer indexBuffer;    // Device buffer of all indices forming triangles
+        //appBuffer matColorBuffer; // Device buffer of array of 'wavefront material'
+    };
+
+    // OBJ Instance
+    struct objInstance
+    {
+        uint32_t  objIndex{ 0 };    // Reference to m_objModel
+        uint32_t  txtOffset{ 0 };   // offset in m_textures
+        glm::mat4 transform{ 0 };   // Position of the instance
+        glm::mat4 transformIT{ 0 }; // Inverse Transpose
+    };
+
+    // Objects and instances in the scene
+    std::vector<objModel>    m_objModel;
+    std::vector<objInstance> m_objInstance;
 
     // Graphics Pipeline
     vk::PipelineLayout      m_pipelineLayout;
@@ -64,7 +86,7 @@ public:
     vk::DescriptorSetLayout m_descPoolLayout;
     vk::DescriptorSet       m_descriptorSet;
 
-    VmaAllocator            m_allocator;
+    VmaAllocator            m_allocator; // VMA Allocator
     vk::Device              m_device;
     vk::PhysicalDevice      m_physicalDevice;
     vk::Instance            m_instance;

@@ -36,7 +36,7 @@ void ExampleVulkan::init(const vk::Device& device,
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// Destroy all Allocations
 //
 void ExampleVulkan::destroy()
 {
@@ -71,10 +71,11 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// Loading the OBJ file and setting up all buffers
 //
 void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
 {
+
 }
 
 //--------------------------------------------------------------------------------------------------
