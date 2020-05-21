@@ -432,14 +432,17 @@ public:
     //--------------------------------------------------------------------------------------------------
     // Collection of get methods
     //
-    vk::Instance        getInstance() { return m_instance; }
-    vk::Device          getDevice() { return m_device; }
-    vk::PhysicalDevice  getPhysicalDevice() { return m_physicalDevice; }
-    
-    uint32_t            getGraphicsQueueFamily() { return m_graphicsQueueIdx; }
-    uint32_t            getPresentQueueFamily() { return m_presentQueueIdx; }
-
-    vk::Extent2D        getSize() { return m_size; }
+    vk::Instance                 getInstance() { return m_instance; }
+    vk::Device                   getDevice() { return m_device; }
+    vk::PhysicalDevice           getPhysicalDevice() { return m_physicalDevice; }  
+    vk::Queue                    getGraphicsQueue() { return m_graphicsQueue; }
+    uint32_t                     getGraphicsQueueFamily() { return m_graphicsQueueIdx; }
+    vk::Queue                    getPresentQueue() { return m_presentQueue; }
+    uint32_t                     getPresentQueueFamily() { return m_presentQueueIdx; }
+    vk::Extent2D                 getSize() { return m_size; }
+    vk::RenderPass               getRenderPass() { return m_renderPass; }
+    vk::PipelineCache            getPipelineCache() { return m_pipelineCache; }
+    std::vector<vk::Framebuffer> getFramebuffers() { return m_framebuffers; }
 
 protected:
     //--------------------------------------------------------------------------------------------------

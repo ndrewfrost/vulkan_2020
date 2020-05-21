@@ -45,5 +45,8 @@
     <ClInclude Include="external\vk_mem_alloc.h">
       <Filter>External</Filter>
     </ClInclude>
+    <ClInclude Include="src\commands.hpp">
+      <Filter>Source Files\vks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

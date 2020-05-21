@@ -28,10 +28,13 @@
 #include "vulkanbase.hpp"
 #include "camera.h"
 #include "examplevulkan.h"
+#include "commands.hpp"
 
 static int g_winWidth  = 800;
 static int g_winHeight = 600;
 static bool g_resizeRequest = false;
+
+static vk::DescriptorPool g_imguiDescPool;
 
 ///////////////////////////////////////////////////////////////////////////
 // GLFW Callback functions   
@@ -109,12 +112,62 @@ static void onResizeCallback(GLFWwindow* window, int w, int h)
 // IMGUI  
 ///////////////////////////////////////////////////////////////////////////
 
+static void checkVkResult(VkResult err)
+{
+    if (err == 0)
+        return;
+    printf("VkResult %d\n", err);
+    if (err < 0)
+        abort();
+}
+
 //--------------------------------------------------------------------------------------------------
 // 
 //
 static void setupImGUI(app::VulkanBase& vulkanBase, GLFWwindow* window)
 {
+    // create pool onfo descriptor used by ImGUI
+    std::vector<vk::DescriptorPoolSize> counters{ {vk::DescriptorType::eCombinedImageSampler, 2} };
+    
+    vk::DescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.poolSizeCount = static_cast<uint32_t>(counters.size());
+    poolInfo.pPoolSizes    = counters.data();
+    poolInfo.maxSets       = static_cast<uint32_t>(counters.size());
 
+    vk::Device device(vulkanBase.getDevice());
+    g_imguiDescPool = device.createDescriptorPool(poolInfo);
+
+    // Setup Dear ImGUI binding
+    IMGUI_CHECKVERSION();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    ImGui_ImplGlfw_InitForVulkan(window, true);
+    ImGui_ImplVulkan_InitInfo imGuiInitInfo = {};
+    imGuiInitInfo.Allocator       = nullptr;
+    imGuiInitInfo.DescriptorPool  = g_imguiDescPool;
+    imGuiInitInfo.Device          = vulkanBase.getDevice();
+    imGuiInitInfo.ImageCount      = (uint32_t)vulkanBase.getFramebuffers().size();
+    imGuiInitInfo.Instance        = vulkanBase.getInstance();
+    imGuiInitInfo.MinImageCount   = (uint32_t)vulkanBase.getFramebuffers().size();
+    imGuiInitInfo.PhysicalDevice  = vulkanBase.getPhysicalDevice();
+    imGuiInitInfo.PipelineCache   = vulkanBase.getPipelineCache();
+    imGuiInitInfo.Queue           = vulkanBase.getGraphicsQueue();
+    imGuiInitInfo.QueueFamily     = vulkanBase.getGraphicsQueueFamily();
+    imGuiInitInfo.CheckVkResultFn = checkVkResult;
+
+    ImGui_ImplVulkan_Init(&imGuiInitInfo, vulkanBase.getRenderPass());
+
+    // Setup style
+    ImGui::StyleColorsDark();
+
+    // Upload Fonts
+
+
+    auto cmdBuffer = cmdBufferGen.createCommandBuffer();
+    ImGui_ImplVulkan_CreateFontsTexture(cmdBuffer);
+    cmdBufferGen.flushCommandBuffer(cmdBuffer);
+
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -127,7 +180,7 @@ static void destroyImGUI(const vk::Device& device)
 //--------------------------------------------------------------------------------------------------
 // 
 //
-static void renderUI(/*ExampleVulkan& exampleVK*/)
+static void renderUI(ExampleVulkan& exampleVK)
 {
 
 }
@@ -188,7 +241,7 @@ int main(int argc, char* argv[])
         exampleVulkan.init(vulkanBase.getDevice(), vulkanBase.getPhysicalDevice(), 
                            vulkanBase.getInstance(), vulkanBase.getGraphicsQueueFamily(), 
                            vulkanBase.getSize());
-        exampleVulkan.loadModel();
+        exampleVulkan.loadModel("");
         /*
         exampleVulkan.createOffscreenRender();
         exampleVulkan.createDescripotrSetLayout();
