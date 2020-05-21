@@ -56,7 +56,7 @@ public:
     void updateUniformBuffer();
 
     // OBJ Model
-    struct objModel
+    struct ObjModel
     {
         uint32_t  nbIndices{ 0 };
         uint32_t  nbVertices{ 0 };
@@ -66,7 +66,7 @@ public:
     };
 
     // OBJ Instance
-    struct objInstance
+    struct ObjInstance
     {
         uint32_t  objIndex{ 0 };    // Reference to m_objModel
         uint32_t  txtOffset{ 0 };   // offset in m_textures
@@ -74,9 +74,19 @@ public:
         glm::mat4 transformIT{ 0 }; // Inverse Transpose
     };
 
+    // Information pushed at each draw call
+    struct ObjPushConstant
+    {
+        glm::vec3 lightPosition{ 10.f, 15.f, 8.f };
+        int       instanceId{ 0 }; // To retrieve the transformation matrix
+        float     lightIntensity{ 100.f };
+        int       lightType{ 0 };  // 0: point, 1: infinite
+    };
+    ObjPushConstant m_pushConstant;
+
     // Objects and instances in the scene
-    std::vector<objModel>    m_objModel;
-    std::vector<objInstance> m_objInstance;
+    std::vector<ObjModel>    m_objModel;
+    std::vector<ObjInstance> m_objInstance;
 
     // Graphics Pipeline
     vk::PipelineLayout      m_pipelineLayout;
