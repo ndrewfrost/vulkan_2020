@@ -34,15 +34,15 @@ public:
 
     void destroy();
 
-    void resize();
+    void resize(const vk::Extent2D& size);
 
-    void rasterize();
+    void rasterize(const vk::CommandBuffer& cmdBuffer);
 
     void createDescripotrSetLayout();
 
     void createGraphicsPipeline(const vk::RenderPass& renderPass);
 
-    void loadModel();
+    void loadModel(const std::string& filename, glm::mat4 transform = glm::mat4(1));
 
     void updateDescriptorSet();
 
@@ -50,7 +50,8 @@ public:
 
     void createSceneDescriptionBuffer();
 
-    void createTextureImages();
+    void createTextureImages(const vk::CommandBuffer& cmdBuffer,
+                             const std::vector<std::string>& textures);
 
     void updateUniformBuffer();
 

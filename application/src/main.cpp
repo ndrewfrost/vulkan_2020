@@ -188,7 +188,20 @@ int main(int argc, char* argv[])
         exampleVulkan.init(vulkanBase.getDevice(), vulkanBase.getPhysicalDevice(), 
                            vulkanBase.getInstance(), vulkanBase.getGraphicsQueueFamily(), 
                            vulkanBase.getSize());
+        exampleVulkan.loadModel();
+        /*
+        exampleVulkan.createOffscreenRender();
+        exampleVulkan.createDescripotrSetLayout();
+        exampleVulkan.createGraphicsPipeline(vulkanBase.getRenderPass());
+        exampleVulkan.createUniformBuffer();
+        exampleVulkan.createSceneDescriptionBuffer();
+        exampleVulkan.updateDescriptorSet();
 
+        exampleVulkan.createPostDescriptor();
+        exampleVulkan.createPostPipeline(vulkanBase.getRenderPass());
+        exampleVulkan.updatePostDescriptorSet();
+        glm::vec4 clearColor = glm::vec4(1, 1, 1, 1.00f);
+        */
                
         // main loop
         while (!glfwWindowShouldClose(window))

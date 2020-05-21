@@ -34,3 +34,80 @@ void ExampleVulkan::init(const vk::Device& device,
     m_graphicsIdx    = graphicsFamilyIdx;
     m_size           = size;
 }
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::destroy()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::resize(const vk::Extent2D& size)
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::createDescripotrSetLayout()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::updateDescriptorSet()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::createUniformBuffer()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::createSceneDescriptionBuffer()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer, const std::vector<std::string>& textures)
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::updateUniformBuffer()
+{
+}
