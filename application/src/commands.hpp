@@ -12,9 +12,16 @@
 
 namespace app {
 
+///////////////////////////////////////////////////////////////////////////
+// SingleCommandBuffer
+///////////////////////////////////////////////////////////////////////////
+
 class SingleCommandBuffer
 {
 public:
+    //--------------------------------------------------------------------------------------------------
+    // 
+    //
     SingleCommandBuffer(const vk::Device& device, uint32_t queueFamilyIdx) : m_device(device)
     {
         m_queue = m_device.getQueue(queueFamilyIdx, 0);
@@ -25,11 +32,17 @@ public:
         m_commandPool = m_device.createCommandPool(cmdPoolCreateInfo);
     }
 
+    //--------------------------------------------------------------------------------------------------
+    // 
+    //
     ~SingleCommandBuffer()
     {
         m_device.destroyCommandPool(m_commandPool);
     }
 
+    //--------------------------------------------------------------------------------------------------
+    // 
+    //
     vk::CommandBuffer createCommandBuffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary) const
     {
         vk::CommandBufferAllocateInfo allocInfo = {};
@@ -45,6 +58,9 @@ public:
         return commandBuffer;
     }
 
+    //--------------------------------------------------------------------------------------------------
+    // 
+    //
     void flushCommandBuffer(const vk::CommandBuffer& commandBuffer) const
     {
         commandBuffer.end();

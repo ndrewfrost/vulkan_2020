@@ -161,7 +161,7 @@ static void setupImGUI(app::VulkanBase& vulkanBase, GLFWwindow* window)
     ImGui::StyleColorsDark();
 
     // Upload Fonts
-
+    app::SingleCommandBuffer cmdBufferGen(vulkanBase.getDevice(), vulkanBase.getGraphicsQueueFamily());
 
     auto cmdBuffer = cmdBufferGen.createCommandBuffer();
     ImGui_ImplVulkan_CreateFontsTexture(cmdBuffer);
@@ -175,14 +175,32 @@ static void setupImGUI(app::VulkanBase& vulkanBase, GLFWwindow* window)
 //
 static void destroyImGUI(const vk::Device& device)
 {
+    if (ImGui::GetCurrentContext() != nullptr) {
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
 
+        device.destroyDescriptorPool(g_imguiDescPool);
+    }
 }
+
 //--------------------------------------------------------------------------------------------------
 // 
 //
 static void renderUI(ExampleVulkan& exampleVK)
 {
-
+    static int item = 1;
+    if (ImGui::Combo("Up Vector", &item, "X\0Y\0Z\0\0")) {
+        glm::vec3 pos, eye, up;
+        CameraView.getLookAt(pos, eye, up);
+        up = glm::vec3(item == 0, item == 1, item == 2);
+        CameraView.setLookAt(pos, eye, up);
+    }
+    ImGui::SliderFloat3("Light Position", &exampleVK.m_pushConstant.lightPosition.x, -20.f, 20.f);
+    ImGui::SliderFloat("Light Intensity", &exampleVK.m_pushConstant.lightIntensity, 0.f, 100.f);
+    ImGui::RadioButton("Point", &exampleVK.m_pushConstant.lightType, 0);
+    ImGui::SameLine();
+    ImGui::RadioButton("Infinite", &exampleVK.m_pushConstant.lightType, 1);
 }
 
 ///////////////////////////////////////////////////////////////////////////
