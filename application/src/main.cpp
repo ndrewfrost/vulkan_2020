@@ -262,7 +262,7 @@ int main(int argc, char* argv[])
         exampleVulkan.loadModel("../media/scenes/cube_multi.obj");
         
         exampleVulkan.createOffscreenRender();
-        exampleVulkan.createDescripotrSetLayout();
+        exampleVulkan.createDescriptorSetLayout();
         exampleVulkan.createGraphicsPipeline(vulkanBase.getRenderPass());
         exampleVulkan.createUniformBuffer();
         exampleVulkan.createSceneDescriptionBuffer();

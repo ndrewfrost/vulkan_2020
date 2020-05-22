@@ -93,7 +93,7 @@ void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
                                                  | vk::ShaderStageFlagBits::eFragment,
                                                  0, m_pushConstant);
 
-        cmdBuffer.bindVertexBuffers(0,1, &model.vertexBuffer.buffer, &offset);
+        cmdBuffer.bindVertexBuffers(0,1, &vk::Buffer(model.vertexBuffer.buffer), &offset);
         cmdBuffer.bindIndexBuffer(model.indexBuffer.buffer, 0, vk::IndexType::eUint32);
         cmdBuffer.drawIndexed(model.nbIndices, 1, 0, 0, 0);
     }
@@ -102,14 +102,84 @@ void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// Describes the layout pushed when rendering
 //
-void ExampleVulkan::createDescripotrSetLayout()
+void ExampleVulkan::createDescriptorSetLayout()
 {
+    uint32_t nbTxt = static_cast<uint32_t>(m_textures.size());
+    uint32_t nbObj = static_cast<uint32_t>(m_objModel.size());
+
+    // Camera Matrices (binding = 0)
+    m_descSetLayoutBinding.emplace_back(
+        vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 
+                                       1, vk::ShaderStageFlagBits::eVertex));
+
+    // Materials (binding = 1)
+    m_descSetLayoutBinding.emplace_back(
+        vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eStorageBuffer,
+                                       nbObj, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment));
+
+    // Scene description (binding = 2)
+    m_descSetLayoutBinding.emplace_back(
+        vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eStorageBuffer,
+                                       1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment));
+
+    // Textures (binding = 3)
+    m_descSetLayoutBinding.emplace_back(
+        vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eCombinedImageSampler,
+                                       nbTxt, vk::ShaderStageFlagBits::eFragment));
+
+    // Descriptor Set Layout
+    {
+        vk::DescriptorSetLayoutCreateInfo layoutInfo = {};
+        layoutInfo.bindingCount = static_cast<uint32_t>(m_descSetLayoutBinding.size());
+        layoutInfo.pBindings    = m_descSetLayoutBinding.data();
+        try {
+            m_descPoolLayout = m_device.createDescriptorSetLayout(layoutInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create descriptor set layout!");
+        }
+    }
+
+    // Descriptor Pool
+    {
+        // Aggregate the bindings to obtain the required size of the descriptors using that layout
+        std::vector<vk::DescriptorPoolSize> counters;
+        counters.reserve(m_descSetLayoutBinding.size());
+        for (const auto& binding : m_descSetLayoutBinding) {
+            counters.emplace_back(binding.descriptorType, binding.descriptorCount);
+        }
+
+        vk::DescriptorPoolCreateInfo poolInfo = {};
+        poolInfo.poolSizeCount = static_cast<uint32_t>(counters.size());
+        poolInfo.pPoolSizes    = counters.data();
+        poolInfo.maxSets       = 1;
+        try {
+            m_descriptorPool = m_device.createDescriptorPool(poolInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create descriptor pool!");
+        }
+    }
+    
+    // Descriptor Set
+    {
+        vk::DescriptorSetAllocateInfo allocInfo = {};
+        allocInfo.descriptorPool = m_descriptorPool;
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts = &m_descPoolLayout;
+        try {
+            m_descriptorSet = m_device.allocateDescriptorSets(allocInfo)[0];
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to allocate descriptor set!");
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// create the pipeline layout
 //
 void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
 {

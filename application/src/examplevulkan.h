@@ -46,7 +46,7 @@ public:
 
     void rasterize(const vk::CommandBuffer& cmdBuffer);
 
-    void createDescripotrSetLayout();
+    void createDescriptorSetLayout();
 
     void createGraphicsPipeline(const vk::RenderPass& renderPass);
 
@@ -156,9 +156,10 @@ public:
     vk::PipelineLayout      m_pipelineLayout;
     vk::Pipeline            m_graphicsPipeline;
 
-    vk::DescriptorPool      m_descriptorPool;
-    vk::DescriptorSetLayout m_descPoolLayout;
-    vk::DescriptorSet       m_descriptorSet;
+    std::vector<vk::DescriptorSetLayoutBinding> m_descSetLayoutBinding;
+    vk::DescriptorPool                          m_descriptorPool;
+    vk::DescriptorSetLayout                     m_descPoolLayout;
+    vk::DescriptorSet                           m_descriptorSet;
 
     BufferDedicated               m_cameraMat;  // Device-Host of the camera matrices
     BufferDedicated               m_sceneDesc;  // Device buffer of the OBJ instances
