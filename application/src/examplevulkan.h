@@ -63,6 +63,44 @@ public:
 
     void updateUniformBuffer();
 
+    
+
+    //---------------------------------------------------------------------------
+    // Objects
+    //
+    struct BufferDedicated
+    {
+        VkBuffer         buffer;
+        VmaAllocation    allocation;
+    };
+
+    struct ImageDedicated
+    {
+        VkImage          image;
+        VmaAllocation    allocation;
+    };
+
+    struct TextureDedicated
+    {
+        vk::DescriptorImageInfo descriptor;
+
+        TextureDedicated& operator=(const ImageDedicated& buffer)
+        {
+            static_cast<ImageDedicated&>(*this) = buffer;
+            return *this;
+        }
+    };
+
+    struct AccelerationDedicated
+    {
+        vk::AccelerationStructureNV accel;
+        vk::DeviceMemory            allocation;
+    };
+
+    //---------------------------------------------------------------------------
+    //
+    //
+    
     // Holding the camera matrices
     struct CameraMatrices
     {
@@ -86,9 +124,9 @@ public:
     {
         uint32_t  nbIndices{ 0 };
         uint32_t  nbVertices{ 0 };
-        //appBuffer vertexBuffer;   // Device buffer of all vertex
-        //appBuffer indexBuffer;    // Device buffer of all indices forming triangles
-        //appBuffer matColorBuffer; // Device buffer of array of 'wavefront material'
+        BufferDedicated vertexBuffer;   // Device buffer of all vertex
+        BufferDedicated indexBuffer;    // Device buffer of all indices forming triangles
+        BufferDedicated matColorBuffer; // Device buffer of array of 'wavefront material'
     };
 
     // OBJ Instance
@@ -122,6 +160,10 @@ public:
     vk::DescriptorSetLayout m_descPoolLayout;
     vk::DescriptorSet       m_descriptorSet;
 
+    BufferDedicated               m_cameraMat;  // Device-Host of the camera matrices
+    BufferDedicated               m_sceneDesc;  // Device buffer of the OBJ instances
+    std::vector<TextureDedicated> m_textures;   // vector of all textures of the scene
+
     VmaAllocator            m_allocator; // VMA Allocator
     app::DebugUtil          m_debug;
     vk::Device              m_device;
@@ -130,8 +172,11 @@ public:
     vk::Extent2D            m_size;
     uint32_t                m_graphicsIdx{0};
 
-public:
-    // # Post
+
+    //////////////////////////////////////////////////////////////////////////
+    // Post-processing
+    //////////////////////////////////////////////////////////////////////////
+
     void createOffscreenRender();
     void createPostPipeline(const vk::RenderPass& renderPass);
     void createPostDescriptor();

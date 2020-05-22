@@ -100,12 +100,27 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     // create buffers on device and copy vertices, indices and materials
     app::SingleCommandBuffer cmdBufferGet(m_device, m_graphicsIdx);
     vk::CommandBuffer commandBuffer = cmdBufferGet.createCommandBuffer();
-    model.vertexBuffer;
-    model.indexBuffer;
-    model.matColorBuffer;
 
+    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    VmaAllocationCreateInfo allocInfo = {};
+
+    bufferInfo.size  = sizeof(loader.m_vertices) * loader.m_vertices.size();
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    allocInfo.usage  = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &model.vertexBuffer.buffer, &model.vertexBuffer.allocation, nullptr);
+    
+    bufferInfo.size  = sizeof(loader.m_indices) * loader.m_indices.size();
+    bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    allocInfo.usage  = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &model.indexBuffer.buffer,    &model.indexBuffer.allocation, nullptr);
+    
+    bufferInfo.size  = sizeof(loader.m_materials) * loader.m_materials.size();
+    bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    allocInfo.usage  = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &model.matColorBuffer.buffer, &model.matColorBuffer.allocation, nullptr);
+    
     // creates all textures found
-    creatTextureImages(commandBuffer, loader.m_textures);
+    createTextureImages(commandBuffer, loader.m_textures);
     cmdBufferGet.flushCommandBuffer(commandBuffer);
     
     std::string objNb = std::to_string(instance.objIndex);
@@ -151,3 +166,7 @@ void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer, cons
 void ExampleVulkan::updateUniformBuffer()
 {
 }
+
+//////////////////////////////////////////////////////////////////////////
+// Post-processing
+//////////////////////////////////////////////////////////////////////////
