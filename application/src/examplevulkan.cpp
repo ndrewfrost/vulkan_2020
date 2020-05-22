@@ -45,17 +45,60 @@ void ExampleVulkan::destroy()
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// called when resizing of the window
 //
 void ExampleVulkan::resize(const vk::Extent2D& size)
 {
+    m_size = size;
+    createOffscreenRender();
+    updatePostDescriptorSet();
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// Draw scene in raster mode
 //
 void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
 {
+    vk::DeviceSize offset{ 0 };
+
+    m_debug.beginLabel(cmdBuffer, "Rasterize");
+
+    // Dynamic Viewport
+    vk::Viewport viewport = {};
+    viewport.x        = 0.0f;
+    viewport.y        = 0.0f;
+    viewport.width    = (float) m_size.width;
+    viewport.height   = (float) m_size.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    vk::Rect2D scissor = {};
+    scissor.offset = vk::Offset2D{ 0,0 };
+    scissor.extent = m_size;
+
+    cmdBuffer.setViewport(0, {viewport});
+    cmdBuffer.setScissor(0, {scissor});
+
+    // Drawing all traingles
+    cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
+    cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout, 0, { m_descriptorSet }, {});
+
+    for (int i = 0; i < m_objInstance.size(); ++i) {
+        auto& instance = m_objInstance[i];
+        auto& model = m_objModel[instance.objIndex];
+        m_pushConstant.instanceId = i; // which instance to draw
+
+        cmdBuffer.pushConstants<ObjPushConstant>(m_pipelineLayout, 
+                                                 vk::ShaderStageFlagBits::eVertex 
+                                                 | vk::ShaderStageFlagBits::eFragment,
+                                                 0, m_pushConstant);
+
+        cmdBuffer.bindVertexBuffers(0,1, &model.vertexBuffer.buffer, &offset);
+        cmdBuffer.bindIndexBuffer(model.indexBuffer.buffer, 0, vk::IndexType::eUint32);
+        cmdBuffer.drawIndexed(model.nbIndices, 1, 0, 0, 0);
+    }
+
+    m_debug.endLabel(cmdBuffer);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -74,6 +117,8 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
 
 //--------------------------------------------------------------------------------------------------
 // Loading the OBJ file and setting up all buffers
+//
+// TODO: FIX Buffer Staging (Maybe build another class)
 //
 void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
 {
@@ -122,6 +167,9 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     // creates all textures found
     createTextureImages(commandBuffer, loader.m_textures);
     cmdBufferGet.flushCommandBuffer(commandBuffer);
+    vmaDestroyBuffer(m_allocator, model.vertexBuffer.buffer,   model.vertexBuffer.allocation);
+    vmaDestroyBuffer(m_allocator, model.indexBuffer.buffer,    model.indexBuffer.allocation);
+    vmaDestroyBuffer(m_allocator, model.matColorBuffer.buffer, model.matColorBuffer.allocation);
     
     std::string objNb = std::to_string(instance.objIndex);
     m_debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb).c_str()));
