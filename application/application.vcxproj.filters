@@ -54,5 +54,8 @@
     <ClInclude Include="src\debugutil.hpp">
       <Filter>Source Files\vks</Filter>
     </ClInclude>
+    <ClInclude Include="src\allocator.hpp">
+      <Filter>Source Files\vks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -9,9 +9,6 @@
 #pragma once
 
 #include <sstream>
-
-#define VMA_IMPLEMENTATION
-#include "..//external/vk_mem_alloc.h"
 #include "vulkan/vulkan.hpp"
 
 #include "glm/glm.hpp"
@@ -23,7 +20,10 @@
 #include "..//external/obj_loader.h"
 #include "commands.hpp"
 #include "debugutil.hpp"
+#include "allocator.hpp"
 
+using Buffer = app::BufferDedicated;
+using Texture = app::TextureDedicated;
 
 
  ///////////////////////////////////////////////////////////////////////////
@@ -63,40 +63,6 @@ public:
 
     void updateUniformBuffer();
 
-    
-
-    //---------------------------------------------------------------------------
-    // Objects
-    //
-    struct BufferDedicated
-    {
-        VkBuffer         buffer;
-        VmaAllocation    allocation;
-    };
-
-    struct ImageDedicated
-    {
-        VkImage          image;
-        VmaAllocation    allocation;
-    };
-
-    struct TextureDedicated
-    {
-        vk::DescriptorImageInfo descriptor;
-
-        TextureDedicated& operator=(const ImageDedicated& buffer)
-        {
-            static_cast<ImageDedicated&>(*this) = buffer;
-            return *this;
-        }
-    };
-
-    struct AccelerationDedicated
-    {
-        vk::AccelerationStructureNV accel;
-        vk::DeviceMemory            allocation;
-    };
-
     //---------------------------------------------------------------------------
     //
     //
@@ -124,9 +90,9 @@ public:
     {
         uint32_t  nbIndices{ 0 };
         uint32_t  nbVertices{ 0 };
-        BufferDedicated vertexBuffer;   // Device buffer of all vertex
-        BufferDedicated indexBuffer;    // Device buffer of all indices forming triangles
-        BufferDedicated matColorBuffer; // Device buffer of array of 'wavefront material'
+        Buffer    vertexBuffer;   // Device buffer of all vertex
+        Buffer    indexBuffer;    // Device buffer of all indices forming triangles
+        Buffer    matColorBuffer; // Device buffer of array of 'wavefront material'
     };
 
     // OBJ Instance
@@ -161,11 +127,11 @@ public:
     vk::DescriptorSetLayout                     m_descPoolLayout;
     vk::DescriptorSet                           m_descriptorSet;
 
-    BufferDedicated               m_cameraMat;  // Device-Host of the camera matrices
-    BufferDedicated               m_sceneDesc;  // Device buffer of the OBJ instances
-    std::vector<TextureDedicated> m_textures;   // vector of all textures of the scene
+    Buffer               m_cameraMat;  // Device-Host of the camera matrices
+    Buffer               m_sceneDesc;  // Device buffer of the OBJ instances
+    std::vector<Texture> m_textures;   // vector of all textures of the scene
 
-    VmaAllocator            m_allocator; // VMA Allocator
+    app::Allocator          m_allocator; 
     app::DebugUtil          m_debug;
     vk::Device              m_device;
     vk::PhysicalDevice      m_physicalDevice;
@@ -195,5 +161,10 @@ public:
 
     vk::RenderPass                              m_offscreenRenderPass;
     vk::Framebuffer                             m_offscreenFramebuffer;
+
+    Texture    m_offscreenColor;
+    vk::Format m_offscreenColorFormat{ vk::Format::eR32G32B32A32Sfloat };
+    Texture    m_offscreenDepth;
+    vk::Format m_offscreenDepthFormat{ vk::Format::eD32Sfloat };
 
 }; // class ExampleVulkan

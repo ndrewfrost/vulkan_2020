@@ -21,12 +21,7 @@ void ExampleVulkan::init(const vk::Device& device,
                          uint32_t graphicsFamilyIdx, 
                          const vk::Extent2D& size)
 {
-    VmaAllocatorCreateInfo allocatorInfo = {};
-    allocatorInfo.physicalDevice = physicalDevice;
-    allocatorInfo.device         = device;
-    allocatorInfo.instance       = instance;
-
-    vmaCreateAllocator(&allocatorInfo, &m_allocator);
+    m_allocator.init(device, physicalDevice, instance);
 
     m_device         = device;
     m_physicalDevice = physicalDevice;
@@ -215,31 +210,14 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     // create buffers on device and copy vertices, indices and materials
     app::SingleCommandBuffer cmdBufferGet(m_device, m_graphicsIdx);
     vk::CommandBuffer commandBuffer = cmdBufferGet.createCommandBuffer();
+    model.vertexBuffer   = m_allocator.createBuffer(loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    model.indexBuffer    = m_allocator.createBuffer(loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    model.matColorBuffer = m_allocator.createBuffer(loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
-    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    VmaAllocationCreateInfo allocInfo = {};
-
-    bufferInfo.size  = sizeof(loader.m_vertices) * loader.m_vertices.size();
-    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    allocInfo.usage  = VMA_MEMORY_USAGE_CPU_TO_GPU;
-    vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &model.vertexBuffer.buffer, &model.vertexBuffer.allocation, nullptr);
-    
-    bufferInfo.size  = sizeof(loader.m_indices) * loader.m_indices.size();
-    bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    allocInfo.usage  = VMA_MEMORY_USAGE_CPU_TO_GPU;
-    vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &model.indexBuffer.buffer,    &model.indexBuffer.allocation, nullptr);
-    
-    bufferInfo.size  = sizeof(loader.m_materials) * loader.m_materials.size();
-    bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    allocInfo.usage  = VMA_MEMORY_USAGE_CPU_TO_GPU;
-    vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &model.matColorBuffer.buffer, &model.matColorBuffer.allocation, nullptr);
-    
     // creates all textures found
     createTextureImages(commandBuffer, loader.m_textures);
     cmdBufferGet.flushCommandBuffer(commandBuffer);
-    vmaDestroyBuffer(m_allocator, model.vertexBuffer.buffer,   model.vertexBuffer.allocation);
-    vmaDestroyBuffer(m_allocator, model.indexBuffer.buffer,    model.indexBuffer.allocation);
-    vmaDestroyBuffer(m_allocator, model.matColorBuffer.buffer, model.matColorBuffer.allocation);
+    m_allocator.flushStaging();
     
     std::string objNb = std::to_string(instance.objIndex);
     m_debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb).c_str()));
@@ -288,3 +266,24 @@ void ExampleVulkan::updateUniformBuffer()
 //////////////////////////////////////////////////////////////////////////
 // Post-processing
 //////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------
+// Creates an offscreen ramebuffer and associated render pass
+//
+void ExampleVulkan::createOffscreenRender()
+{
+    m_allocator.destroy(m_offscreenColor);
+    m_allocator.destroy(m_offscreenDepth);
+
+    // creating the color image
+
+    // creating the depth buffer
+
+    // setting the image layout for color and depth
+
+    // creating a renderpass for the offscreen
+
+    // creating the frame buffer for offscreen
+
+
+}
