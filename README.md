@@ -10,6 +10,8 @@ TODO
 
 - [vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator): Vulkan Memory Allocator
 
+- [vma-hpp](https://github.com/malte-v/VulkanMemoryAllocator-Hpp): VMA hpp Wrapper
+
 - [glfw](https://github.com/glfw/glfw): Window and inputs
 
 - [glm](https://github.com/g-truc/glm): OpenGL Mathematics
