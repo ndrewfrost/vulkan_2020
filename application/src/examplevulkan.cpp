@@ -75,7 +75,41 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
 //
 void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
 {
+    ObjLoader<Vertex> loader;
+    loader.loadModel(filename);
 
+    // convert srgb to linear
+    for (auto& m : loader.m_materials) {
+        m.ambient = glm::pow(m.ambient, glm::vec3(2.2f));
+        m.diffuse = glm::pow(m.diffuse, glm::vec3(2.2f));
+        m.specular = glm::pow(m.specular, glm::vec3(2.2f));
+    }
+
+    ObjInstance instance;
+    instance.objIndex    = static_cast<uint32_t>(m_objModel.size());
+    instance.transform   = transform;
+    instance.transformIT = glm::inverseTranspose(transform);
+    instance.txtOffset   = static_cast<uint32_t>(m_textures.size());
+
+    ObjModel model;
+    model.nbIndices = static_cast<uint32_t>(loader.m_indices.size());
+    model.nbVertices = static_cast<uint32_t>(loader.m_vertices.size());
+
+    // create buffers on device and copy vertices, indices and materials
+    app::SingleCommandBuffer cmdBufferGet(m_device, m_graphicsIdx);
+    vk::CommandBuffer commandBuffer = cmdBufferGet.createCommandBuffer();
+    model.vertexBuffer;
+    model.indexBuffer;
+    model.matColorBuffer;
+
+    // creates all textures found
+    creatTextureImages(commandBuffer, loader.m_textures);
+    cmdBufferGet.flushCommandBuffer(commandBuffer);
+    
+    std::string objNb = std::to_string(instance.objIndex);
+
+    m_objModel.emplace_back(model);
+    m_objInstance.emplace_back(instance);
 }
 
 //--------------------------------------------------------------------------------------------------

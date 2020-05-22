@@ -25,6 +25,7 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="external\obj_loader.h" />
     <ClInclude Include="external\vk_mem_alloc.h" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\commands.hpp" />

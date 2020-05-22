@@ -48,5 +48,8 @@
     <ClInclude Include="src\commands.hpp">
       <Filter>Source Files\vks</Filter>
     </ClInclude>
+    <ClInclude Include="external\obj_loader.h">
+      <Filter>External</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

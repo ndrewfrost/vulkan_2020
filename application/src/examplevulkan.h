@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <sstream>
+
 #define VMA_IMPLEMENTATION
 #include "..//external/vk_mem_alloc.h"
 #include "vulkan/vulkan.hpp"
@@ -17,6 +19,11 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#include "..//external/obj_loader.h"
+#include "commands.hpp"
+
+
 
  ///////////////////////////////////////////////////////////////////////////
  // ExampleVulkan
@@ -54,6 +61,24 @@ public:
                              const std::vector<std::string>& textures);
 
     void updateUniformBuffer();
+
+    // Holding the camera matrices
+    struct CameraMatrices
+    {
+        glm::mat4 view;
+        glm::mat4 proj;
+        glm::mat4 viewInverse;
+    };
+
+    // OBJ representation of a vertex
+    struct Vertex
+    {
+        glm::vec3 pos;
+        glm::vec3 nrm;
+        glm::vec3 color;
+        glm::vec2 texCoord;
+        int       matID = 0;
+    };
 
     // OBJ Model
     struct ObjModel
@@ -103,6 +128,24 @@ public:
     vk::Extent2D            m_size;
     uint32_t                m_graphicsIdx{0};
 
+public:
     // # Post
+    void createOffscreenRender();
+    void createPostPipeline(const vk::RenderPass& renderPass);
+    void createPostDescriptor();
+    void createPostDescriptorSet();
+    void updatePostDescriptorSet();
+    void drawPost(vk::CommandBuffer commandBuffer);
+
+    std::vector<vk::DescriptorSetLayoutBinding> m_postDescSetLayoutBinding;
+    vk::DescriptorPool                          m_postDescriptorPool;
+    vk::DescriptorSetLayout                     m_postDescPoolLayout;
+    vk::DescriptorSet                           m_postDescriptorSet;
+
+    vk::Pipeline                                m_postPipeline;
+    vk::PipelineLayout                          m_postPipelineLayout;
+
+    vk::RenderPass                              m_offscreenRenderPass;
+    vk::Framebuffer                             m_offscreenFramebuffer;
 
 }; // class ExampleVulkan

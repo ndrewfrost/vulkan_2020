@@ -259,8 +259,8 @@ int main(int argc, char* argv[])
         exampleVulkan.init(vulkanBase.getDevice(), vulkanBase.getPhysicalDevice(), 
                            vulkanBase.getInstance(), vulkanBase.getGraphicsQueueFamily(), 
                            vulkanBase.getSize());
-        exampleVulkan.loadModel("");
-        /*
+        exampleVulkan.loadModel("../media/scenes/cube_multi.obj");
+        
         exampleVulkan.createOffscreenRender();
         exampleVulkan.createDescripotrSetLayout();
         exampleVulkan.createGraphicsPipeline(vulkanBase.getRenderPass());
@@ -272,8 +272,7 @@ int main(int argc, char* argv[])
         exampleVulkan.createPostPipeline(vulkanBase.getRenderPass());
         exampleVulkan.updatePostDescriptorSet();
         glm::vec4 clearColor = glm::vec4(1, 1, 1, 1.00f);
-        */
-               
+                       
         // main loop
         while (!glfwWindowShouldClose(window))
         {
