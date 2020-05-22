@@ -33,6 +33,8 @@ void ExampleVulkan::init(const vk::Device& device,
     m_instance       = instance;
     m_graphicsIdx    = graphicsFamilyIdx;
     m_size           = size;
+
+    m_debug.setup(m_device);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -107,6 +109,9 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     cmdBufferGet.flushCommandBuffer(commandBuffer);
     
     std::string objNb = std::to_string(instance.objIndex);
+    m_debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb).c_str()));
+    m_debug.setObjectName(model.indexBuffer.buffer, (std::string("index_" + objNb).c_str()));
+    m_debug.setObjectName(model.matColorBuffer.buffer, (std::string("mat_" + objNb).c_str()));
 
     m_objModel.emplace_back(model);
     m_objInstance.emplace_back(instance);

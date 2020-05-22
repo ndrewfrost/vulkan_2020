@@ -22,6 +22,7 @@
 
 #include "..//external/obj_loader.h"
 #include "commands.hpp"
+#include "debugutil.hpp"
 
 
 
@@ -122,6 +123,7 @@ public:
     vk::DescriptorSet       m_descriptorSet;
 
     VmaAllocator            m_allocator; // VMA Allocator
+    app::DebugUtil          m_debug;
     vk::Device              m_device;
     vk::PhysicalDevice      m_physicalDevice;
     vk::Instance            m_instance;

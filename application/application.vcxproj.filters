@@ -51,5 +51,8 @@
     <ClInclude Include="external\obj_loader.h">
       <Filter>External</Filter>
     </ClInclude>
+    <ClInclude Include="src\debugutil.hpp">
+      <Filter>Source Files\vks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
