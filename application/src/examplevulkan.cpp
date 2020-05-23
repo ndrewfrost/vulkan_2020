@@ -268,7 +268,7 @@ void ExampleVulkan::updateUniformBuffer()
 //////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------
-// Creates an offscreen ramebuffer and associated render pass
+// Creates an offscreen framebuffer and associated render pass
 //
 void ExampleVulkan::createOffscreenRender()
 {
@@ -276,6 +276,18 @@ void ExampleVulkan::createOffscreenRender()
     m_allocator.destroy(m_offscreenDepth);
 
     // creating the color image
+    vk::ImageCreateInfo colorCreateInfo = app::image::create2DInfo(m_size, m_offscreenColorFormat,
+        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage);
+
+    try {
+        m_offscreenColor = m_allocator.createImage(colorCreateInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create image!");
+    }
+
+    m_offscreenColor.descriptor = app::image::create2DDescriptor(m_device, m_offscreenColor.image, 
+        vk::SamplerCreateInfo{}, m_offscreenColorFormat, vk::ImageLayout::eGeneral);
 
     // creating the depth buffer
 
