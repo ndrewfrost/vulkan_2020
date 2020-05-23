@@ -290,6 +290,16 @@ void ExampleVulkan::createOffscreenRender()
         vk::SamplerCreateInfo{}, m_offscreenColorFormat, vk::ImageLayout::eGeneral);
 
     // creating the depth buffer
+    vk::ImageCreateInfo depthCreateInfo = app::image::create2DInfo(m_size, m_offscreenDepthFormat,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment);
+
+    try {
+        m_offscreenDepth = m_allocator.createImage(depthCreateInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create image!");
+    }
+
 
     // setting the image layout for color and depth
 
