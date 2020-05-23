@@ -60,5 +60,8 @@
     <ClInclude Include="src\images.hpp">
       <Filter>Source Files\vks</Filter>
     </ClInclude>
+    <ClInclude Include="src\renderpass.hpp">
+      <Filter>Source Files\vks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

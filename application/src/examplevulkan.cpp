@@ -276,47 +276,61 @@ void ExampleVulkan::createOffscreenRender()
     m_allocator.destroy(m_offscreenDepth);
 
     // creating the color image
-    vk::ImageCreateInfo colorCreateInfo = app::image::create2DInfo(m_size, m_offscreenColorFormat,
-        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage);
+    {
+        vk::ImageCreateInfo colorCreateInfo = app::image::create2DInfo(m_size, m_offscreenColorFormat,
+            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage);
 
-    try {
-        m_offscreenColor = m_allocator.createImage(colorCreateInfo);
-    }
-    catch (vk::SystemError err) {
-        throw std::runtime_error("failed to create image!");
-    }
+        try {
+            m_offscreenColor = m_allocator.createImage(colorCreateInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create image!");
+        }
 
-    m_offscreenColor.descriptor = app::image::create2DDescriptor(m_device, m_offscreenColor.image, 
-        vk::SamplerCreateInfo{}, m_offscreenColorFormat, vk::ImageLayout::eGeneral);
+        m_offscreenColor.descriptor = app::image::create2DDescriptor(m_device, m_offscreenColor.image,
+            vk::SamplerCreateInfo{}, m_offscreenColorFormat, vk::ImageLayout::eGeneral);
+    }
 
     // creating the depth buffer
-    vk::ImageCreateInfo depthCreateInfo = app::image::create2DInfo(m_size, m_offscreenDepthFormat,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment);
+    {
+        vk::ImageCreateInfo depthCreateInfo = app::image::create2DInfo(m_size, m_offscreenDepthFormat,
+            vk::ImageUsageFlagBits::eDepthStencilAttachment);
 
-    try {
-        m_offscreenDepth = m_allocator.createImage(depthCreateInfo);
-    }
-    catch (vk::SystemError err) {
-        throw std::runtime_error("failed to create image!");
+        try {
+            m_offscreenDepth = m_allocator.createImage(depthCreateInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create image!");
+        }
+
+        vk::ImageViewCreateInfo depthStencilView = {};
+        depthStencilView.viewType = vk::ImageViewType::e2D;
+        depthStencilView.format = m_offscreenDepthFormat;
+        depthStencilView.subresourceRange = { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 };
+        depthStencilView.image = m_offscreenDepth.image;
+
+        try {
+            m_offscreenDepth.descriptor.imageView = m_device.createImageView(depthStencilView);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create image!");
+        }
     }
 
-    vk::ImageViewCreateInfo depthStencilView = {};
-    depthStencilView.viewType             = vk::ImageViewType::e2D;
-    depthStencilView.format               = m_offscreenDepthFormat;
-    depthStencilView.subresourceRange     = { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 };
-    depthStencilView.image                = m_offscreenDepth.image;
-    
-    try {
-        m_offscreenDepth.descriptor.imageView = m_device.createImageView(depthStencilView);
-    }
-    catch (vk::SystemError err) {
-        throw std::runtime_error("failed to create image!");
-    }
     // setting the image layout for color and depth
+    {
+
+    }
 
     // creating a renderpass for the offscreen
+    if (!m_offscreenRenderPass){
+        m_offscreenRenderPass = app::util::createRenderPass(
+            m_device, { m_offscreenColorFormat }, m_offscreenDepthFormat,
+            1, true, true, vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral);
+    }
 
     // creating the frame buffer for offscreen
+    {
 
-
+    }
 }

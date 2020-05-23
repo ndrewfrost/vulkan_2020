@@ -34,6 +34,7 @@
     <ClInclude Include="src\debugutil.hpp" />
     <ClInclude Include="src\examplevulkan.h" />
     <ClInclude Include="src\images.hpp" />
+    <ClInclude Include="src\renderpass.hpp" />
     <ClInclude Include="src\swapchain.hpp" />
     <ClInclude Include="src\vulkanbase.hpp" />
   </ItemGroup>
