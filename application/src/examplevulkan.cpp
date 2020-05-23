@@ -331,6 +331,24 @@ void ExampleVulkan::createOffscreenRender()
 
     // creating the frame buffer for offscreen
     {
+        std::vector<vk::ImageView> attachments = { m_offscreenColor.descriptor.imageView,
+                                                   m_offscreenDepth.descriptor.imageView };
 
+        m_device.destroy(m_offscreenFramebuffer);
+        
+        vk::FramebufferCreateInfo framebufferInfo = {};
+        framebufferInfo.renderPass      = m_offscreenRenderPass;
+        framebufferInfo.attachmentCount = 2;
+        framebufferInfo.pAttachments    = attachments.data();
+        framebufferInfo.width           = m_size.width;
+        framebufferInfo.height          = m_size.height;
+        framebufferInfo.setLayers       = 1;
+
+        try {
+            m_offscreenFramebuffer = m_device.createFramebuffer(framebufferInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create offscreen framebuffer!");
+        }
     }
 }
