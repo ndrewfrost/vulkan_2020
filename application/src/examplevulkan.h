@@ -22,6 +22,7 @@
 #include "debugutil.hpp"
 #include "allocator.hpp"
 #include "images.hpp"
+#include "renderpass.hpp"
 
 using Buffer = app::BufferDedicated;
 using Texture = app::TextureDedicated;
