@@ -32,6 +32,104 @@ inline uint32_t mipLevels(vk::Extent2D extent)
 }
 
 //--------------------------------------------------------------------------------------------------
+// Return the access flag for an image layout
+//
+vk::AccessFlags accessFlagsForLayout(vk::ImageLayout layout)
+{
+    switch (layout)
+    {
+    case vk::ImageLayout::ePreinitialized:
+        return vk::AccessFlagBits::eHostWrite;
+    case vk::ImageLayout::eTransferDstOptimal:
+        return vk::AccessFlagBits::eTransferWrite;
+    case vk::ImageLayout::eTransferSrcOptimal:
+        return vk::AccessFlagBits::eTransferRead;
+    case vk::ImageLayout::eColorAttachmentOptimal:
+        return vk::AccessFlagBits::eColorAttachmentWrite;
+    case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+        return vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+    case vk::ImageLayout::eShaderReadOnlyOptimal:
+        return vk::AccessFlagBits::eShaderRead;
+    default:
+        return vk::AccessFlags();
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+// Return the pipeline stage for an image layout
+//
+vk::PipelineStageFlags pipelineStageForLayout(vk::ImageLayout layout)
+{
+    switch (layout)
+    {
+    case vk::ImageLayout::eTransferDstOptimal:
+    case vk::ImageLayout::eTransferSrcOptimal:
+        return vk::PipelineStageFlagBits::eTransfer;
+    case vk::ImageLayout::eColorAttachmentOptimal:
+        return vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+        return vk::PipelineStageFlagBits::eEarlyFragmentTests;
+    case vk::ImageLayout::eShaderReadOnlyOptimal:
+        return vk::PipelineStageFlagBits::eFragmentShader;
+    case vk::ImageLayout::ePreinitialized:
+        return vk::PipelineStageFlagBits::eHost;
+    case vk::ImageLayout::eUndefined:
+        return vk::PipelineStageFlagBits::eTopOfPipe;
+    default:
+        return vk::PipelineStageFlagBits::eBottomOfPipe;
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+// set Image Layout
+//
+inline void setImageLayout(
+    const vk::CommandBuffer& commandBuffer,
+    const vk::Image& image,
+    const vk::ImageLayout& oldImageLayout,
+    const vk::ImageLayout& newImageLayout)
+{
+    setImageLayout(commandBuffer, image, vk::ImageAspectFlagBits::eColor, oldImageLayout, newImageLayout);
+}
+
+void setImageLayout(
+    const vk::CommandBuffer& commandBuffer,
+    const vk::Image& image,
+    const vk::ImageLayout& oldImageLayout,
+    const vk::ImageLayout& newImageLayout,
+    const vk::ImageSubresourceRange& subresourceRange)
+{
+    vk::ImageMemoryBarrier imageMemoryBarrier = {};
+    imageMemoryBarrier.oldLayout         = oldImageLayout;
+    imageMemoryBarrier.newLayout         = newImageLayout;
+    imageMemoryBarrier.image             = image;
+    imageMemoryBarrier.subresourceRange  = subresourceRange;
+    imageMemoryBarrier.srcAccessMask     = accessFlagsForLayout(oldImageLayout);
+    imageMemoryBarrier.dstAccessMask     = accessFlagsForLayout(newImageLayout);
+    
+    vk::PipelineStageFlags srcStageMask  = pipelineStageForLayout(oldImageLayout);
+    vk::PipelineStageFlags destStageMask = pipelineStageForLayout(newImageLayout);
+    
+    commandBuffer.pipelineBarrier(srcStageMask, destStageMask, 
+        vk::DependencyFlags(), nullptr, nullptr, imageMemoryBarrier);
+}
+
+void setImageLayout(
+    const vk::CommandBuffer& commandBuffer,
+    const vk::Image& image,
+    const vk::ImageAspectFlags& aspectMask,
+    const vk::ImageLayout& oldImageLayout,
+    const vk::ImageLayout& newImageLayout)
+{
+    vk::ImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = aspectMask;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+
+    setImageLayout(commandBuffer, image, oldImageLayout, newImageLayout, subresourceRange);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Create a vk::ImageCreateInfo
 //
 vk::ImageCreateInfo create2DInfo(

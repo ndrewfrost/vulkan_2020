@@ -319,7 +319,19 @@ void ExampleVulkan::createOffscreenRender()
 
     // setting the image layout for color and depth
     {
+        app::SingleCommandBuffer commandBufferGen(m_device, m_graphicsIdx);
+        vk::CommandBuffer commandBuffer = commandBufferGen.createCommandBuffer();
 
+        app::image::setImageLayout(
+            commandBuffer, m_offscreenColor.image,
+            vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
+
+        app::image::setImageLayout(
+            commandBuffer, m_offscreenDepth.image,
+            vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+        commandBufferGen.flushCommandBuffer(commandBuffer);
     }
 
     // creating a renderpass for the offscreen
