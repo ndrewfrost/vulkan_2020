@@ -300,7 +300,18 @@ void ExampleVulkan::createOffscreenRender()
         throw std::runtime_error("failed to create image!");
     }
 
-
+    vk::ImageViewCreateInfo depthStencilView = {};
+    depthStencilView.viewType             = vk::ImageViewType::e2D;
+    depthStencilView.format               = m_offscreenDepthFormat;
+    depthStencilView.subresourceRange     = { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 };
+    depthStencilView.image                = m_offscreenDepth.image;
+    
+    try {
+        m_offscreenDepth.descriptor.imageView = m_device.createImageView(depthStencilView);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create image!");
+    }
     // setting the image layout for color and depth
 
     // creating a renderpass for the offscreen
