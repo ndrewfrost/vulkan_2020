@@ -89,6 +89,27 @@ public:
     }
 
     //--------------------------------------------------------------------------------------------------
+    // Create an image with data
+    //
+    ImageDedicated createImage(
+        const vk::CommandBuffer&   cmdBuffer,
+        size_t                     size_,
+        const void*                data_,
+        const vk::ImageCreateInfo& info_,
+        const vk::ImageLayout&     layout_ = vk::ImageLayout::eShaderReadOnlyOptimal)
+    {
+        ImageDedicated resultImage = createImage(info_);
+
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+        vmaCreateImage(m_allocator, &info, &allocInfo, &resultImage.image, &resultImage.allocation, nullptr);
+
+        return resultImage;
+    }
+
+
+    //--------------------------------------------------------------------------------------------------
     // Staging buffer creation, uploading data to device buffer
     //
     template <typename T>
