@@ -207,104 +207,115 @@ static void renderUI(ExampleVulkan& exampleVK)
 // Application Entry  
 ///////////////////////////////////////////////////////////////////////////
 
+//--------------------------------------------------------------------------------------------------
+// Application
+//
+void application() 
+{
+    // Setup Window
+    glfwInit();
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+    GLFWwindow* window = glfwCreateWindow(g_winWidth, g_winHeight, "Vulkan", nullptr, nullptr);
+
+    glfwSetScrollCallback(window, onScrollCallback);
+    glfwSetKeyCallback(window, onKeyCallback);
+    glfwSetCursorPosCallback(window, onMouseMoveCallback);
+    glfwSetMouseButtonCallback(window, onMouseButtonCallback);
+    glfwSetFramebufferSizeCallback(window, onResizeCallback);
+
+    // Setup Camera
+    CameraView.setWindowSize(g_winWidth, g_winHeight);
+    CameraView.setLookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+
+    // Setup Vulkan 
+    if (!glfwVulkanSupported())
+    {
+        std::cout << "GLFW; Vulkan not supported" << std::endl;
+    }
+
+    // Create Vulkan Base Application
+    app::ContextCreateInfo contextInfo = {};
+    contextInfo.addInstanceExtension(VK_KHR_SURFACE_EXTENSION_NAME);
+    contextInfo.addInstanceExtension(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+    contextInfo.addInstanceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    contextInfo.addDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    contextInfo.addDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+
+    // Base Vulkan application
+    app::VulkanBase vulkanBase;
+    vulkanBase.setupVulkan(contextInfo, window);
+    vulkanBase.createSurface(g_winWidth, g_winHeight);
+    vulkanBase.createDepthBuffer();
+    vulkanBase.createRenderPass();
+    vulkanBase.createFrameBuffers();
+
+    // Imgui
+    setupImGUI(vulkanBase, window);
+
+    // Nvidea Example
+    ExampleVulkan exampleVulkan;
+    exampleVulkan.init(vulkanBase.getDevice(), vulkanBase.getPhysicalDevice(),
+        vulkanBase.getInstance(), vulkanBase.getGraphicsQueueFamily(),
+        vulkanBase.getSize());
+    exampleVulkan.loadModel("../media/scenes/cube_multi.obj");
+
+    exampleVulkan.createOffscreenRender();
+    exampleVulkan.createDescriptorSetLayout();
+    exampleVulkan.createGraphicsPipeline(vulkanBase.getRenderPass());
+    exampleVulkan.createUniformBuffer();
+    exampleVulkan.createSceneDescriptionBuffer();
+    exampleVulkan.updateDescriptorSet();
+
+    exampleVulkan.createPostDescriptor();
+    exampleVulkan.createPostPipeline(vulkanBase.getRenderPass());
+    exampleVulkan.updatePostDescriptorSet();
+    glm::vec4 clearColor = glm::vec4(1, 1, 1, 1.00f);
+
+    // main loop
+    while (!glfwWindowShouldClose(window))
+    {
+        glfwPollEvents();
+
+        if (g_resizeRequest) {
+            vulkanBase.onWindowResize(g_winWidth, g_winHeight);
+            g_resizeRequest = false;
+        }
+
+        // ImGui Frame
+
+        // Simple Window
+
+        // Render the scene
+
+        // Begin render pass
+
+        // rendering scene
+
+        // rendering UI
+
+    }
+
+    // cleanup
+    vulkanBase.getDevice().waitIdle();
+    destroyImGUI(vulkanBase.getDevice());
+
+    vulkanBase.destroy();
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
+}
+
+//--------------------------------------------------------------------------------------------------
+//  Main / Entry Point
+//
 int main(int argc, char* argv[]) 
 {
     void(argc), void(argv);
 
     try {
-        // Setup Window
-        glfwInit();
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-        GLFWwindow* window = glfwCreateWindow(g_winWidth, g_winHeight, "Vulkan", nullptr, nullptr);
-
-        glfwSetScrollCallback(window, onScrollCallback);
-        glfwSetKeyCallback(window, onKeyCallback);
-        glfwSetCursorPosCallback(window, onMouseMoveCallback);
-        glfwSetMouseButtonCallback(window, onMouseButtonCallback);
-        glfwSetFramebufferSizeCallback(window, onResizeCallback);
-
-        // Setup Camera
-        CameraView.setWindowSize(g_winWidth, g_winHeight);
-        CameraView.setLookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
-        // Setup Vulkan 
-        if (!glfwVulkanSupported())
-        {
-            std::cout << "GLFW; Vulkan not supported" << std::endl;
-        }
-
-        // Create Vulkan Base Application
-        app::ContextCreateInfo contextInfo = {};
-        contextInfo.addInstanceExtension(VK_KHR_SURFACE_EXTENSION_NAME);
-        contextInfo.addInstanceExtension(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-        contextInfo.addInstanceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-        contextInfo.addDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);        
-        contextInfo.addDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-
-        // Base Vulkan application
-        app::VulkanBase vulkanBase;
-        vulkanBase.setupVulkan(contextInfo, window);
-        vulkanBase.createSurface(g_winWidth, g_winHeight);
-        vulkanBase.createDepthBuffer();
-        vulkanBase.createRenderPass();
-        vulkanBase.createFrameBuffers();
-
-        // Imgui
-        setupImGUI(vulkanBase, window);
-
-        // Nvidea Example
-        ExampleVulkan exampleVulkan;
-        exampleVulkan.init(vulkanBase.getDevice(), vulkanBase.getPhysicalDevice(), 
-                           vulkanBase.getInstance(), vulkanBase.getGraphicsQueueFamily(), 
-                           vulkanBase.getSize());
-        exampleVulkan.loadModel("../media/scenes/cube_multi.obj");
-        
-        exampleVulkan.createOffscreenRender();
-        exampleVulkan.createDescriptorSetLayout();
-        exampleVulkan.createGraphicsPipeline(vulkanBase.getRenderPass());
-        exampleVulkan.createUniformBuffer();
-        exampleVulkan.createSceneDescriptionBuffer();
-        exampleVulkan.updateDescriptorSet();
-
-        exampleVulkan.createPostDescriptor();
-        exampleVulkan.createPostPipeline(vulkanBase.getRenderPass());
-        exampleVulkan.updatePostDescriptorSet();
-        glm::vec4 clearColor = glm::vec4(1, 1, 1, 1.00f);
-                       
-        // main loop
-        while (!glfwWindowShouldClose(window))
-        {
-            glfwPollEvents();
-
-            if (g_resizeRequest) {
-                vulkanBase.onWindowResize(g_winWidth, g_winHeight);
-                g_resizeRequest = false;
-            }
-
-            // ImGui Frame
-
-            // Simple Window
-
-            // Render the scene
-
-            // Begin render pass
-
-            // rendering scene
-
-            // rendering UI
-
-        }
-
-        // cleanup
-        vulkanBase.getDevice().waitIdle();
-        destroyImGUI(vulkanBase.getDevice());
-
-        vulkanBase.destroy();
-
-        glfwDestroyWindow(window);
-        glfwTerminate();
+        application();
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
