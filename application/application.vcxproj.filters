@@ -11,42 +11,39 @@
     <Filter Include="External">
       <UniqueIdentifier>{3230e05f-cc5d-4495-a6f9-36aa11156334}</UniqueIdentifier>
     </Filter>
+    <Filter Include="External\imgui">
+      <UniqueIdentifier>{5b0f02c7-b573-4eda-88b8-40204e2d9872}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\context.cpp">
+    <ClCompile Include="external\imgui\imgui.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_demo.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_draw.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_impl_glfw.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_impl_vulkan.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_widgets.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\vulkanbackend.cpp">
       <Filter>Source Files\vks</Filter>
-    </ClCompile>
-    <ClCompile Include="src\camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\examplevulkan.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\vulkanbase.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\context.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\swapchain.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\camera.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\examplevulkan.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\vk_mem_alloc.h">
       <Filter>External</Filter>
-    </ClInclude>
-    <ClInclude Include="src\commands.hpp">
-      <Filter>Source Files\vks</Filter>
     </ClInclude>
     <ClInclude Include="external\obj_loader.h">
       <Filter>External</Filter>
@@ -54,13 +51,16 @@
     <ClInclude Include="src\debugutil.hpp">
       <Filter>Source Files\vks</Filter>
     </ClInclude>
-    <ClInclude Include="src\allocator.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\images.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
     <ClInclude Include="src\renderpass.hpp">
+      <Filter>Source Files\vks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\swapchain.hpp">
+      <Filter>Source Files\vks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\commands.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vulkanbackend.hpp">
       <Filter>Source Files\vks</Filter>
     </ClInclude>
   </ItemGroup>

@@ -67,7 +67,7 @@ public:
         vk::SubmitInfo submitInfo = {};
         submitInfo.waitSemaphoreCount   = 0;
         submitInfo.pWaitSemaphores      = nullptr;
-        submitInfo.setPWaitDstStageMask = nullptr;
+        submitInfo.pWaitDstStageMask    = nullptr;
         submitInfo.commandBufferCount   = 1;
         submitInfo.pCommandBuffers      = &commandBuffer;
         m_queue.submit(submitInfo, vk::Fence());

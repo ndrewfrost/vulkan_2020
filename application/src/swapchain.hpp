@@ -16,9 +16,9 @@ namespace app {
 // Swapchain Struct
 ///////////////////////////////////////////////////////////////////////////
 
-struct SwapChain
+struct Swapchain
 {
-    struct SwapChainImage
+    struct SwapchainImage
     {
         vk::Image     image;
         vk::ImageView view;
@@ -28,16 +28,16 @@ struct SwapChain
     vk::Device                  device;
 
     vk::SurfaceKHR              surface;
-    
+
     vk::SwapchainKHR            swapchain;
-    std::vector<SwapChainImage> images;
+    std::vector<SwapchainImage> images;
     uint32_t                    imageCount{ 0 };
 
     vk::Format                  imageFormat{ vk::Format::eUndefined };
     vk::ColorSpaceKHR           colorSpace{ vk::ColorSpaceKHR::eSrgbNonlinear };
-    
+
     vk::Queue                   graphicsQueue;
-    uint32_t                    graphicsQueueIdx{VK_QUEUE_FAMILY_IGNORED};
+    uint32_t                    graphicsQueueIdx{ VK_QUEUE_FAMILY_IGNORED };
 
     vk::Queue                   presentQueue;
     uint32_t                    presentQueueIdx{ VK_QUEUE_FAMILY_IGNORED };
@@ -50,16 +50,16 @@ struct SwapChain
               const vk::Queue&          newGraphicsQueue,
               uint32_t                  newGraphicsQueueIdx,
               const vk::Queue&          newPresentQueue,
-              uint32_t                  newPresentQueueIdx,               
+              uint32_t                  newPresentQueueIdx,
               const vk::SurfaceKHR&     newSurface,
-              vk::Format                newColorFormat = vk::Format::eUndefined) 
+              vk::Format                newColorFormat = vk::Format::eUndefined)
     {
         physicalDevice   = newPhysicalDevice;
         device           = newDevice;
         graphicsQueue    = newGraphicsQueue;
         graphicsQueueIdx = newGraphicsQueueIdx;
-        presentQueue    = newPresentQueue;
-        presentQueueIdx = newPresentQueueIdx;
+        presentQueue     = newPresentQueue;
+        presentQueueIdx  = newPresentQueueIdx;
 
         surface = newSurface;
 
@@ -118,7 +118,7 @@ struct SwapChain
 
         // get physical device surface capabilities
         vk::SurfaceCapabilitiesKHR surfaceCaps = physicalDevice.getSurfaceCapabilitiesKHR(surface);
-        
+
         // get present modes
         std::vector<vk::PresentModeKHR> presentModes = physicalDevice.getSurfacePresentModesKHR(surface);
         vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
@@ -162,31 +162,31 @@ struct SwapChain
         }
 
         vk::SwapchainCreateInfoKHR createInfo = {};
-        createInfo.surface               = surface;
-        createInfo.minImageCount         = desiredSwapchainImages;
-        createInfo.imageFormat           = imageFormat;
-        createInfo.imageColorSpace       = colorSpace;
-        createInfo.imageExtent           = swapchainExtent;
-        createInfo.imageArrayLayers      = 1;
-        createInfo.imageUsage            = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst;
-        createInfo.preTransform          = preTransform;
-        createInfo.presentMode           = presentMode;
-        createInfo.clipped               = VK_TRUE;
-        createInfo.compositeAlpha        = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+        createInfo.surface          = surface;
+        createInfo.minImageCount    = desiredSwapchainImages;
+        createInfo.imageFormat      = imageFormat;
+        createInfo.imageColorSpace  = colorSpace;
+        createInfo.imageExtent      = swapchainExtent;
+        createInfo.imageArrayLayers = 1;
+        createInfo.imageUsage       = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst;
+        createInfo.preTransform     = preTransform;
+        createInfo.presentMode      = presentMode;
+        createInfo.clipped          = VK_TRUE;
+        createInfo.compositeAlpha   = vk::CompositeAlphaFlagBitsKHR::eOpaque;
 
-        createInfo.oldSwapchain = oldSwapchain;
+        createInfo.oldSwapchain     = oldSwapchain;
 
         if (graphicsQueueIdx != presentQueueIdx) {
             uint32_t indices[] = { graphicsQueueIdx, presentQueueIdx };
 
-            createInfo.imageSharingMode = vk::SharingMode::eConcurrent;
+            createInfo.imageSharingMode      = vk::SharingMode::eConcurrent;
             createInfo.queueFamilyIndexCount = 2;
-            createInfo.pQueueFamilyIndices = indices;
+            createInfo.pQueueFamilyIndices   = indices;
         }
         else {
-            createInfo.imageSharingMode = vk::SharingMode::eExclusive;
+            createInfo.imageSharingMode      = vk::SharingMode::eExclusive;
             createInfo.queueFamilyIndexCount = 0;
-            createInfo.pQueueFamilyIndices = nullptr;
+            createInfo.pQueueFamilyIndices   = nullptr;
         }
 
         try {
@@ -206,32 +206,34 @@ struct SwapChain
 
         // get Images
         vk::ImageViewCreateInfo imageViewCreateInfo = {};
-        imageViewCreateInfo.format   = imageFormat;
-        imageViewCreateInfo.viewType = vk::ImageViewType::e2D;
+        imageViewCreateInfo.format                      = imageFormat;
+        imageViewCreateInfo.viewType                    = vk::ImageViewType::e2D;
         imageViewCreateInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
         imageViewCreateInfo.subresourceRange.levelCount = 1;
         imageViewCreateInfo.subresourceRange.layerCount = 1;
 
         auto swapchainImages = device.getSwapchainImagesKHR(swapchain);
-        imageCount           = (uint32_t)swapchainImages.size();
+        imageCount = (uint32_t)swapchainImages.size();
 
         images.resize(imageCount);
+
         for (uint32_t i = 0; i < imageCount; i++) {
             images[i].image           = swapchainImages[i];
             imageViewCreateInfo.image = swapchainImages[i];
+
             try {
                 images[i].view = device.createImageView(imageViewCreateInfo);
             }
             catch (vk::SystemError err) {
                 throw std::runtime_error("failed to create image views!");
-            }  
+            }
         }
     }
 
     //--------------------------------------------------------------------------------------------------
     //
     //
-    std::vector<vk::Framebuffer> createFramebuffers(vk::FramebufferCreateInfo framebufferCreateInfo)
+    std::vector<vk::Framebuffer> createFramebuffer(vk::FramebufferCreateInfo framebufferCreateInfo)
     {
         // Verify that the first attachment is null
         assert(framebufferCreateInfo.pAttachments[0] == vk::ImageView());
@@ -258,17 +260,32 @@ struct SwapChain
     //
     vk::Result acquire(const vk::Semaphore& presentCompleteSemaphore, uint32_t* imageIndex)
     {
-
+        const vk::Result result = device.acquireNextImageKHR(swapchain, UINT64_MAX, presentCompleteSemaphore, {}, imageIndex);
+        if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
+            throw std::error_code(result);
+        }
+        return result;
     }
 
     //--------------------------------------------------------------------------------------------------
     //
     //
-    vk::Result present(uint32_t imageIndex, vk::Semaphore waitSemaphore)
+    vk::Result present(uint32_t imageIndex, vk::Semaphore waitSemaphore) 
     {
+        vk::PresentInfoKHR presentInfo = {};
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains    = &swapchain;
+        presentInfo.pImageIndices  = &imageIndex;
 
+        // Check if wait semaphore has been specified to wait for, before presenting the image
+        if (waitSemaphore) {
+            presentInfo.pWaitSemaphores    = &waitSemaphore;
+            presentInfo.waitSemaphoreCount = 1;
+        }
+
+        return graphicsQueue.presentKHR(presentInfo);
     }
 
-};
+}; // struct SwapChain
 
 } // namespace app
