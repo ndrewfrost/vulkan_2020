@@ -70,17 +70,15 @@ public:
     template <typename T>
     vk::PipelineShaderStageCreateInfo& addShader(const std::vector<T>& code,
                                                  vk::ShaderStageFlagBits stage,
-                                                 const char* entryPoint = "main")
-    {
-
-    }
+                                                 const char* entryPoint = "main");
 
     //--------------------------------------------------------------------------------------------------
     //
     //
     vk::Pipeline create(const vk::PipelineCache& cache)
     {
-
+        update();
+        return device.createGraphicsPipeline(cache, pipelineCreateInfo);
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -88,6 +86,7 @@ public:
     //
     vk::Pipeline create()
     {
+        return create(pipelineCache);
     }
 
     //--------------------------------------------------------------------------------------------------

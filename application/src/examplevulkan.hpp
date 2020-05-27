@@ -64,6 +64,24 @@ public:
 
     void rasterize(const vk::CommandBuffer& cmdBuffer);
 
+    // Holding the camera matrices
+    struct CameraMatrices
+    {
+        glm::mat4 view;
+        glm::mat4 proj;
+        glm::mat4 viewInverse;
+    };
+
+    // OBJ representation of a vertex
+    struct Vertex
+    {
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec3 color;
+        glm::vec2 texCoord;
+        int       matID = 0;
+    };
+
     // The OBJ model
     struct ObjModel
     {
@@ -130,6 +148,11 @@ public:
     void updatePostDescriptorSet();
 
     void drawPost(vk::CommandBuffer cmdBuf);
+
+    vk::Pipeline                                m_postPipeline;
+    vk::PipelineLayout                          m_postPipelineLayout;
+    vk::RenderPass                              m_offscreenRenderPass;
+    vk::Framebuffer                             m_offscreenFramebuffer;
 
     
 }; // class ExampleVulkan

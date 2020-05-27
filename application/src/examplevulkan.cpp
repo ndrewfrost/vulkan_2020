@@ -102,7 +102,40 @@ void ExampleVulkan::createDescriptorSetLayout()
 //
 void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
 {
+    vk::PushConstantRange pushConstantRanges = { vk::ShaderStageFlagBits::eVertex
+                                               | vk::ShaderStageFlagBits::eFragment,
+                                                 0, sizeof(ObjPushConstant) };
+
+    // Create Pipeline Layout
+    vk::DescriptorSetLayout      descriptorSetLayout(m_descriptorSetLayout);
+    vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
+    pipelineLayoutCreateInfo.setLayoutCount = 1;
+    pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
+    pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+    pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRanges;
     
+    try {
+        m_pipelineLayout = m_device.createPipelineLayout(pipelineLayoutCreateInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create pipeline layout!");
+    }
+
+    // Create the Pipeline
+    app::GraphicsPipelineGenerator pipelineGenerator(m_device, m_pipelineLayout, m_offscreenRenderPass);
+    pipelineGenerator.depthStencilState = { true };
+    pipelineGenerator.addShader(app::util::readFile("shaders/vert_shader.vert.spv"), vk::ShaderStageFlagBits::eVertex);
+    pipelineGenerator.addShader(app::util::readFile("shaders/frag_shader.vert.spv"), vk::ShaderStageFlagBits::eFragment);
+    pipelineGenerator.vertexInputState.bindingDescriptions = { {0, sizeof(Vertex)} };
+    pipelineGenerator.vertexInputState.attributeDescriptions = {
+      {0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, position)},
+      {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, normal)},
+      {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)},
+      {3, 0, vk::Format::eR32G32Sfloat,    offsetof(Vertex, texCoord)},
+      {4, 0, vk::Format::eR32Sint,         offsetof(Vertex, matID)} };;
+
+    m_graphicsPipeline = pipelineGenerator.create();
+    m_debug.setObjectName(m_graphicsPipeline, "Graphics Pipeline");
 }
 
 //--------------------------------------------------------------------------------------------------
