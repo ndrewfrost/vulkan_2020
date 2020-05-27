@@ -40,9 +40,6 @@
     <ClCompile Include="src\examplevulkan.cpp">
       <Filter>Source Files\vks</Filter>
     </ClCompile>
-    <ClCompile Include="src\images.cpp">
-      <Filter>Source Files\vks</Filter>
-    </ClCompile>
     <ClCompile Include="src\vulkanbackend.cpp">
       <Filter>Source Files\vks</Filter>
     </ClCompile>

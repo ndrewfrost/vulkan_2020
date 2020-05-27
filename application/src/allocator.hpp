@@ -88,9 +88,18 @@ public:
     //--------------------------------------------------------------------------------------------------
     // Basic Image creation
     //
-    ImageDedicated createImage()
+    ImageDedicated createImage(
+        const VkImageCreateInfo& info,
+        const vk::MemoryPropertyFlags memUsage_ = vk::MemoryPropertyFlagBits::eDeviceLocal)
     {
+        ImageDedicated resultImage;
 
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+        vmaCreateImage(m_allocator, &info, &allocInfo, &resultImage.image, &resultImage.allocation, nullptr);
+
+        return resultImage;
     }
 
     //--------------------------------------------------------------------------------------------------

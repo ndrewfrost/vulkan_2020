@@ -25,6 +25,7 @@
 #include "descriptorsets.hpp"
 #include "renderpass.hpp"
 #include "debugutil.hpp"
+#include "images.hpp"
 
 ///////////////////////////////////////////////////////////////////////////
 // ExampleVulkan
@@ -149,10 +150,19 @@ public:
 
     void drawPost(vk::CommandBuffer cmdBuf);
 
-    vk::Pipeline                                m_postPipeline;
-    vk::PipelineLayout                          m_postPipelineLayout;
-    vk::RenderPass                              m_offscreenRenderPass;
-    vk::Framebuffer                             m_offscreenFramebuffer;
+    std::vector<vk::DescriptorSetLayoutBinding> m_postDescSetLayoutBind;
+    vk::DescriptorPool      m_postDescriptorPool;
+    vk::DescriptorSetLayout m_postDescriptorSetLayout;
+    vk::DescriptorSet       m_postDescriptorSet;
 
+    vk::Pipeline            m_postPipeline;
+    vk::PipelineLayout      m_postPipelineLayout;
+    vk::RenderPass          m_offscreenRenderPass;
+    vk::Framebuffer         m_offscreenFramebuffer;
+
+    app::TextureDedicated   m_offscreenColor;
+    app::TextureDedicated   m_offscreenDepth;
+    vk::Format              m_offscreenColorFormat{ vk::Format::eR32G32B32A32Sfloat };
+    vk::Format              m_offscreenDepthFormat{ vk::Format::eD32Sfloat };
     
 }; // class ExampleVulkan

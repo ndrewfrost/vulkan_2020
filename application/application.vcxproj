@@ -27,7 +27,6 @@
     <ClCompile Include="external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\camera.cpp" />
     <ClCompile Include="src\examplevulkan.cpp" />
-    <ClCompile Include="src\images.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\vulkanbackend.cpp" />
   </ItemGroup>
