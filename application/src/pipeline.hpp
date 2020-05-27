@@ -1,7 +1,7 @@
 /*
  *
  * Andrew Frost
- * renderpass.hpp
+ * pipeline.hpp
  * 2020
  *
  */
@@ -11,7 +11,5 @@
 #include <vulkan/vulkan.hpp>
 
 namespace app {
-namespace util {
 
-}; // namespace util
-}; // namespace app
+} // namespace app

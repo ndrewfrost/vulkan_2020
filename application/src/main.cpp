@@ -29,8 +29,8 @@
 #include "camera.h"
 #include "examplevulkan.hpp"
 
-static int  g_winWidth = 800;
-static int  g_winHeight = 600;
+static int  g_winWidth      = 800;
+static int  g_winHeight     = 600;
 static bool g_resizeRequest = false;
 
 static vk::DescriptorPool g_imguiDescPool;
@@ -82,18 +82,18 @@ static void onMouseMoveCallback(GLFWwindow* window, double mouseX, double mouseY
         ImGuiIO& io = ImGui::GetIO();
         if (io.WantCaptureKeyboard || io.WantCaptureMouse) return;
     }
-
+    
     tools::Camera::Inputs inputs;
-    inputs.lmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    inputs.lmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)   == GLFW_PRESS;
     inputs.mmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
-    inputs.rmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    inputs.rmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT)  == GLFW_PRESS;
     if (!inputs.lmb && !inputs.rmb && !inputs.mmb) {
         return;  // no mouse button pressed
     }
 
-    inputs.ctrl = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
-    inputs.shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-    inputs.alt = glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
+    inputs.ctrl  = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+    inputs.shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS;
+    inputs.alt   = glfwGetKey(window, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS;
 
     CameraView.mouseMove(static_cast<int>(mouseX), static_cast<int>(mouseY), inputs);
 }
@@ -119,8 +119,8 @@ static void onResizeCallback(GLFWwindow* window, int w, int h)
     (void)(window);
     CameraView.setWindowSize(w, h);
     g_resizeRequest = true;
-    g_winWidth = w;
-    g_winHeight = h;
+    g_winWidth      = w;
+    g_winHeight     = h;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -149,8 +149,8 @@ static void setupImGUI(app::VulkanBackend& vkBackend, GLFWwindow* window)
 
     vk::DescriptorPoolCreateInfo poolInfo = {};
     poolInfo.poolSizeCount = static_cast<uint32_t>(counters.size());
-    poolInfo.pPoolSizes = counters.data();
-    poolInfo.maxSets = static_cast<uint32_t>(counters.size());
+    poolInfo.pPoolSizes    = counters.data();
+    poolInfo.maxSets       = static_cast<uint32_t>(counters.size());
 
     vk::Device device(vkBackend.getDevice());
     g_imguiDescPool = device.createDescriptorPool(poolInfo);
@@ -162,16 +162,16 @@ static void setupImGUI(app::VulkanBackend& vkBackend, GLFWwindow* window)
     (void)io;
     ImGui_ImplGlfw_InitForVulkan(window, true);
     ImGui_ImplVulkan_InitInfo imGuiInitInfo = {};
-    imGuiInitInfo.Allocator = nullptr;
-    imGuiInitInfo.DescriptorPool = g_imguiDescPool;
-    imGuiInitInfo.Device = vkBackend.getDevice();
-    imGuiInitInfo.ImageCount = (uint32_t)vkBackend.getFramebuffers().size();
-    imGuiInitInfo.Instance = vkBackend.getInstance();
-    imGuiInitInfo.MinImageCount = (uint32_t)vkBackend.getFramebuffers().size();
-    imGuiInitInfo.PhysicalDevice = vkBackend.getPhysicalDevice();
-    imGuiInitInfo.PipelineCache = vkBackend.getPipelineCache();
-    imGuiInitInfo.Queue = vkBackend.getGraphicsQueue();
-    imGuiInitInfo.QueueFamily = vkBackend.getGraphicsQueueIdx();
+    imGuiInitInfo.Allocator       = nullptr;
+    imGuiInitInfo.DescriptorPool  = g_imguiDescPool;
+    imGuiInitInfo.Device          = vkBackend.getDevice();
+    imGuiInitInfo.ImageCount      = (uint32_t)vkBackend.getFramebuffers().size();
+    imGuiInitInfo.Instance        = vkBackend.getInstance();
+    imGuiInitInfo.MinImageCount   = (uint32_t)vkBackend.getFramebuffers().size();
+    imGuiInitInfo.PhysicalDevice  = vkBackend.getPhysicalDevice();
+    imGuiInitInfo.PipelineCache   = vkBackend.getPipelineCache();
+    imGuiInitInfo.Queue           = vkBackend.getGraphicsQueue();
+    imGuiInitInfo.QueueFamily     = vkBackend.getGraphicsQueueIdx();
     imGuiInitInfo.CheckVkResultFn = checkVkResult;
 
     ImGui_ImplVulkan_Init(&imGuiInitInfo, vkBackend.getRenderPass());
@@ -225,7 +225,7 @@ static void renderUI()
 //--------------------------------------------------------------------------------------------------
 // Application
 //
-void application()
+void application() 
 {
     glfwSetErrorCallback(onErrorCallback);
 
@@ -265,13 +265,13 @@ void application()
 
     // Vulkan
     ExampleVulkan vkExample;
-    vkExample.init(vkBackend.getDevice(), vkBackend.getPhysicalDevice(),
-        vkBackend.getInstance(), vkBackend.getGraphicsQueueIdx(),
-        vkBackend.getPresentQueueIdx(), vkBackend.getSize());
+    vkExample.init(vkBackend.getDevice(), vkBackend.getPhysicalDevice(), 
+                   vkBackend.getInstance(), vkBackend.getGraphicsQueueIdx(), 
+                   vkBackend.getPresentQueueIdx(), vkBackend.getSize());
 
     vkExample.loadModel("../media/scenes/cube_multi.obj");
     vkExample.createOffscreenRender();
-    vkExample.createDescriptionSetLayout();
+    vkExample.createDescriptorSetLayout();
     vkExample.createGraphicsPipeline(vkBackend.getRenderPass());
     vkExample.createUniformBuffer();
     vkExample.createSceneDescriptionBuffer();
@@ -281,8 +281,8 @@ void application()
     vkExample.createPostPipeline(vkBackend.getRenderPass());
     vkExample.updatePostDescriptorSet();
     glm::vec4 clearColor = glm::vec4(1, 1, 1, 1.00f);
-
-    // main loop
+    
+    // Main Loop
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -292,6 +292,7 @@ void application()
             vkExample.resize(vkBackend.getSize());
             g_resizeRequest = false;
         }
+
 
         // ImGui Frame
         /*
@@ -307,13 +308,15 @@ void application()
             ImGui::Render();
         }
         */
-        
+
         // Render the scene
         //vkBackend.prepareFrame();
         //auto                     currentFrame = vkBackend.getCurrentFrame();
         //const vk::CommandBuffer& cmdBuffer    = vkBackend.getCommandBuffers()[currentFrame];
 
         //cmdBuffer.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
+
+        
 
         // Begin render pass
 
@@ -322,16 +325,15 @@ void application()
         // rendering UI
         //ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
 
-
         //cmdBuffer.end();
         //vkBackend.submitFrame();
     }
 
-    // cleanup
+    // Cleanup
     vkBackend.getDevice().waitIdle();
     //destroyImGUI(vkBackend.getDevice());
 
-    vkExample.destroyResources();
+    vkExample.destroy();
     vkBackend.destroy();
 
     glfwDestroyWindow(window);
@@ -343,7 +345,7 @@ void application()
 //
 int main(int argc, char* argv[]) 
 {
-    void(argc), void(argv);
+    (void)(argc), (void)(argv);
 
     try {
         application();

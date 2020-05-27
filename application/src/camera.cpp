@@ -13,7 +13,7 @@ namespace tools {
 //--------------------------------------------------------------------------------------------------
 // Math Functions
 //
-template <typename T> 
+template <typename T>
 bool isZero(const T& _a)
 {
     return fabs(_a) < std::numeric_limits<T>::epsilon();
@@ -206,10 +206,10 @@ void Camera::dolly(float dx, float dy)
 void Camera::trackball(int x, int y)
 {
     glm::vec2 p0(2 * (m_mouse[0] - m_width / 2) / double(m_width),
-                 2 * (m_height / 2 - m_mouse[1]) / double(m_height));
+        2 * (m_height / 2 - m_mouse[1]) / double(m_height));
 
     glm::vec2 p1(2 * (x - m_width / 2) / double(m_width),
-                 2 * (m_height / 2 - y) / double(m_height));
+        2 * (m_height / 2 - y) / double(m_height));
 
     // determine the z coordinate on the sphere
     glm::vec3 pTB0(p0[0], p0[1], projectOntoTBSphere(p0));
@@ -223,7 +223,7 @@ void Camera::trackball(int x, int y)
     float t = glm::length(pTB0 - pTB1) / (2.f * m_tbsize);
 
     // clamp between -1 and 1
-    if (t > 1.0f){
+    if (t > 1.0f) {
         t = 1.0f;
     }
     else if (t < -1.0f) {
@@ -235,7 +235,7 @@ void Camera::trackball(int x, int y)
     glm::vec4 rot_axis = m_matrix * glm::vec4(axis, 0);
     glm::mat4 rot_mat = glm::rotate(rad, glm::vec3(rot_axis.x, rot_axis.y, rot_axis.z));
     glm::vec3 pnt = m_pos - m_int;
-    
+
     glm::vec4 pnt2 = rot_mat * glm::vec4(pnt.x, pnt.y, pnt.z, 1);
     m_pos = m_int + glm::vec3(pnt2.x, pnt2.y, pnt2.z);
     glm::vec4 up2 = rot_mat * glm::vec4(m_up.x, m_up.y, m_up.z, 0);
@@ -357,7 +357,7 @@ void Camera::wheel(int value)
     length = length < 0.001f ? 0.001f : length;
 
     dolly(dx * m_speed, dx * m_speed);
-    update;
+    update();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -376,7 +376,7 @@ void Camera::setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm:
 //
 void Camera::setWindowSize(int w, int h)
 {
-    m_width  = w;
+    m_width = w;
     m_height = h;
 }
 
@@ -395,9 +395,9 @@ void Camera::setMousePosition(int x, int y)
 //
 void Camera::getLookAt(glm::vec3& eye, glm::vec3& center, glm::vec3& up) const
 {
-    eye    = m_pos;
+    eye = m_pos;
     center = m_int;
-    up     = m_up;
+    up = m_up;
 }
 
 //--------------------------------------------------------------------------------------------------

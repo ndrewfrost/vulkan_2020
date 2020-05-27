@@ -42,7 +42,7 @@ public:
         bool lmb = false; bool mmb = false; bool rmb = false;
         bool shift = false; bool ctrl = false; bool alt = false;
     };
-    
+
     Actions mouseMove(int x, int y, const Inputs& inputs);
 
     void setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up);
@@ -101,14 +101,14 @@ private:
 
 protected:
     // Camera Position
-    glm::vec3 m_pos    = glm::vec3(1, 1, 1);
-    glm::vec3 m_int    = glm::vec3(0, 0, 0);
-    glm::vec3 m_up     = glm::vec3(0, 1, 0);
+    glm::vec3 m_pos = glm::vec3(1, 1, 1);
+    glm::vec3 m_int = glm::vec3(0, 0, 0);
+    glm::vec3 m_up = glm::vec3(0, 1, 0);
     glm::mat4 m_matrix = glm::mat4(1);
-    float     m_roll   = 0; // Rotation around Z axis
+    float     m_roll = 0; // Rotation around Z axis
 
     // Screen 
-    int m_width  = 1;
+    int m_width = 1;
     int m_height = 1;
 
     // Other

@@ -7,6 +7,7 @@
  */
 
 #pragma once
+
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
@@ -27,9 +28,15 @@ public:
         m_queue = m_device.getQueue(queueFamilyIdx, 0);
 
         vk::CommandPoolCreateInfo cmdPoolCreateInfo = {};
-        cmdPoolCreateInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+        cmdPoolCreateInfo.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
         cmdPoolCreateInfo.queueFamilyIndex = queueFamilyIdx;
-        m_commandPool = m_device.createCommandPool(cmdPoolCreateInfo);
+        
+        try {
+            m_commandPool = m_device.createCommandPool(cmdPoolCreateInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create single command buffer's command pool!");
+        }
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -49,11 +56,23 @@ public:
         allocInfo.commandPool        = m_commandPool;
         allocInfo.level              = level;
         allocInfo.commandBufferCount = 1;
-        vk::CommandBuffer commandBuffer = m_device.allocateCommandBuffers(allocInfo)[0];
+
+        vk::CommandBuffer commandBuffer;
+        try {
+            commandBuffer = m_device.allocateCommandBuffers(allocInfo)[0];
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to allocate single command buffer!");
+        }
 
         vk::CommandBufferBeginInfo beginInfo = {};
         beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-        commandBuffer.begin(beginInfo);
+        try {
+            commandBuffer.begin(beginInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to begin single command buffer!");
+        }
 
         return commandBuffer;
     }
@@ -64,14 +83,22 @@ public:
     void flushCommandBuffer(const vk::CommandBuffer& commandBuffer) const
     {
         commandBuffer.end();
+
         vk::SubmitInfo submitInfo = {};
         submitInfo.waitSemaphoreCount   = 0;
         submitInfo.pWaitSemaphores      = nullptr;
         submitInfo.pWaitDstStageMask    = nullptr;
         submitInfo.commandBufferCount   = 1;
         submitInfo.pCommandBuffers      = &commandBuffer;
-        m_queue.submit(submitInfo, vk::Fence());
+        
+        try {
+            m_queue.submit(submitInfo, vk::Fence());
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to submit single command buffer!");
+        }
         m_queue.waitIdle();
+
         m_device.freeCommandBuffers(m_commandPool, commandBuffer);
     }
 

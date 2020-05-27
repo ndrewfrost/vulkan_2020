@@ -12,8 +12,9 @@
 #include "..//external/vk_mem_alloc.h"
 #include "vulkan/vulkan.hpp"
 
-
 namespace app {
+
+// Objects
 
 struct BufferDedicated
 {
@@ -40,12 +41,14 @@ struct TextureDedicated : public ImageDedicated
 
 struct AccelerationDedicated
 {
-    vk::AccelerationStructureNV accel;
-    vk::DeviceMemory            allocation;
+    VkAccelerationStructureNV   acceleration;
+    VmaAllocation               allocation;
 };
 
 ///////////////////////////////////////////////////////////////////////////
 // Allocator
+///////////////////////////////////////////////////////////////////////////
+// Allocator for buffers, images and acceleration structures
 ///////////////////////////////////////////////////////////////////////////
 
 class Allocator
@@ -54,90 +57,40 @@ public:
     //--------------------------------------------------------------------------------------------------
     // All staging buffers must be cleared before TODO
     //
-    ~Allocator() { }
+    ~Allocator()
+    {
+    }
 
     //--------------------------------------------------------------------------------------------------
     // Initialization of the allocator
     //
     void init(vk::Device device, vk::PhysicalDevice physicalDevice, vk::Instance instance)
     {
-        m_device         = device;
+        m_device = device;
         m_physicalDevice = physicalDevice;
-        m_instance       = instance;
+        m_instance = instance;
 
         VmaAllocatorCreateInfo allocatorInfo = {};
         allocatorInfo.physicalDevice = physicalDevice;
-        allocatorInfo.device         = device;
-        allocatorInfo.instance       = instance;
+        allocatorInfo.device = device;
+        allocatorInfo.instance = instance;
         vmaCreateAllocator(&allocatorInfo, &m_allocator);
+    }
+
+    //--------------------------------------------------------------------------------------------------
+    // Basic Buffer creation
+    //
+    BufferDedicated createBuffer()
+    {
+
     }
 
     //--------------------------------------------------------------------------------------------------
     // Basic Image creation
     //
-    ImageDedicated createImage(const VkImageCreateInfo& info,
-                               const vk::MemoryPropertyFlags memUsage_ = vk::MemoryPropertyFlagBits::eDeviceLocal)
+    ImageDedicated createImage()
     {
-        ImageDedicated resultImage;
-        
-        VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-        vmaCreateImage(m_allocator, &info, &allocInfo, &resultImage.image, &resultImage.allocation, nullptr);
-
-        return resultImage;
-    }
-
-    //--------------------------------------------------------------------------------------------------
-    // Create an image with data
-    //
-    ImageDedicated createImage(
-        const vk::CommandBuffer&   cmdBuffer,
-        size_t                     size_,
-        const void*                data_,
-        const vk::ImageCreateInfo& info_,
-        const vk::ImageLayout&     layout_ = vk::ImageLayout::eShaderReadOnlyOptimal)
-    {
-        ImageDedicated resultImage = createImage(info_);
-
-        VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-        vmaCreateImage(m_allocator, &info, &allocInfo, &resultImage.image, &resultImage.allocation, nullptr);
-
-        return resultImage;
-    }
-
-
-    //--------------------------------------------------------------------------------------------------
-    // Staging buffer creation, uploading data to device buffer
-    //
-    template <typename T>
-    BufferDedicated createBuffer(const std::vector<T>& data_,
-                                 const VkBufferUsageFlags& usage_ = VkBufferUsageFlags())
-    {
-        return createBuffer(sizeof(T) * data_.size(), data_.data(), usage_);
-    }
-
-    //--------------------------------------------------------------------------------------------------
-    // 
-    //
-    BufferDedicated createBuffer(const vk::DeviceSize& size_ = 0,
-                                 const void* data_ = nullptr,
-                                 const VkBufferUsageFlags & usage_ = VkBufferUsageFlags())
-    {
-        BufferDedicated resultBuffer;
-
-        VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-        bufferInfo.size = size_;
-        bufferInfo.usage = usage_ | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-        
-        VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-        vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &resultBuffer.buffer, &resultBuffer.allocation, nullptr);
-
-        return resultBuffer;
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -147,30 +100,30 @@ public:
     {
 
     }
+
     //--------------------------------------------------------------------------------------------------
     // Destroy
     //
-    void destroy(BufferDedicated& b_)
+    void destroy(BufferDedicated& buffer)
     {
-        vmaDestroyBuffer(m_allocator, b_.buffer, b_.allocation);
+        vmaDestroyBuffer(m_allocator, buffer.buffer, buffer.allocation);
     }
 
-    void destroy(ImageDedicated& i_)
+    void destroy(ImageDedicated& image)
     {
-        vmaDestroyImage(m_allocator, i_.image, i_.allocation);
+        vmaDestroyImage(m_allocator, image.image, image.allocation);
     }
 
-    void destroy(AccelerationDedicated& a_)
+    void destroy(AccelerationDedicated& acceleration)
     {
-        m_device.destroyAccelerationStructureNV(a_.accel);
-        m_device.freeMemory(a_.allocation);
+        
     }
 
-    void destroy(TextureDedicated& t_)
+    void destroy(TextureDedicated& texture)
     {
-        m_device.destroyImageView(t_.descriptor.imageView);
-        m_device.destroySampler(t_.descriptor.sampler);
-        vmaDestroyImage(m_allocator, t_.image, t_.allocation);
+        m_device.destroyImageView(texture.descriptor.imageView);
+        m_device.destroySampler(texture.descriptor.sampler);
+        vmaDestroyImage(m_allocator, texture.image, texture.allocation);
     }
 
 protected:
