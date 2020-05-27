@@ -24,6 +24,7 @@
 #include "utilities.hpp"
 #include "descriptorsets.hpp"
 #include "renderpass.hpp"
+#include "debugutil.hpp"
 
 ///////////////////////////////////////////////////////////////////////////
 // ExampleVulkan
@@ -108,6 +109,8 @@ public:
     app::BufferDedicated               m_sceneDesc;  // Device buffer of the OBJ instances
     std::vector<app::TextureDedicated> m_textures;   // vector of all textures of the scene
 
+    app::Allocator      m_allocator;
+    app::DebugUtil      m_debug;
     vk::Device          m_device;  
     vk::PhysicalDevice  m_physicalDevice;
     uint32_t            m_graphicsQueueIdx{ 0 };

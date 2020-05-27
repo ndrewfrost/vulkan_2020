@@ -98,10 +98,11 @@ void ExampleVulkan::createDescriptorSetLayout()
 }
 
 //--------------------------------------------------------------------------------------------------
-//
+// Creating the pipeline layout
 //
 void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
 {
+    
 }
 
 //--------------------------------------------------------------------------------------------------
