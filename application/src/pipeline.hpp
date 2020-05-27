@@ -55,15 +55,22 @@ public:
     //--------------------------------------------------------------------------------------------------
     //
     //
-    vk::PipelineShaderStageCreateInfo& addShader()
+    vk::PipelineShaderStageCreateInfo& addShader(const std::string& code,
+                                                 vk::ShaderStageFlagBits stage,
+                                                 const char* entryPoint = "main")
     {
+        std::vector<char> v;
+        std::copy(code.begin(), code.end(), std::back_inserter(v));
+        return addShader(v, stage, entryPoint);
     }
 
     //--------------------------------------------------------------------------------------------------
     //
     //
     template <typename T>
-    vk::PipelineShaderStageCreateInfo& addShader()
+    vk::PipelineShaderStageCreateInfo& addShader(const std::vector<T>& code,
+                                                 vk::ShaderStageFlagBits stage,
+                                                 const char* entryPoint = "main")
     {
 
     }
@@ -81,7 +88,6 @@ public:
     //
     vk::Pipeline create()
     {
-
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -89,7 +95,11 @@ public:
     //
     void destroyShaderModules()
     {
+        for (const auto& shaderStage : shaderStages) {
+            device.destroyShaderModule(shaderStage.module);
+        }
 
+        shaderStages.clear();
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -97,6 +107,13 @@ public:
     //
     void update()
     {
+        pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+        pipelineCreateInfo.pStages    = shaderStages.data();
+
+        dynamicState.update();
+        colorBlendState.update();
+        vertexInputState.update();
+        viewportState.update();
     }
 
 private:
@@ -231,7 +248,7 @@ public:
             if (depthEnable) {
                 depthTestEnable = VK_TRUE;
                 depthWriteEnable = VK_TRUE;
-                depthCompareOp = vk::CompareOp::eLessOrEqual
+                depthCompareOp = vk::CompareOp::eLessOrEqual;
             }
         }
     };
@@ -257,12 +274,32 @@ public:
 
 
 //--------------------------------------------------------------------------------------------------
-//
+// Add Shader
 //
 template <typename T>
-vk::PipelineShaderStageCreateInfo& app::GraphicsPipelineGenerator::addShader()
+vk::PipelineShaderStageCreateInfo& app::GraphicsPipelineGenerator::addShader(
+    const std::vector<T>& code,
+    vk::ShaderStageFlagBits stage,
+    const char* entryPoint)
 {
+    VkShaderModuleCreateInfo createInfo = {};
+    createInfo.codeSize = sizeof(T) * code.size();
+    createInfo.pCode    = reinterpret_cast<const uint32_t*>(code.data());
 
+    try {
+        VkShaderModule shaderModule = device.createShaderModule(createInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create shader module!");
+    }
+
+    vk::PipelineShaderStageCreateInfo shaderStage = {};
+    shaderStage.stage  = stage;
+    shaderStage.module = shaderModule;
+    shaderStage.pName  = entryPoint;
+
+    shaderStages.push_back(shaderStage);
+    return shaderStages.back();
 }
 
 } // namespace app
