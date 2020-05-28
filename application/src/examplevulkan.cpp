@@ -82,6 +82,45 @@ void ExampleVulkan::resize(const vk::Extent2D& size)
 //
 void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
 {
+    ObjLoader<Vertex> loader;
+    loader.loadModel(filename);
+
+    // convert srgb to linear
+    for (auto& m : loader.m_materials) {
+        m.ambient  = glm::pow(m.ambient, glm::vec3(2.2f));
+        m.diffuse  = glm::pow(m.diffuse, glm::vec3(2.2f));
+        m.specular = glm::pow(m.specular, glm::vec3(2.2f));
+    }
+
+    ObjInstance instance;
+    instance.objIndex    = static_cast<uint32_t>(m_objModel.size());
+    instance.transform   = transform;
+    instance.transformIT = glm::inverseTranspose(transform);
+    instance.txtOffset   = static_cast<uint32_t>(m_textures.size());
+
+    ObjModel model;
+    model.nIndices  = static_cast<uint32_t>(loader.m_indices.size());
+    model.nVertices = static_cast<uint32_t>(loader.m_vertices.size());
+
+    // create buffers on device and copy vertices, indices and materials
+    app::SingleCommandBuffer cmdBufferGet(m_device, m_graphicsQueueIdx);
+    vk::CommandBuffer commandBuffer = cmdBufferGet.createCommandBuffer();
+    model.vertexBuffer   = m_allocator.createBuffer(loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    model.indexBuffer    = m_allocator.createBuffer(loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    model.matColorBuffer = m_allocator.createBuffer(loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+
+    // creates all textures found
+    createTextureImages(commandBuffer, loader.m_textures);
+    cmdBufferGet.flushCommandBuffer(commandBuffer);
+    m_allocator.flushStaging();
+
+    //std::string objNb = std::to_string(instance.objIndex);
+    //m_debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb).c_str()));
+    //m_debug.setObjectName(model.indexBuffer.buffer, (std::string("index_" + objNb).c_str()));
+    //m_debug.setObjectName(model.matColorBuffer.buffer, (std::string("mat_" + objNb).c_str()));
+
+    m_objModel.emplace_back(model);
+    m_objInstance.emplace_back(instance);
 }
 
 //--------------------------------------------------------------------------------------------------

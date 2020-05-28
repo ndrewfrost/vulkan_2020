@@ -271,6 +271,7 @@ void application()
                    vkBackend.getPresentQueueIdx(), vkBackend.getSize());
 
     vkExample.loadModel("../media/scenes/cube_multi.obj");
+
     vkExample.createOffscreenRender();
     vkExample.createDescriptorSetLayout();
     vkExample.createGraphicsPipeline(vkBackend.getRenderPass());
