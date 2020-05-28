@@ -46,6 +46,9 @@
     <ClCompile Include="src\camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\images.cpp">
+      <Filter>Source Files\vks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\vk_mem_alloc.h">
@@ -61,9 +64,6 @@
       <Filter>Source Files\vks</Filter>
     </ClInclude>
     <ClInclude Include="src\commands.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\debugutil.hpp">
       <Filter>Source Files\vks</Filter>
     </ClInclude>
     <ClInclude Include="src\descriptorsets.hpp">
@@ -89,6 +89,9 @@
     </ClInclude>
     <ClInclude Include="src\camera.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\tiny_obj_loader.h">
+      <Filter>External</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

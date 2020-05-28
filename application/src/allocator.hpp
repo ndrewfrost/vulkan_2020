@@ -8,9 +8,9 @@
 
 #pragma once
 
-#define VMA_IMPLEMENTATION
 #include "..//external/vk_mem_alloc.h"
 #include "vulkan/vulkan.hpp"
+#include "images.hpp"
 
 namespace app {
 

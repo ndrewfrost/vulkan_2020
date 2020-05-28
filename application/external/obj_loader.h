@@ -3,12 +3,13 @@
  *****************************************************************************/
 
 #pragma once
+
 #include "glm/glm.hpp"
 #include <array>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 #include <iostream>
-//#include <tiny_obj_loader.h>
+#include "../external/tiny_obj_loader.h"
 #include <unordered_map>
 #include <vector>
 

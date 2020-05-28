@@ -12,6 +12,11 @@
 #include <vector>
 #include <iostream>
 #include <vulkan/vulkan.hpp>
+#include <algorithm>
+#include <cassert>
+#include <regex>
+#include <sstream>
+#include <mutex>
 
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"

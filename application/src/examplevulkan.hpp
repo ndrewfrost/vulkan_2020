@@ -14,9 +14,6 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_inverse.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include "..//external/obj_loader.h"
 #include "commands.hpp"
 #include "pipeline.hpp"
@@ -24,7 +21,7 @@
 #include "utilities.hpp"
 #include "descriptorsets.hpp"
 #include "renderpass.hpp"
-#include "debugutil.hpp"
+//#include "debugutil.hpp"
 #include "images.hpp"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -129,7 +126,6 @@ public:
     std::vector<app::TextureDedicated> m_textures;   // vector of all textures of the scene
 
     app::Allocator      m_allocator;
-    app::DebugUtil      m_debug;
     vk::Device          m_device;  
     vk::PhysicalDevice  m_physicalDevice;
     uint32_t            m_graphicsQueueIdx{ 0 };

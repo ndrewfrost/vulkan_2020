@@ -6,6 +6,7 @@
  *
  */
 
+#define VK_NO_PROTOTYPES
 #include "vulkanbackend.hpp"
 
  // See: https://github.com/KhronosGroup/Vulkan-Hpp#extensions--per-device-function-pointers
@@ -93,7 +94,7 @@ void VulkanBackend::destroy()
     m_device.destroy();
 
     if (m_debugMessenger)
-        destroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
+        m_instance.destroyDebugUtilsMessengerEXT(m_debugMessenger);
 
     m_instance.destroySurfaceKHR(m_surface);
     m_instance.destroy();
@@ -104,6 +105,11 @@ void VulkanBackend::destroy()
 //
 void VulkanBackend::initInstance(const ContextCreateInfo& info)
 {
+    vk::DynamicLoader         dl;
+    PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr =
+        dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+
     if (info.enableValidationLayers && !checkValidationLayerSupport(info)) {
         throw std::runtime_error("validation layers requested, but not available!");
     }
@@ -129,6 +135,8 @@ void VulkanBackend::initInstance(const ContextCreateInfo& info)
     catch (vk::SystemError err) {
         throw std::runtime_error("failed to create instance!");
     }
+
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(m_instance);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -274,8 +282,21 @@ void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
         throw std::runtime_error("failed to create logical device!");
     }
 
+    // Initialize function pointers
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(m_device);
+
+    // Initialize default queues
     m_graphicsQueue = m_device.getQueue(m_graphicsQueueIdx, 0);
     m_presentQueue  = m_device.getQueue(m_presentQueueIdx, 0);
+    
+    // Initialize debugging tool for queue object names
+#if _DEBUG
+    m_device.setDebugUtilsObjectNameEXT(
+        { vk::ObjectType::eQueue, (uint64_t)(VkQueue)m_graphicsQueue, "graphicsQueue" });
+
+    m_device.setDebugUtilsObjectNameEXT(
+        { vk::ObjectType::eQueue, (uint64_t)(VkQueue)m_presentQueue, "presentQueue" });
+#endif
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -836,13 +857,14 @@ void VulkanBackend::setupDebugMessenger(bool enableValidationLayers)
     debugInfo.pfnUserCallback = debugCallback;
 
     try {
-        createDebugUtilsMessengerEXT(m_instance, reinterpret_cast<const VkDebugUtilsMessengerCreateInfoEXT*>(&debugInfo), nullptr, &m_debugMessenger);
+        m_debugMessenger = m_instance.createDebugUtilsMessengerEXT(debugInfo);
     }
     catch (vk::SystemError err) {
         throw std::runtime_error("failed to set up debug messenger!");
     }
 }
 
+/*
 //--------------------------------------------------------------------------------------------------
 // 
 //
@@ -866,7 +888,7 @@ VkResult VulkanBackend::createDebugUtilsMessengerEXT(vk::Instance instance, cons
     else {
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
-}
+}*/
 
 //--------------------------------------------------------------------------------------------------
 // check Validation Layer Support
@@ -933,7 +955,6 @@ ContextCreateInfo::ContextCreateInfo()
 
         numInstanceExtensions++;
         instanceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-
     }
 }
 

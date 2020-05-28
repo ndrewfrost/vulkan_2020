@@ -31,7 +31,7 @@ inline vk::DescriptorPool createDescriptorPool(vk::Device device,
     vk::DescriptorPoolCreateInfo poolCreateInfo = {};
     poolCreateInfo.poolSizeCount = static_cast<uint32_t>(counters.size());
     poolCreateInfo.pPoolSizes    = counters.data();
-    poolCreateInfo.setMaxSets    = maxSets;
+    poolCreateInfo.maxSets    = maxSets;
 
     try {
         vk::DescriptorPool pool = device.createDescriptorPool(poolCreateInfo);

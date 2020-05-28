@@ -6,6 +6,11 @@
  *
  */
 
+#define VMA_IMPLEMENTATION
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "examplevulkan.hpp"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -18,10 +23,16 @@
 void ExampleVulkan::init(const vk::Device&         device, 
                          const vk::PhysicalDevice& physicalDevice, 
                          const vk::Instance&       instance, 
-                         uint32_t                  graphicsFamilyIdx,
-                         uint32_t                  presentFamilyIdx,
+                         uint32_t                  graphicsQueueIdx,
+                         uint32_t                  presentQueueIdx,
                          const vk::Extent2D&       size)
 {
+    m_allocator.init(device, physicalDevice, instance);
+    m_device = device;
+    m_physicalDevice = physicalDevice;
+    m_graphicsQueueIdx = graphicsQueueIdx;
+    m_presentQueueIdx = presentQueueIdx;
+    m_size = size;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -121,8 +132,8 @@ void ExampleVulkan::createDescriptorSetLayout()
     m_descSetLayoutBind.emplace_back(binding);
 
     m_descriptorSetLayout = app::util::createDescriptorSetLayout(m_device, m_descSetLayoutBind);
-    m_descriptorPool = app::util::createDescriptorPool(m_device, m_descSetLayoutBind, 1);
-    m_descriptorSet = app::util::createDescriptorSet(m_device, m_descriptorPool, m_descriptorSetLayout);
+    m_descriptorPool      = app::util::createDescriptorPool(m_device, m_descSetLayoutBind, 1);
+    m_descriptorSet       = app::util::createDescriptorSet(m_device, m_descriptorPool, m_descriptorSetLayout);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -163,7 +174,6 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
       {4, 0, vk::Format::eR32Sint,         offsetof(Vertex, matID)} };;
 
     m_graphicsPipeline = pipelineGenerator.create();
-    m_debug.setObjectName(m_graphicsPipeline, "Graphics Pipeline");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -205,6 +215,9 @@ void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
 // Post-processing
 //////////////////////////////////////////////////////////////////////////
 
+//--------------------------------------------------------------------------------------------------
+// 
+//
 void ExampleVulkan::createOffscreenRender()
 {
     m_allocator.destroy(m_offscreenColor);
@@ -289,7 +302,7 @@ void ExampleVulkan::createOffscreenRender()
         framebufferInfo.pAttachments    = attachments.data();
         framebufferInfo.width           = m_size.width;
         framebufferInfo.height          = m_size.height;
-        framebufferInfo.setLayers       = 1;
+        framebufferInfo.layers          = 1;
 
         try {
             m_offscreenFramebuffer = m_device.createFramebuffer(framebufferInfo);
@@ -298,4 +311,32 @@ void ExampleVulkan::createOffscreenRender()
             throw std::runtime_error("failed to create offscreen framebuffer!");
         }
     }
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::createPostDescriptor()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+// 
+//
+void ExampleVulkan::updatePostDescriptorSet()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+//
+//
+void ExampleVulkan::drawPost(vk::CommandBuffer cmdBuf)
+{
 }

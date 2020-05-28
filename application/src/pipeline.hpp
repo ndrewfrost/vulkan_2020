@@ -285,8 +285,10 @@ vk::PipelineShaderStageCreateInfo& app::GraphicsPipelineGenerator::addShader(
     createInfo.codeSize = sizeof(T) * code.size();
     createInfo.pCode    = reinterpret_cast<const uint32_t*>(code.data());
 
+    VkShaderModule shaderModule;
+
     try {
-        VkShaderModule shaderModule = device.createShaderModule(createInfo);
+        shaderModule = device.createShaderModule(createInfo);
     }
     catch (vk::SystemError err) {
         throw std::runtime_error("failed to create shader module!");
