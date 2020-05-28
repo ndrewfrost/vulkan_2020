@@ -139,9 +139,9 @@ public:
 
     void createOffscreenRender();
 
-    void createPostPipeline(const vk::RenderPass& renderPass);
-
     void createPostDescriptor();
+
+    void createPostPipeline(const vk::RenderPass& renderPass);
 
     void updatePostDescriptorSet();
 

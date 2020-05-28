@@ -475,17 +475,27 @@ void ExampleVulkan::createOffscreenRender()
 }
 
 //--------------------------------------------------------------------------------------------------
-// The pipeline is how things are rendered, which shaders, type of primitives, depth test and more
-//
-void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
-{
-}
-
-//--------------------------------------------------------------------------------------------------
 // The descriptor layout is the description of the data that is passed to the vertex or the
 // fragment program.
 //
 void ExampleVulkan::createPostDescriptor()
+{
+    vk::DescriptorSetLayoutBinding postBinding = {};
+    postBinding.binding         = 0;
+    postBinding.descriptorType  = vk::DescriptorType::eCombinedImageSampler;
+    postBinding.descriptorCount = 1;
+    postBinding.stageFlags      = vk::ShaderStageFlagBits::eFragment;
+
+    m_postDescSetLayoutBind.emplace_back(postBinding);
+    m_postDescriptorSetLayout = app::util::createDescriptorSetLayout(m_device, m_postDescSetLayoutBind);
+    m_postDescriptorPool      = app::util::createDescriptorPool(m_device, m_postDescSetLayoutBind);
+    m_postDescriptorSet       = app::util::createDescriptorSet(m_device, m_postDescriptorPool, m_postDescriptorSetLayout);
+}
+
+//--------------------------------------------------------------------------------------------------
+// The pipeline is how things are rendered, which shaders, type of primitives, depth test and more
+//
+void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
 {
 }
 
