@@ -79,5 +79,37 @@ inline vk::DescriptorSet createDescriptorSet(vk::Device device,
     }
 }
 
+//--------------------------------------------------------------------------------------------------
+// Write Descriptor Sets 
+//
+inline vk::WriteDescriptorSet createWrite(
+    vk::DescriptorSet                     ds,
+    const vk::DescriptorSetLayoutBinding& binding,
+    const vk::DescriptorBufferInfo*       info,
+    uint32_t                              arrayElement = 0)
+{
+    return { ds, binding.binding, arrayElement, binding.descriptorCount, binding.descriptorType, nullptr, info };
+}
+
+inline vk::WriteDescriptorSet createWrite(
+    vk::DescriptorSet                     ds,
+    const vk::DescriptorSetLayoutBinding& binding,
+    const vk::DescriptorImageInfo*        info,
+    uint32_t                              arrayElement = 0)
+{
+    return { ds, binding.binding, arrayElement, binding.descriptorCount, binding.descriptorType, info };
+}
+
+inline vk::WriteDescriptorSet createWrite(
+    vk::DescriptorSet                                    ds,
+    const vk::DescriptorSetLayoutBinding&                binding,
+    const vk::WriteDescriptorSetAccelerationStructureNV* info,
+    uint32_t                                             arrayElement = 0)
+{
+    vk::WriteDescriptorSet res(ds, binding.binding, arrayElement, binding.descriptorCount, binding.descriptorType);
+    res.setPNext(info);
+    return res;
+}
+
 } // namespeace util
 } // namespace app
