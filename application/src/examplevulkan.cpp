@@ -334,6 +334,42 @@ void ExampleVulkan::updateUniformBuffer()
 //
 void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
 {
+    vk::DeviceSize offset{ 0 };
+
+    // Dynamic Viewport
+    vk::Viewport viewport = {};
+    viewport.x        = 0.0f;
+    viewport.y        = 0.0f;
+    viewport.width    = (float)m_size.width;
+    viewport.height   = (float)m_size.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    vk::Rect2D scissor = {};
+    scissor.offset = vk::Offset2D{ 0,0 };
+    scissor.extent = m_size;
+
+    cmdBuffer.setViewport(0, { viewport });
+    cmdBuffer.setScissor(0, { scissor });
+
+    // Drawing all traingles
+    cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
+    cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout, 0, { m_descriptorSet }, {});
+
+    for (int i = 0; i < m_objInstance.size(); ++i) {
+        auto& instance = m_objInstance[i];
+        auto& model = m_objModel[instance.objIndex];
+        m_pushConstant.instanceId = i; // which instance to draw
+
+        cmdBuffer.pushConstants<ObjPushConstant>(m_pipelineLayout,
+                                                 vk::ShaderStageFlagBits::eVertex
+                                                 | vk::ShaderStageFlagBits::eFragment,
+                                                 0, m_pushConstant);
+
+        cmdBuffer.bindVertexBuffers(0, 1, &vk::Buffer(model.vertexBuffer.buffer), &offset);
+        cmdBuffer.bindIndexBuffer(model.indexBuffer.buffer, 0, vk::IndexType::eUint32);
+        cmdBuffer.drawIndexed(model.nIndices, 1, 0, 0, 0);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
