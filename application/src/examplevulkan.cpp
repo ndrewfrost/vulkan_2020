@@ -258,14 +258,17 @@ void ExampleVulkan::createUniformBuffer()
 }
 
 //--------------------------------------------------------------------------------------------------
-//
+// Create a storage buffer containing the description of the scene elements
+// - Which geometry is used by which instance
+// - Transformation
+// - Offset for texture
 //
 void ExampleVulkan::createSceneDescriptionBuffer()
 {
 }
 
 //--------------------------------------------------------------------------------------------------
-//
+// Setting up the buffers in the descriptor set
 //
 void ExampleVulkan::updateDescriptorSet()
 {
@@ -291,7 +294,7 @@ void ExampleVulkan::updateUniformBuffer()
 }
 
 //--------------------------------------------------------------------------------------------------
-//
+// Drawing the scene in raster mode
 //
 void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
 {
@@ -302,7 +305,7 @@ void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
 //////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------
-// 
+// Creating an offscreen frame buffer and the associated render pass
 //
 void ExampleVulkan::createOffscreenRender()
 {
@@ -400,28 +403,29 @@ void ExampleVulkan::createOffscreenRender()
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// The pipeline is how things are rendered, which shaders, type of primitives, depth test and more
 //
 void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
 {
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// The descriptor layout is the description of the data that is passed to the vertex or the
+// fragment program.
 //
 void ExampleVulkan::createPostDescriptor()
 {
 }
 
 //--------------------------------------------------------------------------------------------------
-// 
+// Update the output
 //
 void ExampleVulkan::updatePostDescriptorSet()
 {
 }
 
 //--------------------------------------------------------------------------------------------------
-//
+// Draw a full screen quad with the attached image
 //
 void ExampleVulkan::drawPost(vk::CommandBuffer cmdBuf)
 {
