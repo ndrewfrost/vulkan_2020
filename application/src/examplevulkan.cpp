@@ -265,6 +265,10 @@ void ExampleVulkan::createUniformBuffer()
 //
 void ExampleVulkan::createSceneDescriptionBuffer()
 {
+    app::SingleCommandBuffer commandGen(m_device, m_graphicsQueueIdx);
+    auto commandBuffer = commandGen.createCommandBuffer();
+    m_sceneDesc = m_allocator.createBuffer(commandBuffer, m_objInstance, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    commandGen.flushCommandBuffer(commandBuffer);
 }
 
 //--------------------------------------------------------------------------------------------------
