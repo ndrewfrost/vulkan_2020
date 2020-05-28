@@ -18,19 +18,19 @@ namespace app {
 
 struct BufferDedicated
 {
-    VkBuffer         buffer;
+    vk::Buffer       buffer;
     VmaAllocation    allocation;
 };
 
 struct ImageDedicated
 {
-    VkImage          image;
+    vk::Image        image;
     VmaAllocation    allocation;
 };
 
 struct TextureDedicated : public ImageDedicated
 {
-    VkDescriptorImageInfo descriptor;
+    vk::DescriptorImageInfo descriptor;
 
     TextureDedicated& operator=(const ImageDedicated& buffer)
     {
@@ -41,7 +41,7 @@ struct TextureDedicated : public ImageDedicated
 
 struct AccelerationDedicated
 {
-    VkAccelerationStructureNV   acceleration;
+    vk::AccelerationStructureNV   acceleration;
     VmaAllocation               allocation;
 };
 

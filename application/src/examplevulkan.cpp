@@ -504,6 +504,9 @@ void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
 //
 void ExampleVulkan::updatePostDescriptorSet()
 {
+    vk::WriteDescriptorSet writeDescSet = 
+        app::util::createWrite(m_postDescriptorSet, m_postDescSetLayoutBind[0],
+                               &m_offscreenColor.descriptor);
 }
 
 //--------------------------------------------------------------------------------------------------
