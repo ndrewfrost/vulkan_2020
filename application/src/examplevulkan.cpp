@@ -276,6 +276,38 @@ void ExampleVulkan::createSceneDescriptionBuffer()
 //
 void ExampleVulkan::updateDescriptorSet()
 {
+    std::vector<vk::WriteDescriptorSet> writes;
+
+    // Camera Matrices
+    vk::DescriptorBufferInfo cameraBufferInfo = {};
+    cameraBufferInfo.buffer = m_cameraMat.buffer;
+    cameraBufferInfo.offset = 0;
+    cameraBufferInfo.range  = VK_WHOLE_SIZE;
+    writes.emplace_back(app::util::createWrites(m_descriptorSet, m_descSetLayoutBind[0], &cameraBufferInfo));
+    
+    // Scene Description
+    vk::DescriptorBufferInfo SceneBufferInfo = {};
+    SceneBufferInfo.buffer = m_sceneDesc.buffer;
+    SceneBufferInfo.offset = 0;
+    SceneBufferInfo.range  = VK_WHOLE_SIZE;
+    writes.emplace_back(app::util::createWrites(m_descriptorSet, m_descSetLayoutBind[2], &SceneBufferInfo));
+
+    // All material buffers, 1 buffer per Obj
+    std::vector<vk::DescriptorBufferInfo> materialBuffersInfo;
+    for (size_t i = 0; i < m_objModel.size(); ++i) {
+        materialBuffersInfo.push_back({ m_objModel[i].matColorBuffer.buffer, 0, VK_WHOLE_SIZE });
+    }
+    writes.emplace_back(app::util::createWrite(m_descriptorSet, m_descSetLayoutBind[1], materialBuffersInfo.data()));
+
+    // All texture samplers
+    std::vector<vk::DescriptorImageInfo> textureImageInfo;
+    for (size_t i = 0; i < m_textures.size(); ++i) {
+        textureImageInfo.push_back(m_textures[i].descriptor);
+    }
+    writes.emplace_back(app::util::createWrites(m_descriptorSet, m_descSetLayoutBind[3], textureImageInfo.data()));
+
+    // writing the information
+    m_device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
 //--------------------------------------------------------------------------------------------------
