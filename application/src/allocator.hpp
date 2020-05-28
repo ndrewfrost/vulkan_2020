@@ -135,6 +135,8 @@ public:
         vmaDestroyImage(m_allocator, texture.image, texture.allocation);
     }
 
+    VmaAllocator& getAllocator() { return m_allocator; }
+
 protected:
     vk::Device                         m_device;
     vk::PhysicalDevice                 m_physicalDevice;

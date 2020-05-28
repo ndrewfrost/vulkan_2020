@@ -94,13 +94,13 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
         m.specular = glm::pow(m.specular, glm::vec3(2.2f));
     }
 
-    ObjInstance instance;
+    ObjInstance instance = {};
     instance.objIndex    = static_cast<uint32_t>(m_objModel.size());
     instance.transform   = transform;
     instance.transformIT = glm::inverseTranspose(transform);
     instance.txtOffset   = static_cast<uint32_t>(m_textures.size());
 
-    ObjModel model;
+    ObjModel model = {};
     model.nIndices  = static_cast<uint32_t>(loader.m_indices.size());
     model.nVertices = static_cast<uint32_t>(loader.m_vertices.size());
 
@@ -250,10 +250,22 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
 }
 
 //--------------------------------------------------------------------------------------------------
-//
+// Called at each frame to update the camera matrix
 //
 void ExampleVulkan::createUniformBuffer()
 {
+    const float aspectRatio = m_size.width / static_cast<float>(m_size.height);
+
+    CameraMatrices ubo = {};
+    ubo.view        = CameraView.getMatrix();
+    ubo.proj        = glm::perspective(glm::radians(65.0f), aspectRatio, 0.1f, 1000.0f);
+    ubo.proj[1][1] *= -1;  // Inverting Y for Vulkan
+    ubo.viewInverse = glm::inverse(ubo.view);
+
+    void* data;
+    vmaMapMemory(m_allocator.getAllocator(), m_cameraMat.allocation, &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    vmaUnmapMemory(m_allocator.getAllocator(), m_cameraMat.allocation);
 }
 
 //--------------------------------------------------------------------------------------------------

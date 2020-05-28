@@ -16,6 +16,7 @@
 
 #include "..//external/obj_loader.h"
 #include "commands.hpp"
+#include "camera.h"
 #include "pipeline.hpp"
 #include "allocator.hpp"
 #include "utilities.hpp"
