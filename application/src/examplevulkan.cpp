@@ -78,7 +78,9 @@ void ExampleVulkan::resize(const vk::Extent2D& size)
 }
 
 //--------------------------------------------------------------------------------------------------
+// Loading the OBJ file and setting up all buffers
 //
+// TODO: FIX Buffer Staging (Maybe build another class)
 //
 void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
 {
@@ -124,11 +126,43 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
 }
 
 //--------------------------------------------------------------------------------------------------
-//
+// Create textures and samplers
 //
 void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer, 
                                         const std::vector<std::string>& textures)
 {
+    vk::SamplerCreateInfo samplerCreateInfo = {};
+    samplerCreateInfo.magFilter  = vk::Filter::eLinear;
+    samplerCreateInfo.minFilter  = vk::Filter::eLinear;
+    samplerCreateInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    samplerCreateInfo.maxLod     = FLT_MAX;
+
+    vk::Format format = vk::Format::eR8G8B8A8Srgb;
+
+    // if no textures are present, create a dummy one to accomodate the pipeline layout
+    if (textures.empty() && m_textures.empty()) {
+        app::TextureDedicated texture;
+
+        glm::u8vec4* color = new glm::u8vec4(255, 255, 255, 255);
+        vk::DeviceSize bufferSize = sizeof(glm::u8vec4);
+        vk::Extent2D   imgSize = vk::Extent2D(1, 1);
+        auto           imageCreateInfo = app::image::create2DInfo(imgSize, format);
+
+        // Creating the vkImage
+        texture = m_allocator.createImage(cmdBuffer, bufferSize, color, imageCreateInfo);
+
+        // Setting up the descriptor used by the shader
+        texture.descriptor = app::image::create2DDescriptor(m_device, texture.image, samplerCreateInfo, format);
+
+        // The image format must be in VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        m_textures.push_back(texture);
+    }
+    else {
+        // Uploading all images
+        for (const auto& texture : textures) {
+
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
