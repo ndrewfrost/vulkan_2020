@@ -75,6 +75,9 @@ void ExampleVulkan::destroy()
 //
 void ExampleVulkan::resize(const vk::Extent2D& size)
 {
+    m_size = size;
+    createOffscreenRender();
+    updatePostDescriptorSet();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -115,11 +118,6 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     createTextureImages(commandBuffer, loader.m_textures);
     cmdBufferGet.flushCommandBuffer(commandBuffer);
     m_allocator.flushStaging();
-
-    //std::string objNb = std::to_string(instance.objIndex);
-    //m_debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb).c_str()));
-    //m_debug.setObjectName(model.indexBuffer.buffer, (std::string("index_" + objNb).c_str()));
-    //m_debug.setObjectName(model.matColorBuffer.buffer, (std::string("mat_" + objNb).c_str()));
 
     m_objModel.emplace_back(model);
     m_objInstance.emplace_back(instance);
@@ -250,22 +248,13 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
 }
 
 //--------------------------------------------------------------------------------------------------
-// Called at each frame to update the camera matrix
+// Creating the uniform buffer holding the camera matrices
+// - Buffer is host visible
 //
 void ExampleVulkan::createUniformBuffer()
 {
-    const float aspectRatio = m_size.width / static_cast<float>(m_size.height);
-
-    CameraMatrices ubo = {};
-    ubo.view        = CameraView.getMatrix();
-    ubo.proj        = glm::perspective(glm::radians(65.0f), aspectRatio, 0.1f, 1000.0f);
-    ubo.proj[1][1] *= -1;  // Inverting Y for Vulkan
-    ubo.viewInverse = glm::inverse(ubo.view);
-
-    void* data;
-    vmaMapMemory(m_allocator.getAllocator(), m_cameraMat.allocation, &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    vmaUnmapMemory(m_allocator.getAllocator(), m_cameraMat.allocation);
+    m_cameraMat = m_allocator.createBuffer(sizeof(CameraMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -283,10 +272,22 @@ void ExampleVulkan::updateDescriptorSet()
 }
 
 //--------------------------------------------------------------------------------------------------
-//
+// Called at each frame to update the camera matrix
 //
 void ExampleVulkan::updateUniformBuffer()
 {
+    const float aspectRatio = m_size.width / static_cast<float>(m_size.height);
+
+    CameraMatrices ubo = {};
+    ubo.view = CameraView.getMatrix();
+    ubo.proj = glm::perspective(glm::radians(65.0f), aspectRatio, 0.1f, 1000.0f);
+    ubo.proj[1][1] *= -1;  // Inverting Y for Vulkan
+    ubo.viewInverse = glm::inverse(ubo.view);
+
+    void* data;
+    vmaMapMemory(m_allocator.getAllocator(), m_cameraMat.allocation, &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    vmaUnmapMemory(m_allocator.getAllocator(), m_cameraMat.allocation);
 }
 
 //--------------------------------------------------------------------------------------------------
