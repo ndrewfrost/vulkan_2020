@@ -512,6 +512,32 @@ void ExampleVulkan::updatePostDescriptorSet()
 //--------------------------------------------------------------------------------------------------
 // Draw a full screen quad with the attached image
 //
-void ExampleVulkan::drawPost(vk::CommandBuffer cmdBuf)
+void ExampleVulkan::drawPost(vk::CommandBuffer cmdBuffer)
 {
+    vk::Viewport viewport = {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)m_size.width;
+    viewport.height = (float)m_size.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    vk::Rect2D scissor = {};
+    scissor.offset = vk::Offset2D{ 0,0 };
+    scissor.extent = m_size;
+
+    cmdBuffer.setViewport(0, { viewport });
+    cmdBuffer.setScissor(0, { scissor });
+
+    const float aspectRatio = m_size.width / static_cast<float>(m_size.height);
+
+    cmdBuffer.pushConstants<float>(m_postPipelineLayout, vk::ShaderStageFlagBits::eFragment, 
+                                   0, aspectRatio);
+
+    cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_postPipeline);
+
+    cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_postPipelineLayout, 
+                                 0, m_postDescriptorSet, {});
+
+    cmdBuffer.draw(3, 1, 0, 0);
 }

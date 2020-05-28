@@ -145,7 +145,7 @@ public:
 
     void updatePostDescriptorSet();
 
-    void drawPost(vk::CommandBuffer cmdBuf);
+    void drawPost(vk::CommandBuffer cmdBuffer);
 
     std::vector<vk::DescriptorSetLayoutBinding> m_postDescSetLayoutBind;
     vk::DescriptorPool      m_postDescriptorPool;
