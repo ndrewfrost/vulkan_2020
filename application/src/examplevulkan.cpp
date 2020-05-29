@@ -7,6 +7,7 @@
  */
 
 #define VMA_IMPLEMENTATION
+#define TINYOBJLOADER_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "examplevulkan.hpp"
@@ -108,9 +109,9 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     // create buffers on device and copy vertices, indices and materials
     app::SingleCommandBuffer cmdBufferGet(m_device, m_graphicsQueueIdx);
     vk::CommandBuffer commandBuffer = cmdBufferGet.createCommandBuffer();
-    model.vertexBuffer   = m_allocator.createBuffer(loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    model.indexBuffer    = m_allocator.createBuffer(loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-    model.matColorBuffer = m_allocator.createBuffer(loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    model.vertexBuffer   = m_allocator.createBuffer(commandBuffer, loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    model.indexBuffer    = m_allocator.createBuffer(commandBuffer, loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    model.matColorBuffer = m_allocator.createBuffer(commandBuffer, loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
     // creates all textures found
     createTextureImages(commandBuffer, loader.m_textures);

@@ -9,21 +9,21 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 #include <iostream>
-#include "../external/tiny_obj_loader.h"
+#include "tiny_obj_loader.h"
 #include <unordered_map>
 #include <vector>
 
  // Structure holding the material
 struct MatrialObj
 {
-    glm::vec3 ambient = glm::vec3(0.1f, 0.1f, 0.1f);
-    glm::vec3 diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-    glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 ambient       = glm::vec3(0.1f, 0.1f, 0.1f);
+    glm::vec3 diffuse       = glm::vec3(0.7f, 0.7f, 0.7f);
+    glm::vec3 specular      = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec3 transmittance = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 emission = glm::vec3(0.0f, 0.0f, 0.10);
-    float     shininess = 0.f;
-    float     ior = 1.0f;  // index of refraction
-    float     dissolve = 1.f;   // 1 == opaque; 0 == fully transparent
+    glm::vec3 emission      = glm::vec3(0.0f, 0.0f, 0.10);
+    float     shininess     = 0.f;
+    float     ior           = 1.0f;  // index of refraction
+    float     dissolve       = 1.f;   // 1 == opaque; 0 == fully transparent
         // illumination model (see http://www.fileformat.info/format/material/)
     int illum = 0;
     int textureID = -1;
@@ -122,12 +122,12 @@ void ObjLoader<TVert>::loadModel(const std::string& filename)
         {
             TVert  vertex = {};
             float* vp = &attrib.vertices[3 * index.vertex_index];
-            vertex.pos = { *(vp + 0), *(vp + 1), *(vp + 2) };
+            vertex.position = { *(vp + 0), *(vp + 1), *(vp + 2) };
 
             if (!attrib.normals.empty() && index.normal_index >= 0)
             {
                 float* np = &attrib.normals[3 * index.normal_index];
-                vertex.nrm = { *(np + 0), *(np + 1), *(np + 2) };
+                vertex.normal = { *(np + 0), *(np + 1), *(np + 2) };
             }
 
             if (!attrib.texcoords.empty() && index.texcoord_index >= 0)
@@ -166,10 +166,10 @@ void ObjLoader<TVert>::loadModel(const std::string& filename)
             TVert& v1 = m_vertices[m_indices[i + 1]];
             TVert& v2 = m_vertices[m_indices[i + 2]];
 
-            glm::vec3 n = glm::normalize(glm::cross((v1.pos - v0.pos), (v2.pos - v0.pos)));
-            v0.nrm = n;
-            v1.nrm = n;
-            v2.nrm = n;
+            glm::vec3 n = glm::normalize(glm::cross((v1.position - v0.position), (v2.position - v0.position)));
+            v0.normal = n;
+            v1.normal = n;
+            v2.normal = n;
         }
     }
 }
