@@ -217,7 +217,7 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
                                                  0, sizeof(ObjPushConstant) };
 
     // Create Pipeline Layout
-    vk::DescriptorSetLayout      descriptorSetLayout(m_descriptorSetLayout);
+    vk::DescriptorSetLayout descriptorSetLayout(m_descriptorSetLayout);
     vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
     pipelineLayoutCreateInfo.setLayoutCount = 1;
     pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
@@ -493,10 +493,34 @@ void ExampleVulkan::createPostDescriptor()
 }
 
 //--------------------------------------------------------------------------------------------------
-// The pipeline is how things are rendered, which shaders, type of primitives, depth test and more
+// create Post Pipeline
 //
 void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
 {
+    vk::PushConstantRange pushConstantRanges = {vk::ShaderStageFlagBits::eFragment,
+                                                 0, sizeof(float) };
+
+    // Create Pipeline Layout
+    vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
+    pipelineLayoutCreateInfo.setLayoutCount         = 1;
+    pipelineLayoutCreateInfo.pSetLayouts            = &m_postDescriptorSetLayout;
+    pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+    pipelineLayoutCreateInfo.pPushConstantRanges    = &pushConstantRanges;
+
+    try {
+        m_postPipelineLayout = m_device.createPipelineLayout(pipelineLayoutCreateInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create pipeline layout!");
+    }
+
+    // Create the Pipeline
+    app::GraphicsPipelineGenerator pipelineGenerator(m_device, m_postPipelineLayout, renderPass);
+
+    pipelineGenerator.addShader(app::util::readFile("shaders/passthrough.vert.spv"), vk::ShaderStageFlagBits::eVertex);
+    pipelineGenerator.addShader(app::util::readFile("shaders/post.vert.spv"), vk::ShaderStageFlagBits::eFragment);
+    pipelineGenerator.rasterizationState.setCullMode(vk::CullModeFlagBits::eNone);
+    m_postPipeline = pipelineGenerator.create();
 }
 
 //--------------------------------------------------------------------------------------------------
