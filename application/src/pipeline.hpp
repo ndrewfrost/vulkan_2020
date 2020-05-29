@@ -281,11 +281,11 @@ vk::PipelineShaderStageCreateInfo& app::GraphicsPipelineGenerator::addShader(
     vk::ShaderStageFlagBits stage,
     const char* entryPoint)
 {
-    VkShaderModuleCreateInfo createInfo = {};
+    vk::ShaderModuleCreateInfo createInfo = {};
     createInfo.codeSize = sizeof(T) * code.size();
     createInfo.pCode    = reinterpret_cast<const uint32_t*>(code.data());
 
-    VkShaderModule shaderModule;
+    vk::ShaderModule shaderModule;
 
     try {
         shaderModule = device.createShaderModule(createInfo);

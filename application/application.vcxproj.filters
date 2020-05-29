@@ -93,5 +93,6 @@
     <ClInclude Include="external\tiny_obj_loader.h">
       <Filter>External</Filter>
     </ClInclude>
+    <ClInclude Include="src\debug.hpp" />
   </ItemGroup>
 </Project>

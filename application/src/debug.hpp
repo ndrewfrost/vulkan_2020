@@ -1,7 +1,7 @@
 /*
  *
  * Andrew Frost
- * debugutil.hpp
+ * debug.hpp
  * 2020
  *
  */
@@ -11,10 +11,11 @@
 #include <vulkan/vulkan.hpp>
 
 ///////////////////////////////////////////////////////////////////////////
-// Debug Utility
+// Debug 
 ///////////////////////////////////////////////////////////////////////////
 
 namespace app {
+namespace debug {
 
 struct DebugUtil
 {
@@ -127,4 +128,5 @@ private:
     vk::Device m_device;
 };
 
+} // namespace debug
 } // namespace app

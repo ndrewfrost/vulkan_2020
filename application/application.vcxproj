@@ -38,6 +38,7 @@
     <ClInclude Include="src\allocator.hpp" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\commands.hpp" />
+    <ClInclude Include="src\debug.hpp" />
     <ClInclude Include="src\descriptorsets.hpp" />
     <ClInclude Include="src\examplevulkan.hpp" />
     <ClInclude Include="src\images.hpp" />

@@ -103,7 +103,7 @@ public:
         const VkMemoryPropertyFlags memUsage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
     {
         VkBufferCreateInfo info = {};
-        info.flags = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         info.size  = size;
         info.usage =  usage;
         return createBuffer(info , memUsage);
@@ -133,7 +133,7 @@ public:
 
         // Create Result buffer
         VkBufferCreateInfo info = {};
-        info.flags = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         info.size  = size;
         info.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 

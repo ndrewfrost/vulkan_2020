@@ -27,6 +27,8 @@ void ExampleVulkan::init(const vk::Device&         device,
                          const vk::Extent2D&       size)
 {
     m_allocator.init(device, physicalDevice, instance);
+    m_debug.setup(device);
+
     m_device = device;
     m_physicalDevice = physicalDevice;
     m_graphicsQueueIdx = graphicsQueueIdx;
@@ -143,7 +145,8 @@ void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer,
         glm::u8vec4* color = new glm::u8vec4(255, 255, 255, 255);
         vk::DeviceSize bufferSize = sizeof(glm::u8vec4);
         vk::Extent2D   imgSize = vk::Extent2D(1, 1);
-        auto           imageCreateInfo = app::image::create2DInfo(imgSize, format);
+        
+        VkImageCreateInfo imageCreateInfo = app::image::create2DInfo(imgSize, format);
 
         // Creating the vkImage
         texture = m_allocator.createImage(cmdBuffer, bufferSize, color, imageCreateInfo);
@@ -157,7 +160,35 @@ void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer,
     else {
         // Uploading all images
         for (const auto& texture : textures) {
+            std::stringstream ss;
+            int               texWidth, texHeight, texChannels;
+            ss << "../media/textures/" << texture;
 
+            stbi_uc* pixels =
+                stbi_load(ss.str().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+            // Handle failure
+            if (!pixels)
+            {
+                texWidth = texHeight = 1;
+                texChannels = 4;
+                glm::u8vec4* color = new glm::u8vec4(255, 0, 255, 255);
+                pixels = reinterpret_cast<stbi_uc*>(color);
+            }
+
+            vk::DeviceSize bufferSize = static_cast<uint64_t>(texWidth) * texHeight * sizeof(glm::u8vec4);
+            auto imageSize = vk::Extent2D(texWidth, texHeight);
+            auto imageCreateInfo = app::image::create2DInfo(imageSize, format, vk::ImageUsageFlagBits::eSampled, true);
+
+            app::TextureDedicated texture;
+            texture = m_allocator.createImage(cmdBuffer, bufferSize, pixels, imageCreateInfo);
+
+            app::image::generateMipmaps(cmdBuffer, texture.image, format, imageSize, imageCreateInfo.mipLevels);
+        
+            texture.descriptor =
+                app::image::create2DDescriptor(m_device, texture.image, samplerCreateInfo, format);
+
+            m_textures.push_back(texture);
         }
     }
 }
@@ -234,7 +265,7 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
     app::GraphicsPipelineGenerator pipelineGenerator(m_device, m_pipelineLayout, m_offscreenRenderPass);
     pipelineGenerator.depthStencilState = { true };
     pipelineGenerator.addShader(app::util::readFile("shaders/vert_shader.vert.spv"), vk::ShaderStageFlagBits::eVertex);
-    pipelineGenerator.addShader(app::util::readFile("shaders/frag_shader.vert.spv"), vk::ShaderStageFlagBits::eFragment);
+    pipelineGenerator.addShader(app::util::readFile("shaders/frag_shader.frag.spv"), vk::ShaderStageFlagBits::eFragment);
     pipelineGenerator.vertexInputState.bindingDescriptions = { {0, sizeof(Vertex)} };
     pipelineGenerator.vertexInputState.attributeDescriptions = {
       {0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, position)},
@@ -244,6 +275,7 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
       {4, 0, vk::Format::eR32Sint,         offsetof(Vertex, matID)} };;
 
     m_graphicsPipeline = pipelineGenerator.create();
+    //m_debug.setObjectName(m_graphicsPipeline, "graphics Pipeline");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -517,7 +549,7 @@ void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
     app::GraphicsPipelineGenerator pipelineGenerator(m_device, m_postPipelineLayout, renderPass);
 
     pipelineGenerator.addShader(app::util::readFile("shaders/passthrough.vert.spv"), vk::ShaderStageFlagBits::eVertex);
-    pipelineGenerator.addShader(app::util::readFile("shaders/post.vert.spv"), vk::ShaderStageFlagBits::eFragment);
+    pipelineGenerator.addShader(app::util::readFile("shaders/post.frag.spv"), vk::ShaderStageFlagBits::eFragment);
     pipelineGenerator.rasterizationState.setCullMode(vk::CullModeFlagBits::eNone);
     m_postPipeline = pipelineGenerator.create();
 }
