@@ -295,6 +295,7 @@ void application()
             g_resizeRequest = false;
         }
 
+        vkExample.updateUniformBuffer();
 
         // ImGui Frame
         /*
@@ -312,23 +313,46 @@ void application()
         */
 
         // Render the scene
-        //vkBackend.prepareFrame();
-        //auto                     currentFrame = vkBackend.getCurrentFrame();
-        //const vk::CommandBuffer& cmdBuffer    = vkBackend.getCommandBuffers()[currentFrame];
+        vkBackend.prepareFrame();
+        auto                     currentFrame = vkBackend.getCurrentFrame();
+        const vk::CommandBuffer& cmdBuffer    = vkBackend.getCommandBuffers()[currentFrame];
 
-        //cmdBuffer.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
+        cmdBuffer.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
 
-        
+        vk::ClearValue clearValues[2];
+        clearValues[0].setColor(app::util::clearColor(clearColor));
+        clearValues[1].setDepthStencil({ 1.0f, 0 });
 
         // Begin render pass
+        vk::RenderPassBeginInfo offscreenRenderPassBeginInfo = {};
+        offscreenRenderPassBeginInfo.clearValueCount = 2;
+        offscreenRenderPassBeginInfo.pClearValues    = clearValues;
+        offscreenRenderPassBeginInfo.renderPass      = vkExample.m_offscreenRenderPass;
+        offscreenRenderPassBeginInfo.framebuffer     = vkExample.m_offscreenFramebuffer;
+        offscreenRenderPassBeginInfo.renderArea      = vk::Rect2D({}, vkBackend.getSize());
 
-        // rendering scene
+        // Rendering scene
+        cmdBuffer.beginRenderPass(offscreenRenderPassBeginInfo, vk::SubpassContents::eInline);
+        vkExample.rasterize(cmdBuffer);
+        cmdBuffer.endRenderPass();
+
+        // Post render pass
+        vk::RenderPassBeginInfo postRenderPassBeginInfo = {};
+        postRenderPassBeginInfo.clearValueCount = 2;
+        postRenderPassBeginInfo.pClearValues    = clearValues;
+        postRenderPassBeginInfo.renderPass      = vkBackend.getRenderPass(); 
+        postRenderPassBeginInfo.framebuffer     = vkBackend.getFramebuffers()[currentFrame];
+        postRenderPassBeginInfo.renderArea      = vk::Rect2D({}, vkBackend.getSize());
+
+        cmdBuffer.beginRenderPass(postRenderPassBeginInfo, vk::SubpassContents::eInline);
+        vkExample.drawPost(cmdBuffer);
 
         // rendering UI
         //ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
 
-        //cmdBuffer.end();
-        //vkBackend.submitFrame();
+        cmdBuffer.endRenderPass();
+        cmdBuffer.end();
+        vkBackend.submitFrame();
     }
 
     // Cleanup
