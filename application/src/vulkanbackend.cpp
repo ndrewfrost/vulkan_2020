@@ -256,12 +256,17 @@ void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
 
         queueCreateInfos.push_back(queueInfo);
     }
+    vk::PhysicalDeviceDescriptorIndexingFeaturesEXT indexFeature = {};
+
+    vk::PhysicalDeviceScalarBlockLayoutFeaturesEXT  scalarFeature = {};
+    scalarFeature.pNext = &indexFeature;
 
     // Vulkan >= 1.1 uses pNext to enable features, and not pEnabledFeatures
     vk::PhysicalDeviceFeatures2 enabledFeatures2 = {};
     enabledFeatures2.features = m_physicalDevice.getFeatures();
-    m_physicalDevice.getFeatures2(&enabledFeatures2);
     enabledFeatures2.features.samplerAnisotropy = VK_TRUE;
+    enabledFeatures2.pNext = &scalarFeature;
+    m_physicalDevice.getFeatures2(&enabledFeatures2);
 
     vk::DeviceCreateInfo deviceCreateInfo = {};
     deviceCreateInfo.queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size());
@@ -966,6 +971,7 @@ void ContextCreateInfo::addDeviceExtension(const char* name)
     numDeviceExtensions++;
     deviceExtensions.emplace_back(name);
 }
+
 
 //--------------------------------------------------------------------------------------------------
 // 

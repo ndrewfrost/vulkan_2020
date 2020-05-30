@@ -256,7 +256,11 @@ void application()
     contextInfo.addInstanceExtension(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
     contextInfo.addInstanceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
     contextInfo.addDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    contextInfo.addDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
     contextInfo.addDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+    contextInfo.addDeviceExtension(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
+    contextInfo.addDeviceExtension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+    contextInfo.addDeviceExtension(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
 
     app::VulkanBackend vkBackend;
     vkBackend.setupVulkan(contextInfo, window);
