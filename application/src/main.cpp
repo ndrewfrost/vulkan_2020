@@ -268,7 +268,8 @@ void application()
     ExampleVulkan vkExample;
     vkExample.init(vkBackend.getDevice(), vkBackend.getPhysicalDevice(), 
                    vkBackend.getInstance(), vkBackend.getGraphicsQueueIdx(), 
-                   vkBackend.getPresentQueueIdx(), vkBackend.getSize());
+                   vkBackend.getPresentQueueIdx(), vkBackend.getSize(),
+                   vkBackend.getSampleCount());
 
     vkExample.loadModel("../media/scenes/cube_multi.obj");
 

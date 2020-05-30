@@ -41,7 +41,8 @@ public:
               const vk::Instance&       instance,
               uint32_t                  graphicsFamilyIdx,
               uint32_t                  presentFamilyIdx,
-              const vk::Extent2D&       size);
+              const vk::Extent2D&       size,
+              vk::SampleCountFlagBits   m_sampleCount);
 
     void destroy();
 
@@ -124,6 +125,7 @@ public:
     vk::DescriptorPool                          m_descriptorPool;
     vk::DescriptorSetLayout                     m_descriptorSetLayout;
     vk::DescriptorSet                           m_descriptorSet;
+    vk::SampleCountFlagBits                     m_sampleCount{ vk::SampleCountFlagBits::e1 };
 
     app::BufferDedicated               m_cameraMat;  // Device-Host of the camera matrices
     app::BufferDedicated               m_sceneDesc;  // Device buffer of the OBJ instances

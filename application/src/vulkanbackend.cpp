@@ -260,7 +260,7 @@ void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
     // Vulkan >= 1.1 uses pNext to enable features, and not pEnabledFeatures
     vk::PhysicalDeviceFeatures2 enabledFeatures2 = {};
     enabledFeatures2.features = m_physicalDevice.getFeatures();
-    //m_physicalDevice.getFeatures2(&enabledFeatures2);
+    m_physicalDevice.getFeatures2(&enabledFeatures2);
     enabledFeatures2.features.samplerAnisotropy = VK_TRUE;
 
     vk::DeviceCreateInfo deviceCreateInfo = {};

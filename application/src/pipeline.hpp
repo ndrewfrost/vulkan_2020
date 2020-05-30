@@ -153,7 +153,7 @@ public:
         }
     };
 
-    struct PipelineColorBlendAttachmentState    : public vk::PipelineColorBlendAttachmentState
+    struct PipelineColorBlendAttachmentState : public vk::PipelineColorBlendAttachmentState
     {
         PipelineColorBlendAttachmentState()
         {
@@ -171,7 +171,7 @@ public:
         }
     };
 
-    struct PipelineColorBlendStateCreateInfo    : public vk::PipelineColorBlendStateCreateInfo
+    struct PipelineColorBlendStateCreateInfo : public vk::PipelineColorBlendStateCreateInfo
     {
         std::vector<PipelineColorBlendAttachmentState> blendAttachmentStates{
             PipelineColorBlendAttachmentState() };
@@ -183,7 +183,7 @@ public:
         }
     };
 
-    struct PipelineDynamicStateCreateInfo       : public vk::PipelineDynamicStateCreateInfo
+    struct PipelineDynamicStateCreateInfo : public vk::PipelineDynamicStateCreateInfo
     {
         std::vector<vk::DynamicState> dynamicStateEnables;
 
@@ -199,7 +199,7 @@ public:
         }
     };
 
-    struct PipelineVertexInputStateCreateInfo   : public vk::PipelineVertexInputStateCreateInfo
+    struct PipelineVertexInputStateCreateInfo : public vk::PipelineVertexInputStateCreateInfo
     {
         std::vector<vk::VertexInputBindingDescription>   bindingDescriptions;
         std::vector<vk::VertexInputAttributeDescription> attributeDescriptions;
@@ -213,7 +213,7 @@ public:
         }
     };
 
-    struct PipelineViewportStateCreateInfo      : public vk::PipelineViewportStateCreateInfo
+    struct PipelineViewportStateCreateInfo : public vk::PipelineViewportStateCreateInfo
     {
         std::vector<vk::Viewport> viewports;
         std::vector<vk::Rect2D>   scissors;
@@ -240,7 +240,7 @@ public:
         }
     };
 
-    struct PipelineDepthStencilStateCreateInfo  : public vk::PipelineDepthStencilStateCreateInfo
+    struct PipelineDepthStencilStateCreateInfo : public vk::PipelineDepthStencilStateCreateInfo
     {
         PipelineDepthStencilStateCreateInfo(bool depthEnable = true)
         {
@@ -249,6 +249,15 @@ public:
                 depthWriteEnable = VK_TRUE;
                 depthCompareOp = vk::CompareOp::eLessOrEqual;
             }
+        }
+    };
+
+    struct PipelineMultisampleStateCreateInfo : public vk::PipelineMultisampleStateCreateInfo
+    {
+        PipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1)
+        {
+            sampleShadingEnable  = VK_FALSE;
+            rasterizationSamples = samples;
         }
     };
 
@@ -266,7 +275,7 @@ public:
     PipelineVertexInputStateCreateInfo             vertexInputState;
     PipelineViewportStateCreateInfo                viewportState;
     PipelineDepthStencilStateCreateInfo            depthStencilState;
-    vk::PipelineMultisampleStateCreateInfo         multisampleState;
+    PipelineMultisampleStateCreateInfo             multisampleState;
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 
 }; // struct GraphicsPipelineGenerator

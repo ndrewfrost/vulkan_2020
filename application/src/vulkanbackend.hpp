@@ -141,8 +141,8 @@ public:
     const std::vector<vk::Framebuffer>&   getFramebuffers()     { return m_framebuffers; }
     const std::vector<vk::CommandBuffer>& getCommandBuffers()   { return m_commandBuffers; }
     uint32_t                              getCurrentFrame()     { return m_currentFrame; }
-
-
+    vk::SampleCountFlagBits               getSampleCount()      { return m_sampleCount;  }
+     
 protected:
     vk::Instance                   m_instance;
     vk::PhysicalDevice             m_physicalDevice;
