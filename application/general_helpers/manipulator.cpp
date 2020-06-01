@@ -1,16 +1,16 @@
 /*
  *
  * Andrew Frost
- * camera.cpp
+ * manipulator.cpp
  * 2020
  *
  */
 
-#include "camera.h"
+#include "manipulator.h"
 
 namespace tools {
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Math Functions
 //
 template <typename T>
@@ -31,22 +31,21 @@ inline float sign(float s)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// Camera
+// Manipulator                                                           //
 ///////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // 
 //
-Camera::Camera()
+Manipulator::Manipulator()
 {
     update();
 }
 
-
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // update internal transformation matrix
 //
-void Camera::update()
+void Manipulator::update()
 {
     m_matrix = glm::lookAt(m_pos, m_int, m_up);
 
@@ -56,10 +55,10 @@ void Camera::update()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // pan the camera perpendicularly to the line of sight
 //
-void Camera::pan(float dx, float dy)
+void Manipulator::pan(float dx, float dy)
 {
     if (m_mode == Fly) {
         dx *= -1;
@@ -82,11 +81,11 @@ void Camera::pan(float dx, float dy)
 
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Orbit camera around interest point
 // if 'invert' then camera stays in place and interest orbit around the camera
 //
-void Camera::orbit(float dx, float dy, bool invert)
+void Manipulator::orbit(float dx, float dy, bool invert)
 {
     if (isZero(dx) && isZero(dy)) {
         return;
@@ -141,10 +140,10 @@ void Camera::orbit(float dx, float dy, bool invert)
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Move camera towards interest point (Doesn't cross it)
 //
-void Camera::dolly(float dx, float dy)
+void Manipulator::dolly(float dx, float dy)
 {
     glm::vec3 z(m_pos - m_int);
     float length = static_cast<float>(glm::length(z));
@@ -194,16 +193,16 @@ void Camera::dolly(float dx, float dy)
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Trackball calculation
 // Calc axis and angle by the given mouse coordinates
-// Project the point onto the virtual trackball, then calculate the axis of rotation
-// which is cross product of (p0, p1) and (center of ball, p0)
+// Project the point onto the virtual trackball, then calculate the axis 
+// of rotation which is cross product of (p0, p1) and (center of ball, p0)
 //
-// NOTE: This is a deformed trackball -- is a trackball in the center, but is deformed into a
-// hyperbolic sheet of rotation away from the center.
+// NOTE: This is a deformed trackball -- is a trackball in the center, 
+// but is deformed into a hyperbolic sheet of rotation away from the center.
 //
-void Camera::trackball(int x, int y)
+void Manipulator::trackball(int x, int y)
 {
     glm::vec2 p0(2 * (m_mouse[0] - m_width / 2) / double(m_width),
         2 * (m_height / 2 - m_mouse[1]) / double(m_height));
@@ -242,11 +241,11 @@ void Camera::trackball(int x, int y)
     m_up = glm::vec3(up2.x, up2.y, up2.z);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Project x,y pair onto a sphere of radius r OR a hyperbolic sheet
 // if we are away from the center of the sphere
 //
-double Camera::projectOntoTBSphere(const glm::vec2& p)
+double Manipulator::projectOntoTBSphere(const glm::vec2& p)
 {
     double z;
     double d = length(p);
@@ -264,12 +263,12 @@ double Camera::projectOntoTBSphere(const glm::vec2& p)
     return z;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Call when mouse is moving
 // Finds the appropriate camera operator based on mouse button pressed
 // returns the action that was activated
 //
-Camera::Actions Camera::mouseMove(int x, int y, const Inputs& inputs)
+Manipulator::Actions Manipulator::mouseMove(int x, int y, const Inputs& inputs)
 {
     Actions currAction = None;
 
@@ -305,16 +304,16 @@ Camera::Actions Camera::mouseMove(int x, int y, const Inputs& inputs)
     return currAction;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Function for when camera moves
 //
-void Camera::motion(int x, int y, int action)
+void Manipulator::motion(int x, int y, int action)
 {
     float dx = float(x - m_mouse[0]) / float(m_width);
     float dy = float(x - m_mouse[1]) / float(m_height);
 
     switch (action) {
-    case Camera::Orbit:
+    case Manipulator::Orbit:
         if (m_mode == Trackball) {
             orbit(dx, dy, true);
         }
@@ -322,13 +321,13 @@ void Camera::motion(int x, int y, int action)
             orbit(dx, dy, false);
         }
         break;
-    case Camera::Dolly:
+    case Manipulator::Dolly:
         dolly(dx, dy);
         break;
-    case Camera::Pan:
+    case Manipulator::Pan:
         pan(dx, dy);
         break;
-    case Camera::LookAround:
+    case Manipulator::LookAround:
         if (m_mode == Trackball) {
             trackball(x, y);
         }
@@ -344,10 +343,10 @@ void Camera::motion(int x, int y, int action)
     m_mouse[1] = static_cast<float>(y);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Trigger a dolly when the wheel changes
 //
-void Camera::wheel(int value)
+void Manipulator::wheel(int value)
 {
     auto fval(static_cast<float>(value));
     float dx = (fval * fabs(fval)) / static_cast<float>(m_width);
@@ -360,10 +359,10 @@ void Camera::wheel(int value)
     update();
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Set camera information and derive viewing matrix
 //
-void Camera::setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up)
+void Manipulator::setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up)
 {
     m_pos = eye;
     m_int = center;
@@ -371,113 +370,113 @@ void Camera::setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm:
     update();
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Set window size, call when the size of the window changes
 //
-void Camera::setWindowSize(int w, int h)
+void Manipulator::setWindowSize(int w, int h)
 {
     m_width = w;
     m_height = h;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Set current mouse position
 //
-void Camera::setMousePosition(int x, int y)
+void Manipulator::setMousePosition(int x, int y)
 {
     m_mouse[0] = static_cast<float>(x);
     m_mouse[1] = static_cast<float>(y);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Retreive current camera information
 // Position, interest and up vector
 //
-void Camera::getLookAt(glm::vec3& eye, glm::vec3& center, glm::vec3& up) const
+void Manipulator::getLookAt(glm::vec3& eye, glm::vec3& center, glm::vec3& up) const
 {
     eye = m_pos;
     center = m_int;
     up = m_up;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Set camera mode 
 //
-void Camera::setMode(Camera::Modes mode)
+void Manipulator::setMode(Manipulator::Modes mode)
 {
     m_mode = mode;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Retreive current camera mode
 //
-Camera::Modes Camera::getMode() const
+Manipulator::Modes Manipulator::getMode() const
 {
     return m_mode;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Set the roll around z-axis
 //
-void Camera::setRoll(float roll)
+void Manipulator::setRoll(float roll)
 {
     m_roll = roll;
     update();
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Retreive the camera roll 
 //
-float Camera::getRoll() const
+float Manipulator::getRoll() const
 {
     return m_roll;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Retreive transformation matrix of camera
 //
-const glm::mat4& Camera::getMatrix() const
+const glm::mat4& Manipulator::getMatrix() const
 {
     return m_matrix;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Set the movement speed
 //
-void Camera::setSpeed(float speed)
+void Manipulator::setSpeed(float speed)
 {
     m_speed = speed;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Retreives current speed
 //
-float Camera::getSpeed()
+float Manipulator::getSpeed()
 {
     return m_speed;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Get last mouse position
 //
-void Camera::getMousePosition(int& x, int& y)
+void Manipulator::getMousePosition(int& x, int& y)
 {
     x = static_cast<int>(m_mouse[0]);
     y = static_cast<int>(m_mouse[1]);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Retreives sceen width
 //
-int Camera::getWidth() const
+int Manipulator::getWidth() const
 {
     return m_width;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Retreives sceen height
 //
-int Camera::getHeight() const
+int Manipulator::getHeight() const
 {
     return m_height;
 }

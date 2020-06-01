@@ -14,22 +14,22 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_inverse.hpp"
 
-#include "..//external/obj_loader.h"
-#include "commands.hpp"
-#include "camera.h"
-#include "pipeline.hpp"
-#include "allocator.hpp"
-#include "utilities.hpp"
-#include "descriptorsets.hpp"
-#include "renderpass.hpp"
-#include "images.hpp"
+#include "../external/obj_loader.h"
+#include "../vk_helpers/commands.hpp"
+#include "../general_helpers/manipulator.h"
+#include "../vk_helpers/pipeline.hpp"
+#include "../vk_helpers/allocator.hpp"
+#include "../vk_helpers/utilities.hpp"
+#include "../vk_helpers/descriptorsets.hpp"
+#include "../vk_helpers/renderpass.hpp"
+#include "../vk_helpers/images.hpp"
 
 #ifdef _DEBUG
-#include "debug.hpp"
+#include "../vk_helpers/debug.hpp"
 #endif // _DEBUG
 
 ///////////////////////////////////////////////////////////////////////////
-// ExampleVulkan
+// ExampleVulkan                                                         //
 ///////////////////////////////////////////////////////////////////////////
 
 class ExampleVulkan
@@ -140,7 +140,7 @@ public:
     vk::Extent2D          m_size;         
 
 ///////////////////////////////////////////////////////////////////////////
-// Post-processing
+// Post-processing                                                       //
 ///////////////////////////////////////////////////////////////////////////
 
     void createOffscreenRender();

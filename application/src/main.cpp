@@ -26,10 +26,10 @@
 #include <glm/glm.hpp>
 #include "glm/gtx/transform.hpp"
 
-#include "vulkanbackend.hpp"
-#include "commands.hpp"
-#include "camera.h"
-#include "utilities.hpp"
+#include "../vk_helpers/vulkanbackend.hpp"
+#include "../vk_helpers/commands.hpp"
+#include "../general_helpers/manipulator.h"
+#include "../vk_helpers/utilities.hpp"
 #include "examplevulkan.hpp"
 
 static int  g_winWidth      = 800;
@@ -39,10 +39,10 @@ static bool g_resizeRequest = false;
 static vk::DescriptorPool g_imguiDescPool;
 
 ///////////////////////////////////////////////////////////////////////////
-// GLFW Callback functions   
+// GLFW Callback functions                                               //
 ///////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+
 // onErrorCallback
 //
 static void onErrorCallback(int error, const char* description)
@@ -50,7 +50,7 @@ static void onErrorCallback(int error, const char* description)
     std::cerr << "GLFW Error " << error << ": " << description << std::endl;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // onScrollCallback
 //
 static void onScrollCallback(GLFWwindow* window, double xOffset, double yOffset)
@@ -58,10 +58,10 @@ static void onScrollCallback(GLFWwindow* window, double xOffset, double yOffset)
     if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
         return;
 
-    CameraView.wheel(static_cast<int>(yOffset));
+    CameraManipulator.wheel(static_cast<int>(yOffset));
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // onKeyCallback
 //
 static void onKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -76,7 +76,7 @@ static void onKeyCallback(GLFWwindow* window, int key, int scancode, int action,
         glfwSetWindowShouldClose(window, 1);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // onMouseMoveCallback
 //
 static void onMouseMoveCallback(GLFWwindow* window, double mouseX, double mouseY)
@@ -86,7 +86,7 @@ static void onMouseMoveCallback(GLFWwindow* window, double mouseX, double mouseY
         if (io.WantCaptureKeyboard || io.WantCaptureMouse) return;
     }
     
-    tools::Camera::Inputs inputs;
+    tools::Manipulator::Inputs inputs;
     inputs.lmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)   == GLFW_PRESS;
     inputs.mmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     inputs.rmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT)  == GLFW_PRESS;
@@ -98,10 +98,10 @@ static void onMouseMoveCallback(GLFWwindow* window, double mouseX, double mouseY
     inputs.shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS;
     inputs.alt   = glfwGetKey(window, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS;
 
-    CameraView.mouseMove(static_cast<int>(mouseX), static_cast<int>(mouseY), inputs);
+    CameraManipulator.mouseMove(static_cast<int>(mouseX), static_cast<int>(mouseY), inputs);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // onMouseButtonCallback
 //
 static void onMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
@@ -111,26 +111,26 @@ static void onMouseButtonCallback(GLFWwindow* window, int button, int action, in
 
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
-    CameraView.setMousePosition(static_cast<int>(xpos), static_cast<int>(ypos));
+    CameraManipulator.setMousePosition(static_cast<int>(xpos), static_cast<int>(ypos));
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // onResizeCallback
 //
 static void onResizeCallback(GLFWwindow* window, int w, int h)
 {
     (void)(window);
-    CameraView.setWindowSize(w, h);
+    CameraManipulator.setWindowSize(w, h);
     g_resizeRequest = true;
     g_winWidth      = w;
     g_winHeight     = h;
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// IMGUI  
+// IMGUI                                                                 //
 ///////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // 
 //
 static void checkVkResult(VkResult err)
@@ -142,7 +142,7 @@ static void checkVkResult(VkResult err)
         abort();
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Setup ImGUI
 //
 static void setupImGUI(app::VulkanBackend& vkBackend, GLFWwindow* window)
@@ -193,7 +193,7 @@ static void setupImGUI(app::VulkanBackend& vkBackend, GLFWwindow* window)
     ImGui_ImplVulkan_DestroyFontUploadObjects();
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Destroy ImGUI
 //
 static void destroyImGUI(const vk::Device& device)
@@ -207,7 +207,7 @@ static void destroyImGUI(const vk::Device& device)
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Render UI
 //
 static void renderUI()
@@ -223,17 +223,16 @@ static void renderUI()
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// Application 
+// Application                                                           //
 ///////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Application
 //
 void application() 
 {
     glfwSetErrorCallback(onErrorCallback);
-
-    glfwInit();
+    if (!glfwInit()) return;
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -246,8 +245,8 @@ void application()
     glfwSetFramebufferSizeCallback(window, onResizeCallback);
 
     // Setup Camera
-    CameraView.setWindowSize(g_winWidth, g_winHeight);
-    CameraView.setLookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+    CameraManipulator.setWindowSize(g_winWidth, g_winHeight);
+    CameraManipulator.setLookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
     // check Vulkan Support
     if (!glfwVulkanSupported())
@@ -372,7 +371,7 @@ void application()
     glfwTerminate();
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 //  Main / Entry Point
 //
 int main(int argc, char* argv[]) 

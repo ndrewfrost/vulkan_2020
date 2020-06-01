@@ -46,20 +46,20 @@ struct AccelerationDedicated
 };
 
 ///////////////////////////////////////////////////////////////////////////
-// Allocator
+// Allocator                                                             //
 ///////////////////////////////////////////////////////////////////////////
-// Allocator for buffers, images and acceleration structures
+// Allocator for buffers, images and acceleration structures             //
 ///////////////////////////////////////////////////////////////////////////
 
 class Allocator
 {
 public:
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // All staging buffers must be cleared before
     //
     ~Allocator() { assert(m_stagingBuffers.empty()); }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Initialization of the allocator
     //
     void init(vk::Device device, vk::PhysicalDevice physicalDevice, vk::Instance instance)
@@ -76,7 +76,7 @@ public:
         vmaCreateAllocator(&allocatorInfo, &m_allocator);
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Basic Buffer creation
     //
     BufferDedicated createBuffer(
@@ -94,7 +94,7 @@ public:
         return result;
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Simple Buffer creation
     //
     BufferDedicated createBuffer(
@@ -109,7 +109,7 @@ public:
         return createBuffer(info , memUsage);
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Staging buffer creation, uploading data to device buffer
     //
     BufferDedicated createBuffer(const vk::CommandBuffer&   cmdBuffer,
@@ -146,7 +146,7 @@ public:
         
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Staging buffer creation, uploading data to device buffer
     //
     template <typename T>
@@ -157,7 +157,7 @@ public:
         return createBuffer(cmdBuffer, sizeof(T) * data.size(), data.data(), usage);
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Create Image
     //
     ImageDedicated createImage(
@@ -175,7 +175,7 @@ public:
         return result;
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Create Image with data
     //
     ImageDedicated createImage(
@@ -232,7 +232,7 @@ public:
         return result;
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Create the acceleration structure
     //
     AccelerationDedicated createAcceleration(vk::AccelerationStructureCreateInfoNV& accel)
@@ -241,7 +241,7 @@ public:
         return result;
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Flushing staging buffers, must be done after the command buffer is submitted
     //
     void flushStaging(vk::Fence fence = vk::Fence())
@@ -253,7 +253,7 @@ public:
         cleanGarbage();
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Destroy
     //
     void destroy(BufferDedicated& buffer)
@@ -278,14 +278,14 @@ public:
 
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // get Allocator
     //
     VmaAllocator& getAllocator() { return m_allocator; }
 
 protected:
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Find memory type for memory alloc
     //
     uint32_t getMemoryType(uint32_t memoryTypeBits, const vk::MemoryPropertyFlags& properties)
@@ -300,7 +300,7 @@ protected:
         return UINT32_MAX;
     }
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Clean All Staging buffers, only if associated fence is set to ready
     //
     void cleanGarbage()

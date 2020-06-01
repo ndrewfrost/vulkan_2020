@@ -14,22 +14,20 @@
 namespace tools {
 
 ///////////////////////////////////////////////////////////////////////////
-// Camera
+// Manipulator                                                           //
 ///////////////////////////////////////////////////////////////////////////
-//
-//  The camera object can 
-//  - Orbit        (LMB)
-//  - Pan          (LMB + CTRL  | MMB)
-//  - Dolly        (LMB + SHIFT | RMB)
-//  - Look Around  (LMB + ALT   | LMB + CTRL + SHIFT)
-//  - Trackball
-//
-//  In 3 modes
-//  - Examine, Fly, Walk
-//
+//  The camera object can                                                //
+//  - Orbit        (LMB)                                                 //
+//  - Pan          (LMB + CTRL  | MMB)                                   //
+//  - Dolly        (LMB + SHIFT | RMB)                                   //
+//  - Look Around  (LMB + ALT   | LMB + CTRL + SHIFT)                    //
+//  - Trackball                                                          //
+//                                                                       //
+//  In 3 modes                                                           //
+//  - Examine, Fly, Walk                                                 //
 ///////////////////////////////////////////////////////////////////////////
 
-class Camera
+class Manipulator
 {
 public:
     enum Modes {
@@ -51,10 +49,10 @@ public:
 
     void setMousePosition(int x, int y);
 
-    static Camera& Singleton()
+    static Manipulator& Singleton()
     {
-        static Camera camera;
-        return camera;
+        static Manipulator manipulator;
+        return manipulator;
     }
 
     void getLookAt(glm::vec3& eye, glm::vec3& center, glm::vec3& up) const;
@@ -84,7 +82,7 @@ public:
     int getHeight() const;
 
 protected:
-    Camera();
+    Manipulator();
 
 private:
     void update();
@@ -126,4 +124,4 @@ protected:
 
 } // namespace tools
 
-#define CameraView tools::Camera::Singleton()
+#define CameraManipulator tools::Manipulator::Singleton()

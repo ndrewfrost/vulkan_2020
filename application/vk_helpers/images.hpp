@@ -14,11 +14,11 @@
 namespace app {
 
 //////////////////////////////////////////////////////////////////////////
-// Image Utilities
+// Image Utilities                                                      //
 //////////////////////////////////////////////////////////////////////////
-// - Transition Pipeline Layout tools
-// - 2D Texture creation helper
-// - Cubic Texture creation helper 
+// - Transition Pipeline Layout tools                                   //
+// - 2D Texture creation helper                                         //
+// - Cubic Texture creation helper                                      //
 //////////////////////////////////////////////////////////////////////////
 
 namespace image {
@@ -27,7 +27,7 @@ namespace image {
 #undef max
 #endif
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // mipLevels - Returns the number of mipmaps an image can have
 //
 inline uint32_t mipLevels(vk::Extent2D extent)
@@ -38,7 +38,7 @@ inline uint32_t mipLevels(vk::Extent2D extent)
 vk::AccessFlags accessFlagsForLayout(vk::ImageLayout layout);
 vk::PipelineStageFlags pipelineStageForLayout(vk::ImageLayout layout);
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // set Image Layout
 //
 void setImageLayout(
@@ -64,7 +64,7 @@ inline void setImageLayout(
     setImageLayout(commandBuffer, image, vk::ImageAspectFlagBits::eColor, oldImageLayout, newImageLayout);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create a vk::ImageCreateInfo
 //
 vk::ImageCreateInfo create2DInfo(
@@ -72,7 +72,7 @@ vk::ImageCreateInfo create2DInfo(
     const vk::Format& format = vk::Format::eR8G8B8A8Unorm,
     const vk::ImageUsageFlags& usage = vk::ImageUsageFlagBits::eSampled,
     const bool mipmaps = false);
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // creates vk::create2DDescriptor
 //
 vk::DescriptorImageInfo create2DDescriptor(
@@ -82,7 +82,7 @@ vk::DescriptorImageInfo create2DDescriptor(
     const vk::Format& format = vk::Format::eR8G8B8A8Unorm,
     const vk::ImageLayout& layout = vk::ImageLayout::eShaderReadOnlyOptimal);
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // mipmap generation relies on blitting
 // a more sophisticated version could be done with computer shader <-- TODO
 //

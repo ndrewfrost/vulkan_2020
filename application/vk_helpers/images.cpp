@@ -9,10 +9,10 @@
 #include "images.hpp"
 
  //////////////////////////////////////////////////////////////////////////
- // Images
+ // Images                                                               //
  //////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Return the access flag for an image layout
 //
 vk::AccessFlags app::image::accessFlagsForLayout(vk::ImageLayout layout)
@@ -35,7 +35,7 @@ vk::AccessFlags app::image::accessFlagsForLayout(vk::ImageLayout layout)
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Return the pipeline stage for an image layout
 //
 vk::PipelineStageFlags app::image::pipelineStageForLayout(vk::ImageLayout layout)
@@ -59,7 +59,7 @@ vk::PipelineStageFlags app::image::pipelineStageForLayout(vk::ImageLayout layout
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // set Image Layout
 //
 void app::image::setImageLayout(
@@ -99,7 +99,7 @@ void app::image::setImageLayout(
     setImageLayout(commandBuffer, image, oldImageLayout, newImageLayout, subresourceRange);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create a vk::ImageCreateInfo
 //
 vk::ImageCreateInfo app::image::create2DInfo(
@@ -120,7 +120,7 @@ vk::ImageCreateInfo app::image::create2DInfo(
     return createInfo;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // creates vk::create2DDescriptor
 //
 vk::DescriptorImageInfo app::image::create2DDescriptor(
@@ -144,7 +144,7 @@ vk::DescriptorImageInfo app::image::create2DDescriptor(
     return descriptorInfo;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // mipmap generation relies on blitting
 // a more sophisticated version could be done with computer shader <-- TODO
 //

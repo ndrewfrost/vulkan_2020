@@ -10,10 +10,14 @@
 
 #include <vulkan/vulkan.hpp>
 
+///////////////////////////////////////////////////////////////////////////
+// Descriptor Sets                                                       //
+///////////////////////////////////////////////////////////////////////////
+
 namespace app {
 namespace util {
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Descriptor Set Pool
 //
 inline vk::DescriptorPool createDescriptorPool(vk::Device device,
@@ -42,7 +46,7 @@ inline vk::DescriptorPool createDescriptorPool(vk::Device device,
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Descriptor Set Layout
 //
 inline vk::DescriptorSetLayout createDescriptorSetLayout(vk::Device device,
@@ -71,7 +75,7 @@ inline vk::DescriptorSetLayout createDescriptorSetLayout(vk::Device device,
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Descriptor Set 
 //
 inline vk::DescriptorSet createDescriptorSet(vk::Device device, 
@@ -89,7 +93,7 @@ inline vk::DescriptorSet createDescriptorSet(vk::Device device,
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Write Descriptor Sets 
 //
 inline vk::WriteDescriptorSet createWrite(

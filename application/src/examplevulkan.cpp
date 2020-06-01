@@ -13,10 +13,10 @@
 #include "examplevulkan.hpp"
 
 ///////////////////////////////////////////////////////////////////////////
-// ExampleVulkan
+// ExampleVulkan                                                         //
 ///////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Initialize vk variables to do all buffer and image allocations
 //
 void ExampleVulkan::init(const vk::Device&         device, 
@@ -38,7 +38,7 @@ void ExampleVulkan::init(const vk::Device&         device,
     m_sampleCount = sample;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Destroy all Allocations
 //
 void ExampleVulkan::destroy()
@@ -73,7 +73,7 @@ void ExampleVulkan::destroy()
     m_device.destroy(m_offscreenFramebuffer);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // called when resizing of the window
 //
 void ExampleVulkan::resize(const vk::Extent2D& size)
@@ -83,7 +83,7 @@ void ExampleVulkan::resize(const vk::Extent2D& size)
     updatePostDescriptorSet();
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Loading the OBJ file and setting up all buffers
 //
 // TODO: FIX Buffer Staging (Maybe build another class)
@@ -131,7 +131,7 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     m_objInstance.emplace_back(instance);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create textures and samplers
 //
 void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer, 
@@ -200,7 +200,7 @@ void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer,
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Describing the layout pushed when rendering
 //
 void ExampleVulkan::createDescriptorSetLayout()
@@ -244,7 +244,7 @@ void ExampleVulkan::createDescriptorSetLayout()
     m_descriptorSet       = app::util::createDescriptorSet(m_device, m_descriptorPool, m_descriptorSetLayout);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Creating the pipeline layout
 //
 void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
@@ -286,7 +286,7 @@ void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
     m_debug.setObjectName(m_graphicsPipeline, "graphicsPipeline");
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Creating the uniform buffer holding the camera matrices
 // - Buffer is host visible
 //
@@ -297,7 +297,7 @@ void ExampleVulkan::createUniformBuffer()
     m_debug.setObjectName(m_cameraMat.buffer, "cameraMatBuffer");
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create a storage buffer containing the description of the scene elements
 // - Which geometry is used by which instance
 // - Transformation
@@ -312,7 +312,7 @@ void ExampleVulkan::createSceneDescriptionBuffer()
     m_debug.setObjectName(m_sceneDesc.buffer, "sceneDescBuffer");
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Setting up the buffers in the descriptor set
 //
 void ExampleVulkan::updateDescriptorSet()
@@ -351,7 +351,7 @@ void ExampleVulkan::updateDescriptorSet()
     m_device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Called at each frame to update the camera matrix
 //
 void ExampleVulkan::updateUniformBuffer()
@@ -359,7 +359,7 @@ void ExampleVulkan::updateUniformBuffer()
     const float aspectRatio = m_size.width / static_cast<float>(m_size.height);
 
     CameraMatrices ubo = {};
-    ubo.view = CameraView.getMatrix();
+    ubo.view = CameraManipulator.getMatrix();
     ubo.proj = glm::perspective(glm::radians(65.0f), aspectRatio, 0.1f, 1000.0f);
     ubo.proj[1][1] *= -1;  // Inverting Y for Vulkan
     ubo.viewInverse = glm::inverse(ubo.view);
@@ -370,7 +370,7 @@ void ExampleVulkan::updateUniformBuffer()
     vmaUnmapMemory(m_allocator.getAllocator(), m_cameraMat.allocation);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Drawing the scene in raster mode
 //
 void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
@@ -413,11 +413,11 @@ void ExampleVulkan::rasterize(const vk::CommandBuffer& cmdBuffer)
     }
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Post-processing
-//////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+// Post-processing                                                       //
+///////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Creating an offscreen frame buffer and the associated render pass
 //
 void ExampleVulkan::createOffscreenRender()
@@ -517,9 +517,9 @@ void ExampleVulkan::createOffscreenRender()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
-// The descriptor layout is the description of the data that is passed to the vertex or the
-// fragment program.
+//-------------------------------------------------------------------------
+// The descriptor layout is the description of the data that is passed to 
+// the vertex or the fragment program.
 //
 void ExampleVulkan::createPostDescriptor()
 {
@@ -535,7 +535,7 @@ void ExampleVulkan::createPostDescriptor()
     m_postDescriptorSet       = app::util::createDescriptorSet(m_device, m_postDescriptorPool, m_postDescriptorSetLayout);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // create Post Pipeline
 //
 void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
@@ -568,7 +568,7 @@ void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
     m_debug.setObjectName(m_postPipeline, "postPipeline");
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Update the output
 //
 void ExampleVulkan::updatePostDescriptorSet()
@@ -578,7 +578,7 @@ void ExampleVulkan::updatePostDescriptorSet()
                                &m_offscreenColor.descriptor);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Draw a full screen quad with the attached image
 //
 void ExampleVulkan::drawPost(vk::CommandBuffer cmdBuffer)

@@ -26,11 +26,11 @@
 namespace app {
 
 ///////////////////////////////////////////////////////////////////////////
-// ContextCreateInfo
+// ContextCreateInfo                                                     //
 ///////////////////////////////////////////////////////////////////////////
-// Allows app to specify features that are expected of
-// - vk::Instance
-// - vk::Device
+// Allows app to specify features that are expected of                   //
+// - vk::Instance                                                        //
+// - vk::Device                                                          //
 ///////////////////////////////////////////////////////////////////////////
 struct ContextCreateInfo
 {
@@ -62,7 +62,7 @@ struct ContextCreateInfo
 };
 
 ///////////////////////////////////////////////////////////////////////////
-// VulkanBackend
+// VulkanBackend                                                         //
 ///////////////////////////////////////////////////////////////////////////
 
 class VulkanBackend
@@ -110,9 +110,10 @@ public:
     void onWindowResize(uint32_t width, uint32_t height);
 
     
-    //--------------------------------------------------------------------------------------------------
-    // Debug System Tools
-    //
+    ///////////////////////////////////////////////////////////////////////////
+    // Debug System Tools                                                    //
+    ///////////////////////////////////////////////////////////////////////////
+
     void setupDebugMessenger(bool enabelValidationLayers);
 
     void destroyDebugUtilsMessengerEXT(vk::Instance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator);
@@ -125,7 +126,7 @@ public:
 
     VkDebugUtilsMessengerEXT m_debugMessenger = nullptr;
 
-    //--------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Collection of Getter Methods
     //
     vk::Instance                          getInstance()         { return m_instance; }
@@ -183,8 +184,8 @@ protected:
     uint32_t                       m_currentFrame{0};  // Current Frame in use
 
     // Surface buffer formats
-    vk::Format               m_colorFormat{ vk::Format::eB8G8R8A8Unorm };
-    vk::Format               m_depthFormat{ vk::Format::eUndefined };
+    vk::Format                     m_colorFormat{ vk::Format::eB8G8R8A8Unorm };
+    vk::Format                     m_depthFormat{ vk::Format::eUndefined };
 
 }; // class VulkanBackend
 

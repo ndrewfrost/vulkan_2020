@@ -1,18 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Source Files\vks">
-      <UniqueIdentifier>{ece1d380-61c7-46a0-92ea-b60b3311748d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="External">
       <UniqueIdentifier>{3230e05f-cc5d-4495-a6f9-36aa11156334}</UniqueIdentifier>
     </Filter>
     <Filter Include="External\imgui">
       <UniqueIdentifier>{5b0f02c7-b573-4eda-88b8-40204e2d9872}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{81211554-818a-4a03-9482-6c5d2ec4bb71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vk">
+      <UniqueIdentifier>{8a299555-5aa7-4d3b-ae06-df25ce045878}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="helper">
+      <UniqueIdentifier>{08667ea0-3414-4efd-b9ff-e00abaa54ebc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -34,20 +36,20 @@
     <ClCompile Include="external\imgui\imgui_widgets.cpp">
       <Filter>External\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="general_helpers\manipulator.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
     <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="vk_helpers\images.cpp">
+      <Filter>vk</Filter>
+    </ClCompile>
+    <ClCompile Include="vk_helpers\vulkanbackend.cpp">
+      <Filter>vk</Filter>
     </ClCompile>
     <ClCompile Include="src\examplevulkan.cpp">
-      <Filter>Source Files\vks</Filter>
-    </ClCompile>
-    <ClCompile Include="src\vulkanbackend.cpp">
-      <Filter>Source Files\vks</Filter>
-    </ClCompile>
-    <ClCompile Include="src\camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\images.cpp">
-      <Filter>Source Files\vks</Filter>
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -57,44 +59,44 @@
     <ClInclude Include="external\obj_loader.h">
       <Filter>External</Filter>
     </ClInclude>
-    <ClInclude Include="src\vulkanbackend.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\allocator.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\commands.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\descriptorsets.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\examplevulkan.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\images.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\pipeline.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\renderpass.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\swapchain.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utilities.hpp">
-      <Filter>Source Files\vks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\camera.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\tiny_obj_loader.h">
       <Filter>External</Filter>
     </ClInclude>
-    <ClInclude Include="src\debug.hpp">
-      <Filter>Source Files\vks</Filter>
+    <ClInclude Include="vk_helpers\allocator.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\commands.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\debug.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\descriptorsets.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\images.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\pipeline.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\renderpass.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\swapchain.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\utilities.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_helpers\vulkanbackend.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="general_helpers\manipulator.h">
+      <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="src\examplevulkan.hpp">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

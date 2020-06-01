@@ -25,28 +25,28 @@
     <ClCompile Include="external\imgui\imgui_impl_glfw.cpp" />
     <ClCompile Include="external\imgui\imgui_impl_vulkan.cpp" />
     <ClCompile Include="external\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\camera.cpp" />
+    <ClCompile Include="general_helpers\manipulator.cpp" />
     <ClCompile Include="src\examplevulkan.cpp" />
-    <ClCompile Include="src\images.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\vulkanbackend.cpp" />
+    <ClCompile Include="vk_helpers\images.cpp" />
+    <ClCompile Include="vk_helpers\vulkanbackend.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\obj_loader.h" />
     <ClInclude Include="external\tiny_obj_loader.h" />
     <ClInclude Include="external\vk_mem_alloc.h" />
-    <ClInclude Include="src\allocator.hpp" />
-    <ClInclude Include="src\camera.h" />
-    <ClInclude Include="src\commands.hpp" />
-    <ClInclude Include="src\debug.hpp" />
-    <ClInclude Include="src\descriptorsets.hpp" />
+    <ClInclude Include="general_helpers\manipulator.h" />
     <ClInclude Include="src\examplevulkan.hpp" />
-    <ClInclude Include="src\images.hpp" />
-    <ClInclude Include="src\pipeline.hpp" />
-    <ClInclude Include="src\renderpass.hpp" />
-    <ClInclude Include="src\swapchain.hpp" />
-    <ClInclude Include="src\utilities.hpp" />
-    <ClInclude Include="src\vulkanbackend.hpp" />
+    <ClInclude Include="vk_helpers\allocator.hpp" />
+    <ClInclude Include="vk_helpers\commands.hpp" />
+    <ClInclude Include="vk_helpers\debug.hpp" />
+    <ClInclude Include="vk_helpers\descriptorsets.hpp" />
+    <ClInclude Include="vk_helpers\images.hpp" />
+    <ClInclude Include="vk_helpers\pipeline.hpp" />
+    <ClInclude Include="vk_helpers\renderpass.hpp" />
+    <ClInclude Include="vk_helpers\swapchain.hpp" />
+    <ClInclude Include="vk_helpers\utilities.hpp" />
+    <ClInclude Include="vk_helpers\vulkanbackend.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

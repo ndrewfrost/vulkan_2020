@@ -11,7 +11,7 @@
 #include <vulkan/vulkan.hpp>
 
 ///////////////////////////////////////////////////////////////////////////
-// Debug 
+// Debug                                                                 //
 ///////////////////////////////////////////////////////////////////////////
 
 namespace app {
@@ -19,15 +19,24 @@ namespace debug {
 
 struct DebugUtil
 {
+    //-------------------------------------------------------------------------
+    // Constructors
+    //
     DebugUtil() = default;
     DebugUtil(const vk::Device& device) : m_device(device) {}
 
+    //-------------------------------------------------------------------------
+    // Setup 
+    //
     void setup(const vk::Device& device, const vk::Instance& instance) 
     { 
         SetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(
                 instance, "vkSetDebugUtilsObjectNameEXT");        m_device = device; 
     }
 
+    //-------------------------------------------------------------------------
+    // Set Object Name
+    //
     template <typename T>
     void setObjectName(const T& object, const char* name, VkObjectType t)
     {
@@ -42,6 +51,9 @@ struct DebugUtil
 #endif // _DEBUG
     }
 
+    //-------------------------------------------------------------------------
+    // Collection of set object names
+    //
     void setObjectName(const vk::Buffer& object, const char* name)                  { setObjectName(object, name, VK_OBJECT_TYPE_BUFFER); }
     void setObjectName(const vk::CommandBuffer& object, const char* name)           { setObjectName(object, name, VK_OBJECT_TYPE_COMMAND_BUFFER); }
     void setObjectName(const vk::Image& object, const char* name)                   { setObjectName(object, name, VK_OBJECT_TYPE_IMAGE); }
@@ -56,7 +68,7 @@ struct DebugUtil
     void setObjectName(const vk::SwapchainKHR& object, const char* name)            { setObjectName(object, name, VK_OBJECT_TYPE_SWAPCHAIN_KHR); }
     void setObjectName(const vk::Queue& object, const char* name)                   { setObjectName(object, name, VK_OBJECT_TYPE_QUEUE); }
 
-    //---------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     //
     //
     void beginLabel(const vk::CommandBuffer& cmdBuf, const char* label)
@@ -66,7 +78,7 @@ struct DebugUtil
 #endif  // _DEBUG
     }
 
-    //---------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     //
     //
     void endLabel(const vk::CommandBuffer& cmdBuf)
@@ -76,7 +88,7 @@ struct DebugUtil
 #endif  // _DEBUG
     }
 
-    //---------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     //
     //
     void insertLabel(const vk::CommandBuffer& cmdBuf, const char* label)
@@ -91,7 +103,7 @@ struct DebugUtil
     //
     struct ScopedCmdLabel
     {
-        //---------------------------------------------------------------------------
+        //-------------------------------------------------------------------------
         //
         //
         ScopedCmdLabel(const vk::CommandBuffer& cmdBuf, const char* label)
@@ -102,7 +114,7 @@ struct DebugUtil
 #endif  // _DEBUG
         }
 
-        //---------------------------------------------------------------------------
+        //-------------------------------------------------------------------------
         //
         //
         ~ScopedCmdLabel()
@@ -112,7 +124,7 @@ struct DebugUtil
 #endif  // _DEBUG
         }
 
-        //---------------------------------------------------------------------------
+        //-------------------------------------------------------------------------
         //
         //
         void setLabel(const char* label)
@@ -126,7 +138,7 @@ struct DebugUtil
         const vk::CommandBuffer& m_commandBuffer;
     };
 
-    //---------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     //
     //
     ScopedCmdLabel scopeLabel(const vk::CommandBuffer& cmdBuf, const char* label)
