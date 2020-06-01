@@ -29,6 +29,7 @@
     <ClCompile Include="src\examplevulkan.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="vk_helpers\images.cpp" />
+    <ClCompile Include="vk_helpers\swapchain.cpp" />
     <ClCompile Include="vk_helpers\vulkanbackend.cpp" />
   </ItemGroup>
   <ItemGroup>

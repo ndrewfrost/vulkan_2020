@@ -13,35 +13,109 @@
 namespace app {
 
 ///////////////////////////////////////////////////////////////////////////
-// Swapchain Struct
+// SwapChain                                                             //
 ///////////////////////////////////////////////////////////////////////////
 
-struct Swapchain
+class SwapChain
 {
-    struct SwapchainImage
+public:
+    SwapChain(SwapChain const&) = delete;
+    SwapChain& operator=(SwapChain const&) = delete;
+
+    SwapChain() {}
+    SwapChain(vk::Instance instance, vk::Device device, vk::PhysicalDevice physicalDevice,
+        vk::Queue graphicsQueue, uint32_t graphicsQueueIdx, vk::SurfaceKHR surface, vk::Format format = vk::Format::eB8G8R8A8Unorm)
     {
-        vk::Image     image;
-        vk::ImageView view;
+        init(instance, device, physicalDevice, graphicsQueue, graphicsQueueIdx, surface, format);
+    }
+    ~SwapChain() { destroy(); }
+
+    bool init(vk::Instance instance, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue graphicsQueue,
+        uint32_t graphicsQueueIdx, vk::SurfaceKHR surface, vk::Format format = vk::Format::eB8G8R8A8Unorm);
+
+    void deinitResources();
+
+    void destroy();
+
+    void update(int width, int height, bool vsync);
+    void update(int width, int height) { update(width, height, m_vsync); }
+    
+    bool acquire();
+
+    bool acquireCustom(VkSemaphore semaphore);
+
+    void present(VkQueue queue);
+
+    void present() { present(m_graphicsQueue); }
+
+    void presentCustom(VkPresentInfoKHR& outPresentInfo);
+
+    VkSemaphore getActiveReadSemaphore() const;
+
+    VkSemaphore getActiveWrittenSemaphore() const;
+
+    VkImage     getActiveImage() const;
+
+    VkImageView getActiveImageView() const;
+
+    uint32_t    getActiveImageIndex() const { return m_currentImage; }
+
+    uint32_t         getImageCount()          const { return m_imageCount; }
+    vk::Image        getImage(uint32_t i)     const;
+    vk::ImageView    getImageView(uint32_t i) const;
+    vk::Format       getFormat()              const { return m_surfaceFormat; }
+    uint32_t         getWidth()               const { return m_width; }
+    uint32_t         getHeight()              const { return m_height; }
+    bool             getVsync()               const { return m_vsync; }
+    vk::SwapchainKHR getSwapchain()           const { return m_swapchain; }
+
+    void cmdUpdateBarriers(VkCommandBuffer cmd) const;
+
+    uint32_t getChangeID() const;
+
+private:
+
+    struct Entry
+    {
+        vk::Image     image{};
+        vk::ImageView imageView{};
+        vk::Semaphore readSemaphore{};
+        vk::Semaphore writtenSemaphore{};
+#if _DEBUG
+        std::string debugImageName;
+        std::string debugImageViewName;
+        std::string debugReadSemaphoreName;
+        std::string debugWrittenSemaphoreName;
+#endif
     };
 
-    vk::PhysicalDevice          physicalDevice;
-    vk::Device                  device;
+    vk::Device                          m_device;
+    vk::PhysicalDevice                  m_physicalDevice;
 
-    vk::SurfaceKHR              surface;
+    vk::Queue                           m_graphicsQueue;
+    uint32_t                            m_graphicsQueueIdx{ VK_QUEUE_FAMILY_IGNORED };
+    vk::Queue                           m_presentQueue;
+    uint32_t                            m_presentQueueIdx{ VK_QUEUE_FAMILY_IGNORED };
 
-    vk::SwapchainKHR            swapchain;
-    std::vector<SwapchainImage> images;
-    uint32_t                    imageCount{ 0 };
+    vk::SurfaceKHR                      m_surface;
+    vk::Format                          m_surfaceFormat{};
+    vk::ColorSpaceKHR                   m_surfaceColor{};
 
-    vk::Format                  imageFormat{ vk::Format::eUndefined };
-    vk::ColorSpaceKHR           colorSpace{ vk::ColorSpaceKHR::eSrgbNonlinear };
+    vk::SwapchainKHR                    m_swapchain;
+    uint32_t                            m_imageCount{ 0 };
 
-    vk::Queue                   graphicsQueue;
-    uint32_t                    graphicsQueueIdx{ VK_QUEUE_FAMILY_IGNORED };
+    std::vector<Entry>                  m_entries;
+    std::vector<vk::ImageMemoryBarrier> m_barriers;
 
-    vk::Queue                   presentQueue;
-    uint32_t                    presentQueueIdx{ VK_QUEUE_FAMILY_IGNORED };
+    uint32_t                            m_currentImage{ 0 };
+    uint32_t                            m_currentSemaphore{ 0 };
+    uint32_t                            m_changeID{ 0 };
 
+    uint32_t                            m_width{ 0 };
+    uint32_t                            m_height{ 0 };
+    bool                                m_vsync = false;
+
+    /*
     //--------------------------------------------------------------------------------------------------
     //
     //
@@ -284,8 +358,8 @@ struct Swapchain
         }
 
         return graphicsQueue.presentKHR(presentInfo);
-    }
+    } */
 
-}; // struct SwapChain
+}; // class SwapChain
 
 } // namespace app

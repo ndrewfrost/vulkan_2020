@@ -23,7 +23,9 @@ void ExampleVulkan::setupVulkan(const app::ContextCreateInfo& info, GLFWwindow* 
 {
     VulkanBackend::setupVulkan(info, window);
     m_allocator.init(m_device, m_physicalDevice, m_instance);
+#if _DEBUG
     m_debug.setup(m_device, m_instance);
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -109,10 +111,12 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     cmdBufferGet.flushCommandBuffer(commandBuffer);
     m_allocator.flushStaging();
 
+#if _DEBUG
     std::string objNb = std::to_string(instance.objIndex);
     m_debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb).c_str()));
     m_debug.setObjectName(model.indexBuffer.buffer, (std::string("index_" + objNb).c_str()));
     m_debug.setObjectName(model.matColorBuffer.buffer, (std::string("mat_" + objNb).c_str()));
+#endif
 
     m_objModel.emplace_back(model);
     m_objInstance.emplace_back(instance);
@@ -270,7 +274,9 @@ void ExampleVulkan::createGraphicsPipeline()
       {4, 0, vk::Format::eR32Sint,         offsetof(Vertex, matID)} };;
 
     m_graphicsPipeline = pipelineGenerator.create();
+#if _DEBUG
     m_debug.setObjectName(m_graphicsPipeline, "graphicsPipeline");
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -281,7 +287,9 @@ void ExampleVulkan::createUniformBuffer()
 {
     m_cameraMat = m_allocator.createBuffer(sizeof(CameraMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+#if _DEBUG
     m_debug.setObjectName(m_cameraMat.buffer, "cameraMatBuffer");
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -296,7 +304,9 @@ void ExampleVulkan::createSceneDescriptionBuffer()
     auto commandBuffer = commandGen.createCommandBuffer();
     m_sceneDesc = m_allocator.createBuffer(commandBuffer, m_objInstance, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     commandGen.flushCommandBuffer(commandBuffer);
+#if _DEBUG
     m_debug.setObjectName(m_sceneDesc.buffer, "sceneDescBuffer");
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -476,8 +486,9 @@ void ExampleVulkan::createOffscreenRender()
         m_offscreenRenderPass = app::util::createRenderPass(
             m_device, { m_offscreenColorFormat }, m_offscreenDepthFormat,
             1, true, true, vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral);
-
+#if _DEBUG
         m_debug.setObjectName(m_offscreenRenderPass, "offscreenRenderPass");
+#endif
     }
 
     // creating the frambuffer for offscreen
@@ -552,7 +563,9 @@ void ExampleVulkan::createPostPipeline()
     pipelineGenerator.multisampleState.setRasterizationSamples(m_sampleCount);
     pipelineGenerator.rasterizationState.setCullMode(vk::CullModeFlagBits::eNone);
     m_postPipeline = pipelineGenerator.create();
+#if _DEBUG
     m_debug.setObjectName(m_postPipeline, "postPipeline");
+#endif
 }
 
 //-------------------------------------------------------------------------

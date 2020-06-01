@@ -159,6 +159,9 @@ void VulkanBackend::createSurface(GLFWwindow* window)
         throw std::runtime_error("failed to create window surface!");
     }
     m_surface = vk::SurfaceKHR(rawSurface);
+
+    // Setup camera
+    CameraManipulator.setWindowSize(m_size.width, m_size.height);
 }
 
 //-------------------------------------------------------------------------

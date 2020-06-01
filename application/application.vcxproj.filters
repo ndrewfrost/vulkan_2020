@@ -51,6 +51,9 @@
     <ClCompile Include="external\imgui\imgui_impl_vulkan.cpp">
       <Filter>External\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="vk_helpers\swapchain.cpp">
+      <Filter>vk</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\vk_mem_alloc.h">
