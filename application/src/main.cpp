@@ -24,10 +24,12 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include "glm/gtx/transform.hpp"
 
 #include "vulkanbackend.hpp"
 #include "commands.hpp"
 #include "camera.h"
+#include "utilities.hpp"
 #include "examplevulkan.hpp"
 
 static int  g_winWidth      = 800;
@@ -173,6 +175,7 @@ static void setupImGUI(app::VulkanBackend& vkBackend, GLFWwindow* window)
     imGuiInitInfo.PipelineCache   = vkBackend.getPipelineCache();
     imGuiInitInfo.Queue           = vkBackend.getGraphicsQueue();
     imGuiInitInfo.QueueFamily     = vkBackend.getGraphicsQueueIdx();
+    imGuiInitInfo.MSAASamples     = VK_SAMPLE_COUNT_2_BIT;
     imGuiInitInfo.CheckVkResultFn = checkVkResult;
 
     ImGui_ImplVulkan_Init(&imGuiInitInfo, vkBackend.getRenderPass());
@@ -266,7 +269,7 @@ void application()
     vkBackend.setupVulkan(contextInfo, window);
 
     // Imgui
-    //setupImGUI(vkBackend, window);
+    setupImGUI(vkBackend, window);
 
     // Vulkan
     ExampleVulkan vkExample;
@@ -275,7 +278,7 @@ void application()
                    vkBackend.getPresentQueueIdx(), vkBackend.getSize(),
                    vkBackend.getSampleCount());
 
-    vkExample.loadModel("../media/scenes/cube_multi.obj");
+    vkExample.loadModel(".../../media/scenes/cube_multi.obj");
 
     vkExample.createOffscreenRender();
     vkExample.createDescriptorSetLayout();
@@ -303,7 +306,6 @@ void application()
         vkExample.updateUniformBuffer();
 
         // ImGui Frame
-        /*
         {
             ImGui_ImplVulkan_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -315,8 +317,7 @@ void application()
 
             ImGui::Render();
         }
-        */
-
+        
         // Render the scene
         vkBackend.prepareFrame();
         auto                     currentFrame = vkBackend.getCurrentFrame();
@@ -353,7 +354,7 @@ void application()
         vkExample.drawPost(cmdBuffer);
 
         // rendering UI
-        //ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
 
         cmdBuffer.endRenderPass();
         cmdBuffer.end();
@@ -362,7 +363,7 @@ void application()
 
     // Cleanup
     vkBackend.getDevice().waitIdle();
-    //destroyImGUI(vkBackend.getDevice());
+    destroyImGUI(vkBackend.getDevice());
 
     vkExample.destroy();
     vkBackend.destroy();

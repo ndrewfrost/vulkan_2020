@@ -148,14 +148,81 @@ vk::DescriptorImageInfo app::image::create2DDescriptor(
 // mipmap generation relies on blitting
 // a more sophisticated version could be done with computer shader <-- TODO
 //
-vk::ImageCreateInfo app::image::generateMipmaps(
+void app::image::generateMipmaps(
     const vk::CommandBuffer& cmdBuffer,
     const vk::Image& image,
     const vk::Format& imageFormat,
     const vk::Extent2D& size,
     const uint32_t& mipLevels)
 {
-    vk::ImageCreateInfo imageInfo = {};
+    // Transfer the top level image to a layout 'eTransferSrcOptimal` and its access to 'eTransferRead'
+    vk::ImageMemoryBarrier barrier = {};
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
+    barrier.subresourceRange.baseMipLevel   = 0;
+    barrier.subresourceRange.layerCount     = 1;
+    barrier.subresourceRange.levelCount     = 1;
+    barrier.image                           = image;
+    barrier.oldLayout                       = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrier.newLayout                       = vk::ImageLayout::eTransferSrcOptimal;
+    barrier.srcAccessMask                   = vk::AccessFlags();
+    barrier.dstAccessMask                   = vk::AccessFlagBits::eTransferRead;
 
-    return imageInfo;
+    cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+        vk::DependencyFlags(), nullptr, nullptr, barrier);
+
+    int32_t mipWidth = size.width;
+    int32_t mipHeight = size.height;
+
+    for (uint32_t i = 1; i < mipLevels; i++) {
+        vk::ImageBlit blit;
+        blit.srcOffsets[0]                 = vk::Offset3D{ 0, 0, 0 };
+        blit.srcOffsets[1]                 = vk::Offset3D{ mipWidth, mipHeight, 1 };
+        blit.srcSubresource.aspectMask     = vk::ImageAspectFlagBits::eColor;
+        blit.srcSubresource.mipLevel       = i - 1;
+        blit.srcSubresource.baseArrayLayer = 0;
+        blit.srcSubresource.layerCount     = 1;
+        blit.dstOffsets[0]                 = vk::Offset3D{ 0, 0, 0 };
+        blit.dstOffsets[1] =
+            vk::Offset3D{ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+        blit.dstSubresource.aspectMask     = vk::ImageAspectFlagBits::eColor;
+        blit.dstSubresource.mipLevel       = i;
+        blit.dstSubresource.baseArrayLayer = 0;
+        blit.dstSubresource.layerCount     = 1;
+
+        cmdBuffer.blitImage(image, vk::ImageLayout::eTransferSrcOptimal, image,
+            vk::ImageLayout::eTransferDstOptimal, { blit }, vk::Filter::eLinear);
+        
+        // Next
+        if (i + 1 < mipLevels) {
+            // Transition the current miplevel into a eTransferSrcOptimal layout, to be used as the source for the next one.
+            barrier.subresourceRange.baseMipLevel = i;
+            barrier.oldLayout                     = vk::ImageLayout::eTransferDstOptimal;
+            barrier.newLayout                     = vk::ImageLayout::eTransferSrcOptimal;
+            barrier.srcAccessMask                 = vk::AccessFlags();  //vk::AccessFlagBits::eTransferWrite;
+            barrier.dstAccessMask                 = vk::AccessFlagBits::eTransferRead;
+
+            cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+                vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlags(), nullptr,
+                nullptr, barrier);
+        }
+
+        if (mipWidth > 1)
+            mipWidth /= 2;
+        if (mipHeight > 1)
+            mipHeight /= 2;
+    }
+
+    //Transition all miplevels into a eShaderReadOnlyOptimal layout.
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = mipLevels;
+    barrier.oldLayout = vk::ImageLayout::eUndefined;
+    barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrier.srcAccessMask = vk::AccessFlags();
+    barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+    cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlags(), nullptr,
+        nullptr, barrier);
+
 }

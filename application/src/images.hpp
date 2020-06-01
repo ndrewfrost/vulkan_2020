@@ -86,7 +86,7 @@ vk::DescriptorImageInfo create2DDescriptor(
 // mipmap generation relies on blitting
 // a more sophisticated version could be done with computer shader <-- TODO
 //
-vk::ImageCreateInfo generateMipmaps(
+void generateMipmaps(
     const vk::CommandBuffer& cmdBuffer,
     const vk::Image& image,
     const vk::Format& imageFormat,

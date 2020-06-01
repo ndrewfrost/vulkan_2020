@@ -8,10 +8,7 @@
 
 #define VK_NO_PROTOTYPES
 #include "vulkanbackend.hpp"
-
- // See: https://github.com/KhronosGroup/Vulkan-Hpp#extensions--per-device-function-pointers
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
-static_assert(VK_HEADER_VERSION >= 126, "Vulkan version need 1.1.126.0 or greater");
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;;
 
 namespace app {
 

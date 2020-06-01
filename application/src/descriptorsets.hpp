@@ -48,17 +48,19 @@ inline vk::DescriptorPool createDescriptorPool(vk::Device device,
 inline vk::DescriptorSetLayout createDescriptorSetLayout(vk::Device device,
                                                          const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
 {
-    vk::DescriptorBindingFlagsEXT bindFlag = vk::DescriptorBindingFlagBitsEXT::ePartiallyBound;
+    std::vector<vk::DescriptorBindingFlagsEXT> bindFlag = 
+    { vk::DescriptorBindingFlagBitsEXT::ePartiallyBound,vk::DescriptorBindingFlagBitsEXT::ePartiallyBound,
+      vk::DescriptorBindingFlagBitsEXT::ePartiallyBound ,vk::DescriptorBindingFlagBitsEXT::ePartiallyBound };
 
     vk::DescriptorSetLayoutBindingFlagsCreateInfoEXT extendedInfo{};
     extendedInfo.pNext = nullptr;
     extendedInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-    extendedInfo.pBindingFlags = &bindFlag;
+    extendedInfo.pBindingFlags = bindFlag.data();
 
     vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = {};
     layoutCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutCreateInfo.pBindings    = bindings.data();
-    //layoutCreateInfo.pNext        = &extendedInfo;
+    layoutCreateInfo.pNext        = &extendedInfo;
 
     try {
         vk::DescriptorSetLayout layout = device.createDescriptorSetLayout(layoutCreateInfo);
