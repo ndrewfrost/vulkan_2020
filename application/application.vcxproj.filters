@@ -33,6 +33,9 @@
     <ClCompile Include="src\examplevulkan.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="external\imgui\imgui_widgets.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
     <ClCompile Include="external\imgui\imgui.cpp">
       <Filter>External\imgui</Filter>
     </ClCompile>
@@ -46,9 +49,6 @@
       <Filter>External\imgui</Filter>
     </ClCompile>
     <ClCompile Include="external\imgui\imgui_impl_vulkan.cpp">
-      <Filter>External\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="external\imgui\imgui_widgets.cpp">
       <Filter>External\imgui</Filter>
     </ClCompile>
   </ItemGroup>

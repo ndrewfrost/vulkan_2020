@@ -10,13 +10,14 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
+#include "../external/imgui/imgui.h"
+#include "../external/imgui/imgui_impl_glfw.h"
+#include "../external/imgui/imgui_impl_vulkan.h"
+
 #include <array>
 #include <vulkan/vulkan.hpp>
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
-#include "../external/imgui/imgui.h"
-#include "../external/imgui/imgui_impl_vulkan.h"
-#include "../external/imgui/imgui_impl_glfw.h"
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -97,8 +98,8 @@ void application()
     ExampleVulkan vkExample;
     vkExample.setupVulkan(contextInfo, window);
 
-    // Imgui
-    vkExample.initGUI();
+    // Imgui 
+    vkExample.initGUI(window);
 
     vkExample.loadModel(".../../media/scenes/cube_multi.obj");
     vkExample.createOffscreenRender();
@@ -125,8 +126,8 @@ void application()
             continue;
 
         // Start ImGUI frame
-        ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
         // update camera buffer
         vkExample.updateUniformBuffer();
@@ -136,7 +137,7 @@ void application()
             ImGui::ColorEdit3("Clear color", reinterpret_cast<float*>(&clearColor));
             
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+                 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             
             renderUI();
             

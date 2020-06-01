@@ -139,7 +139,7 @@ public:
     virtual void onWindowResize(uint32_t width, uint32_t height);
     static  void onWindowSizeCallback(GLFWwindow* window, int w, int h);
 
-    void initGUI();
+    void initGUI(GLFWwindow* window);
     
     vk::DescriptorPool m_imguiDescPool;
 

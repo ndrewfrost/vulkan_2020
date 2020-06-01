@@ -58,6 +58,14 @@ void VulkanBackend::destroy()
 {
     m_device.waitIdle();
 
+    if (ImGui::GetCurrentContext() != nullptr) {
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+
+        m_device.destroyDescriptorPool(m_imguiDescPool);
+    }
+
     m_device.destroyImageView(m_depthView);
     m_device.destroyImage(m_depthImage);
     m_device.freeMemory(m_depthMemory);
@@ -839,6 +847,7 @@ bool VulkanBackend::isMinimized(bool doSleeping)
 void VulkanBackend::setupGlfwCallbacks(GLFWwindow* window)
 {
     m_window = window;
+
     glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, &onKeyCallback);
     glfwSetCharCallback(window, &onCharCallback);
@@ -1001,7 +1010,7 @@ static void checkVkResult(VkResult err)
 // Initialization of the GUI
 // - Called AFTER device creation
 //
-void VulkanBackend::initGUI()
+void VulkanBackend::initGUI(GLFWwindow* window)
 {
     assert(m_renderPass && "Render Pass must be set");
 
@@ -1017,13 +1026,12 @@ void VulkanBackend::initGUI()
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
-    ImGui_ImplGlfw_InitForVulkan(m_window, true);
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
     ImGui_ImplVulkan_InitInfo imGuiInitInfo = {};
     imGuiInitInfo.Allocator       = nullptr;
     imGuiInitInfo.DescriptorPool  = m_imguiDescPool;
-    imGuiInitInfo.Device          = m_device;;
+    imGuiInitInfo.Device          = m_device;
     imGuiInitInfo.ImageCount      = (uint32_t)m_framebuffers.size();
     imGuiInitInfo.Instance        = m_instance;
     imGuiInitInfo.MinImageCount   = (uint32_t)m_framebuffers.size();
