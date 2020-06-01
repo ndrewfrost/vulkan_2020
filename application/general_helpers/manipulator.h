@@ -1,13 +1,14 @@
 /*
  *
  * Andrew Frost
- * camera.h
+ * manipulator.h
  * 2020
  *
  */
 
 #pragma once
 
+#include <array>
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
@@ -81,6 +82,10 @@ public:
 
     int getHeight() const;
 
+    void setFov(float fov);
+
+    float getFov() const;
+
 protected:
     Manipulator();
 
@@ -98,12 +103,20 @@ private:
     double projectOntoTBSphere(const glm::vec2& p);
 
 protected:
-    // Camera Position
-    glm::vec3 m_pos = glm::vec3(1, 1, 1);
-    glm::vec3 m_int = glm::vec3(0, 0, 0);
-    glm::vec3 m_up = glm::vec3(0, 1, 0);
+    struct Camera
+    {
+        glm::vec3 eye = glm::vec3(1, 1, 1);
+        glm::vec3 ctr = glm::vec3(0, 0, 0);
+        glm::vec3 up = glm::vec3(0, 1, 0);;
+    };
+
     glm::mat4 m_matrix = glm::mat4(1);
     float     m_roll = 0; // Rotation around Z axis
+    float     m_fov = 60.f;
+
+    Camera m_current;  // current Camera Position
+    Camera m_goal;     // Wish Camera Position
+    Camera m_snapshot; // Current camera the moment a set lookat is done
 
     // Screen 
     int m_width = 1;

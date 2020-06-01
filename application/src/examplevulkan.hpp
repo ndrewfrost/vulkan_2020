@@ -23,30 +23,30 @@
 #include "../vk_helpers/descriptorsets.hpp"
 #include "../vk_helpers/renderpass.hpp"
 #include "../vk_helpers/images.hpp"
-
+#include "../vk_helpers/vulkanbackend.hpp"
 #ifdef _DEBUG
 #include "../vk_helpers/debug.hpp"
 #endif // _DEBUG
 
-///////////////////////////////////////////////////////////////////////////
-// ExampleVulkan                                                         //
-///////////////////////////////////////////////////////////////////////////
+ ///////////////////////////////////////////////////////////////////////////
+ // Example Vulkan                                                        //
+ ///////////////////////////////////////////////////////////////////////////
+ // Simple Rasterizer of OBJ objects                                      //
+ // - Each Obj loaded are stored in an 'ObjModel' and refrenced by        //
+ //   'ObjInstance'                                                       //
+ // - Rendering is done in an offscreen framebuffer                       //
+ // - The image of framebuffer is displayed in post-process in a          //
+ //   fullscreen quad                                                     //
+ ///////////////////////////////////////////////////////////////////////////
 
-class ExampleVulkan
+class ExampleVulkan : public app::VulkanBackend
 {
 public:
+    void setupVulkan(const app::ContextCreateInfo& info, GLFWwindow* window) override;
 
-    void init(const vk::Device&         device,
-              const vk::PhysicalDevice& physicalDevice,
-              const vk::Instance&       instance,
-              uint32_t                  graphicsFamilyIdx,
-              uint32_t                  presentFamilyIdx,
-              const vk::Extent2D&       size,
-              vk::SampleCountFlagBits   m_sampleCount);
+    void destroyResources();
 
-    void destroy();
-
-    void resize(const vk::Extent2D& size);
+    void onWindowResize(uint32_t width, uint32_t height) override;
 
     void loadModel(const std::string& filename, glm::mat4 transform = glm::mat4(1));
 
@@ -55,7 +55,7 @@ public:
 
     void createDescriptorSetLayout();
 
-    void createGraphicsPipeline(const vk::RenderPass& renderPass);
+    void createGraphicsPipeline();
 
     void createUniformBuffer();
 
@@ -125,19 +125,13 @@ public:
     vk::DescriptorPool                          m_descriptorPool;
     vk::DescriptorSetLayout                     m_descriptorSetLayout;
     vk::DescriptorSet                           m_descriptorSet;
-    vk::SampleCountFlagBits                     m_sampleCount{ vk::SampleCountFlagBits::e1 };
 
     app::BufferDedicated               m_cameraMat;  // Device-Host of the camera matrices
     app::BufferDedicated               m_sceneDesc;  // Device buffer of the OBJ instances
     std::vector<app::TextureDedicated> m_textures;   // vector of all textures of the scene
-
+    
     app::Allocator        m_allocator;
     app::debug::DebugUtil m_debug;
-    vk::Device            m_device;  
-    vk::PhysicalDevice    m_physicalDevice;
-    uint32_t              m_graphicsQueueIdx{ 0 };
-    uint32_t              m_presentQueueIdx{ 0 };
-    vk::Extent2D          m_size;         
 
 ///////////////////////////////////////////////////////////////////////////
 // Post-processing                                                       //
@@ -147,7 +141,7 @@ public:
 
     void createPostDescriptor();
 
-    void createPostPipeline(const vk::RenderPass& renderPass);
+    void createPostPipeline();
 
     void updatePostDescriptorSet();
 

@@ -18,10 +18,16 @@
 #include <sstream>
 #include <mutex>
 
+#include "../external/imgui/imgui.h"
+#include "../external/imgui/imgui_impl_vulkan.h"
+#include "../external/imgui/imgui_impl_glfw.h"
+
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"
 
 #include "swapchain.hpp"
+#include "commands.hpp"
+#include "../general_helpers/manipulator.h"
 
 namespace app {
 
@@ -71,9 +77,9 @@ public:
     VulkanBackend()          = default;
     virtual ~VulkanBackend() = default;
 
-    void setupVulkan(const ContextCreateInfo& info, GLFWwindow* window);
+    virtual void setupVulkan(const ContextCreateInfo& info, GLFWwindow* window);
 
-    void destroy();
+    virtual void destroy();
 
     void initInstance(const ContextCreateInfo& info);
 
@@ -89,15 +95,15 @@ public:
 
     void createCommandBuffer();
 
-    void createRenderPass();
+    virtual void createRenderPass();
 
     void createPipelineCache();
 
     void createColorBuffer();
 
-    void createDepthBuffer();
+    virtual void createDepthBuffer();
 
-    void createFrameBuffers();
+    virtual void createFrameBuffers();
 
     void createSyncObjects();
     
@@ -107,9 +113,36 @@ public:
 
     void setViewport(const vk::CommandBuffer& cmdBuffer);
 
-    void onWindowResize(uint32_t width, uint32_t height);
+    bool isMinimized(bool doSleeping = true);
 
+    ///////////////////////////////////////////////////////////////////////////
+    // GLFW Callbacks / ImGUI                                                //
+    ///////////////////////////////////////////////////////////////////////////
+
+    void setupGlfwCallbacks(GLFWwindow* window);
+
+    virtual void onKeyboard(int key, int scancode, int action, int mods);
+    static  void onKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+    virtual void onKeyboardChar(unsigned int key);
+    static  void onCharCallback(GLFWwindow* window, unsigned int key);
+
+    virtual void onMouseMove(int x, int y);
+    static  void onMouseMoveCallback(GLFWwindow* window, double x, double y);
+
+    virtual void onMouseButton(int button, int action, int mod);
+    static  void onMouseButtonCallback(GLFWwindow* window, int button, int action, int mod);
+
+    virtual void onScroll(int delta);
+    static  void onScrollCallback(GLFWwindow* window, double x, double y);
+
+    virtual void onWindowResize(uint32_t width, uint32_t height);
+    static  void onWindowSizeCallback(GLFWwindow* window, int w, int h);
+
+    void initGUI();
     
+    vk::DescriptorPool m_imguiDescPool;
+
     ///////////////////////////////////////////////////////////////////////////
     // Debug System Tools                                                    //
     ///////////////////////////////////////////////////////////////////////////
@@ -159,29 +192,30 @@ protected:
     vk::CommandPool                m_commandPool;
 
     app::Swapchain                 m_swapchain;
-    std::vector<vk::Framebuffer>   m_framebuffers;    // All framebuffers, correspond to the Swapchain
-    std::vector<vk::CommandBuffer> m_commandBuffers;  // Command buffer per nb element in Swapchain
+    std::vector<vk::Framebuffer>   m_framebuffers;      // All framebuffers, correspond to the Swapchain
+    std::vector<vk::CommandBuffer> m_commandBuffers;    // Command buffer per nb element in Swapchain
 
-    vk::RenderPass                 m_renderPass;       // Base render pass
-    vk::PipelineCache              m_pipelineCache;    // Cache for pipeline/shaders
+    vk::RenderPass                 m_renderPass;        // Base render pass
+    vk::PipelineCache              m_pipelineCache;     // Cache for pipeline/shaders
 
-    vk::Image                      m_depthImage;       // Depth/Stencil
-    vk::DeviceMemory               m_depthMemory;      // Depth/Stencil
-    vk::ImageView                  m_depthView;        // Depth/Stencil
+    vk::Image                      m_depthImage;        // Depth/Stencil
+    vk::DeviceMemory               m_depthMemory;       // Depth/Stencil
+    vk::ImageView                  m_depthView;         // Depth/Stencil
 
     vk::SampleCountFlagBits        m_sampleCount{ vk::SampleCountFlagBits::e1 };
     vk::Image                      m_colorImage;     
     vk::DeviceMemory               m_colorMemory;      
     vk::ImageView                  m_colorView;        
 
-    std::vector<vk::Fence>         m_fences;           // Fences per nb element in Swapchain
-    vk::Semaphore                  m_imageAvailable;   // Swap chain image presentation
-    vk::Semaphore                  m_renderFinished;   // Command buffer submission and execution
+    std::vector<vk::Fence>         m_fences;            // Fences per nb element in Swapchain
+    vk::Semaphore                  m_imageAvailable;    // Swap chain image presentation
+    vk::Semaphore                  m_renderFinished;    // Command buffer submission and execution
 
-    vk::Extent2D                   m_size{ 0, 0 };     // Size of the window
-    bool                           m_vsync{ false };   // Swapchain v-Sync
+    vk::Extent2D                   m_size{ 0, 0 };      // Size of the window
+    bool                           m_vsync{ false };    // Swapchain v-Sync
+    GLFWwindow*                    m_window{ nullptr }; // GLFW Window
         
-    uint32_t                       m_currentFrame{0};  // Current Frame in use
+    uint32_t                       m_currentFrame{0};   // Current Frame in use
 
     // Surface buffer formats
     vk::Format                     m_colorFormat{ vk::Format::eB8G8R8A8Unorm };

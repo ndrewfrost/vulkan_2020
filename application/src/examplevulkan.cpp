@@ -19,29 +19,17 @@
 //-------------------------------------------------------------------------
 // Initialize vk variables to do all buffer and image allocations
 //
-void ExampleVulkan::init(const vk::Device&         device, 
-                         const vk::PhysicalDevice& physicalDevice, 
-                         const vk::Instance&       instance, 
-                         uint32_t                  graphicsQueueIdx,
-                         uint32_t                  presentQueueIdx,
-                         const vk::Extent2D&       size,
-                         vk::SampleCountFlagBits   sample)
+void ExampleVulkan::setupVulkan(const app::ContextCreateInfo& info, GLFWwindow* window)
 {
-    m_allocator.init(device, physicalDevice, instance);
-    m_debug.setup(device, instance);
-
-    m_device = device;
-    m_physicalDevice = physicalDevice;
-    m_graphicsQueueIdx = graphicsQueueIdx;
-    m_presentQueueIdx = presentQueueIdx;
-    m_size = size;
-    m_sampleCount = sample;
+    VulkanBackend::setupVulkan(info, window);
+    m_allocator.init(m_device, m_physicalDevice, m_instance);
+    m_debug.setup(m_device, m_instance);
 }
 
 //-------------------------------------------------------------------------
 // Destroy all Allocations
 //
-void ExampleVulkan::destroy()
+void ExampleVulkan::destroyResources()
 {
     m_device.destroy(m_graphicsPipeline);
     m_device.destroy(m_pipelineLayout);
@@ -76,9 +64,8 @@ void ExampleVulkan::destroy()
 //-------------------------------------------------------------------------
 // called when resizing of the window
 //
-void ExampleVulkan::resize(const vk::Extent2D& size)
+void ExampleVulkan::onWindowResize(uint32_t width, uint32_t height)
 {
-    m_size = size;
     createOffscreenRender();
     updatePostDescriptorSet();
 }
@@ -247,7 +234,7 @@ void ExampleVulkan::createDescriptorSetLayout()
 //-------------------------------------------------------------------------
 // Creating the pipeline layout
 //
-void ExampleVulkan::createGraphicsPipeline(const vk::RenderPass& renderPass)
+void ExampleVulkan::createGraphicsPipeline()
 {
     vk::PushConstantRange pushConstantRanges = { vk::ShaderStageFlagBits::eVertex
                                                | vk::ShaderStageFlagBits::eFragment,
@@ -538,7 +525,7 @@ void ExampleVulkan::createPostDescriptor()
 //-------------------------------------------------------------------------
 // create Post Pipeline
 //
-void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
+void ExampleVulkan::createPostPipeline()
 {
     vk::PushConstantRange pushConstantRanges = {vk::ShaderStageFlagBits::eFragment,
                                                  0, sizeof(float) };
@@ -558,7 +545,7 @@ void ExampleVulkan::createPostPipeline(const vk::RenderPass& renderPass)
     }
 
     // Create the Pipeline
-    app::GraphicsPipelineGenerator pipelineGenerator(m_device, m_postPipelineLayout, renderPass);
+    app::GraphicsPipelineGenerator pipelineGenerator(m_device, m_postPipelineLayout, m_renderPass);
 
     pipelineGenerator.addShader(app::util::readFile("shaders/passthrough.vert.spv"), vk::ShaderStageFlagBits::eVertex);
     pipelineGenerator.addShader(app::util::readFile("shaders/post.frag.spv"), vk::ShaderStageFlagBits::eFragment);

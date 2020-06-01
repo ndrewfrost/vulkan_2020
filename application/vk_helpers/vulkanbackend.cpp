@@ -13,10 +13,10 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;;
 namespace app {
 
 ///////////////////////////////////////////////////////////////////////////
-// VulkanBackend
+// VulkanBackend                                                         //
 ///////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Setup Vulkan Renderer Backend
 //
 void VulkanBackend::setupVulkan(const ContextCreateInfo& info, GLFWwindow* window)
@@ -51,7 +51,7 @@ void VulkanBackend::setupVulkan(const ContextCreateInfo& info, GLFWwindow* windo
 
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Call on exit
 //
 void VulkanBackend::destroy()
@@ -98,7 +98,7 @@ void VulkanBackend::destroy()
     m_instance.destroy();
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create Vulkan Instance
 //
 void VulkanBackend::initInstance(const ContextCreateInfo& info)
@@ -113,17 +113,17 @@ void VulkanBackend::initInstance(const ContextCreateInfo& info)
     }
 
     vk::ApplicationInfo appInfo = {};
-    appInfo.pApplicationName    = info.appTitle;
-    appInfo.pEngineName         = info.appEngine;
-    appInfo.apiVersion          = VK_API_VERSION_1_0;
+    appInfo.pApplicationName = info.appTitle;
+    appInfo.pEngineName = info.appEngine;
+    appInfo.apiVersion = VK_API_VERSION_1_0;
 
-    vk::InstanceCreateInfo createInfo  = {};
-    createInfo.pApplicationInfo        = &appInfo;
-    createInfo.enabledExtensionCount   = info.numInstanceExtensions;
+    vk::InstanceCreateInfo createInfo = {};
+    createInfo.pApplicationInfo = &appInfo;
+    createInfo.enabledExtensionCount = info.numInstanceExtensions;
     createInfo.ppEnabledExtensionNames = info.instanceExtensions.data();
 
     if (info.enableValidationLayers) {
-        createInfo.enabledLayerCount   = info.numValidationLayers;
+        createInfo.enabledLayerCount = info.numValidationLayers;
         createInfo.ppEnabledLayerNames = info.validationLayers.data();
     }
 
@@ -137,7 +137,7 @@ void VulkanBackend::initInstance(const ContextCreateInfo& info)
     VULKAN_HPP_DEFAULT_DISPATCHER.init(m_instance);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create Surface
 //
 void VulkanBackend::createSurface(GLFWwindow* window)
@@ -153,7 +153,7 @@ void VulkanBackend::createSurface(GLFWwindow* window)
     m_surface = vk::SurfaceKHR(rawSurface);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Pick Physical Device
 //
 void VulkanBackend::pickPhysicalDevice(const ContextCreateInfo& info)
@@ -161,15 +161,15 @@ void VulkanBackend::pickPhysicalDevice(const ContextCreateInfo& info)
     std::vector<vk::PhysicalDevice> devices = m_instance.enumeratePhysicalDevices();
     if (devices.size() == 0)
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
-    
+
     // Find a GPU
     for (auto device : devices) {
         uint32_t graphicsIdx = -1;
-        uint32_t presentIdx  = -1;
+        uint32_t presentIdx = -1;
 
-        auto queueFamilyProperties     = device.getQueueFamilyProperties();
+        auto queueFamilyProperties = device.getQueueFamilyProperties();
         auto deviceExtensionProperties = device.enumerateDeviceExtensionProperties();
-        
+
         if (device.getSurfaceFormatsKHR(m_surface).size() == 0) continue;
         if (device.getSurfacePresentModesKHR(m_surface).size() == 0) continue;
         if (!checkDeviceExtensionSupport(info, deviceExtensionProperties))
@@ -183,8 +183,8 @@ void VulkanBackend::pickPhysicalDevice(const ContextCreateInfo& info)
 
             if (queueFamily.queueFlags
                 & (vk::QueueFlagBits::eGraphics
-                 | vk::QueueFlagBits::eCompute
-                 | vk::QueueFlagBits::eTransfer)) {
+                    | vk::QueueFlagBits::eCompute
+                    | vk::QueueFlagBits::eTransfer)) {
                 graphicsIdx = j;
                 break;
             }
@@ -205,13 +205,13 @@ void VulkanBackend::pickPhysicalDevice(const ContextCreateInfo& info)
         }
 
         if (graphicsIdx >= 0 && presentIdx >= 0) {
-            m_physicalDevice   = device; 
+            m_physicalDevice = device;
             m_graphicsQueueIdx = graphicsIdx;
-            m_presentQueueIdx  = presentIdx;
+            m_presentQueueIdx = presentIdx;
 
-            m_vsync            = false;
-            m_depthFormat      = vk::Format::eD32SfloatS8Uint;
-            m_colorFormat      = vk::Format::eB8G8R8A8Unorm;
+            m_vsync = false;
+            m_depthFormat = vk::Format::eD32SfloatS8Uint;
+            m_colorFormat = vk::Format::eB8G8R8A8Unorm;
 
             VkPhysicalDeviceProperties physicalDeviceProperties = m_physicalDevice.getProperties();
             VkSampleCountFlags rawCounts = (std::min)(physicalDeviceProperties.limits.framebufferColorSampleCounts, physicalDeviceProperties.limits.framebufferDepthSampleCounts);
@@ -220,9 +220,9 @@ void VulkanBackend::pickPhysicalDevice(const ContextCreateInfo& info)
             if (counts & vk::SampleCountFlagBits::e64) { m_sampleCount = vk::SampleCountFlagBits::e64; }
             if (counts & vk::SampleCountFlagBits::e32) { m_sampleCount = vk::SampleCountFlagBits::e32; }
             if (counts & vk::SampleCountFlagBits::e16) { m_sampleCount = vk::SampleCountFlagBits::e16; }
-            if (counts & vk::SampleCountFlagBits::e8)  { m_sampleCount = vk::SampleCountFlagBits::e8; }
-            if (counts & vk::SampleCountFlagBits::e4)  { m_sampleCount = vk::SampleCountFlagBits::e4; }
-            if (counts & vk::SampleCountFlagBits::e2)  { m_sampleCount = vk::SampleCountFlagBits::e2; }
+            if (counts & vk::SampleCountFlagBits::e8) { m_sampleCount = vk::SampleCountFlagBits::e8; }
+            if (counts & vk::SampleCountFlagBits::e4) { m_sampleCount = vk::SampleCountFlagBits::e4; }
+            if (counts & vk::SampleCountFlagBits::e2) { m_sampleCount = vk::SampleCountFlagBits::e2; }
 
             return;
         }
@@ -234,7 +234,7 @@ void VulkanBackend::pickPhysicalDevice(const ContextCreateInfo& info)
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create Vulkan Device and Queues
 //
 void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
@@ -248,7 +248,7 @@ void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
     for (uint32_t queueFamily : uniqueQueueFamilies) {
         vk::DeviceQueueCreateInfo queueInfo = {};
         queueInfo.queueFamilyIndex = queueFamily;
-        queueInfo.queueCount       = 1;
+        queueInfo.queueCount = 1;
         queueInfo.pQueuePriorities = &queuePriority;
 
         queueCreateInfos.push_back(queueInfo);
@@ -266,12 +266,12 @@ void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
     m_physicalDevice.getFeatures2(&enabledFeatures2);
 
     vk::DeviceCreateInfo deviceCreateInfo = {};
-    deviceCreateInfo.queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size());
-    deviceCreateInfo.pQueueCreateInfos       = queueCreateInfos.data();
-    deviceCreateInfo.enabledExtensionCount   = info.numDeviceExtensions;
+    deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+    deviceCreateInfo.enabledExtensionCount = info.numDeviceExtensions;
     deviceCreateInfo.ppEnabledExtensionNames = info.deviceExtensions.data();
-    deviceCreateInfo.pEnabledFeatures        = nullptr;
-    deviceCreateInfo.pNext                   = &enabledFeatures2;
+    deviceCreateInfo.pEnabledFeatures = nullptr;
+    deviceCreateInfo.pNext = &enabledFeatures2;
 
     if (info.enableValidationLayers) {
         deviceCreateInfo.enabledLayerCount = info.numValidationLayers;
@@ -290,8 +290,8 @@ void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
 
     // Initialize default queues
     m_graphicsQueue = m_device.getQueue(m_graphicsQueueIdx, 0);
-    m_presentQueue  = m_device.getQueue(m_presentQueueIdx, 0);
-    
+    m_presentQueue = m_device.getQueue(m_presentQueueIdx, 0);
+
     // Initialize debugging tool for queue object names
 #if _DEBUG
     m_device.setDebugUtilsObjectNameEXT(
@@ -302,18 +302,18 @@ void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
 #endif
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create Swapchain
 //
 void VulkanBackend::createSwapChain()
 {
     m_swapchain.init(m_physicalDevice, m_device, m_graphicsQueue, m_graphicsQueueIdx,
-                     m_presentQueue, m_presentQueueIdx, m_surface);
+        m_presentQueue, m_presentQueueIdx, m_surface);
 
     m_swapchain.update(m_size, m_vsync);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create Command Pool
 //
 void VulkanBackend::createCommandPool()
@@ -330,16 +330,17 @@ void VulkanBackend::createCommandPool()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
-// Create Command Buffers, store a reference to framebuffer inside their render pass info
+//-------------------------------------------------------------------------
+// Create Command Buffers, store a reference to framebuffer inside their 
+// render pass info
 //
 void VulkanBackend::createCommandBuffer()
 {
     m_commandBuffers.resize(m_swapchain.imageCount);
 
     vk::CommandBufferAllocateInfo cmdBufferAllocInfo = {};
-    cmdBufferAllocInfo.commandPool        = m_commandPool;
-    cmdBufferAllocInfo.level              = vk::CommandBufferLevel::ePrimary;
+    cmdBufferAllocInfo.commandPool = m_commandPool;
+    cmdBufferAllocInfo.level = vk::CommandBufferLevel::ePrimary;
     cmdBufferAllocInfo.commandBufferCount = m_swapchain.imageCount;
 
     try {
@@ -350,46 +351,46 @@ void VulkanBackend::createCommandBuffer()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create basic renderpass, most likely to be overwritten
 //
 void VulkanBackend::createRenderPass()
 {
     if (m_renderPass) m_device.destroy(m_renderPass);
-        
+
     // Color Attachment
     vk::AttachmentDescription colorAttachment = {};
-    colorAttachment.format         = m_colorFormat;
-    colorAttachment.samples        = m_sampleCount;
-    colorAttachment.loadOp         = vk::AttachmentLoadOp::eClear;
-    colorAttachment.storeOp        = vk::AttachmentStoreOp::eStore;
-    colorAttachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+    colorAttachment.format = m_colorFormat;
+    colorAttachment.samples = m_sampleCount;
+    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
     colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-    colorAttachment.initialLayout  = vk::ImageLayout::eUndefined;
-    colorAttachment.finalLayout    = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
+    colorAttachment.finalLayout = vk::ImageLayout::eColorAttachmentOptimal;
 
     // Depth Attachment
     vk::AttachmentDescription depthAttachment = {};
-    depthAttachment.format         = m_depthFormat;
-    depthAttachment.samples        = m_sampleCount;
-    depthAttachment.loadOp         = vk::AttachmentLoadOp::eClear;
-    depthAttachment.storeOp        = vk::AttachmentStoreOp::eStore;
-    depthAttachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+    depthAttachment.format = m_depthFormat;
+    depthAttachment.samples = m_sampleCount;
+    depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    depthAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
     depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-    depthAttachment.initialLayout  = vk::ImageLayout::eUndefined;
-    depthAttachment.finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+    depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
+    depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
     // multisampled images cannot be presented directly.
     // We first need to resolve them to a regular image.
     vk::AttachmentDescription resolveAttachment = {};
-    resolveAttachment.format         = m_colorFormat;
-    resolveAttachment.samples        = vk::SampleCountFlagBits::e1;
-    resolveAttachment.loadOp         = vk::AttachmentLoadOp::eDontCare;
-    resolveAttachment.storeOp        = vk::AttachmentStoreOp::eStore;
-    resolveAttachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+    resolveAttachment.format = m_colorFormat;
+    resolveAttachment.samples = vk::SampleCountFlagBits::e1;
+    resolveAttachment.loadOp = vk::AttachmentLoadOp::eDontCare;
+    resolveAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    resolveAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
     resolveAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-    resolveAttachment.initialLayout  = vk::ImageLayout::eUndefined;
-    resolveAttachment.finalLayout    = vk::ImageLayout::ePresentSrcKHR;
+    resolveAttachment.initialLayout = vk::ImageLayout::eUndefined;
+    resolveAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
 
     const vk::AttachmentReference colorReference{ 0,  vk::ImageLayout::eColorAttachmentOptimal };
     const vk::AttachmentReference depthReference{ 1, vk::ImageLayout::eDepthStencilAttachmentOptimal };
@@ -398,28 +399,28 @@ void VulkanBackend::createRenderPass()
     std::array<vk::AttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, resolveAttachment };
 
     vk::SubpassDescription subpass = {};
-    subpass.pipelineBindPoint       = vk::PipelineBindPoint::eGraphics;
-    subpass.colorAttachmentCount    = 1;
-    subpass.pColorAttachments       = &colorReference;
+    subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorReference;
     subpass.pDepthStencilAttachment = &depthReference;
-    subpass.pResolveAttachments     = &resolveReference;
+    subpass.pResolveAttachments = &resolveReference;
 
     vk::SubpassDependency dependency = {};
-    dependency.srcSubpass      = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass      = 0;
-    dependency.srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-    dependency.dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-    dependency.srcAccessMask   = vk::AccessFlagBits::eMemoryRead;
-    dependency.dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    dependency.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
+    dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
 
 
     vk::RenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.attachmentCount = 3;
-    renderPassInfo.pAttachments    = attachments.data();
-    renderPassInfo.subpassCount    = 1;
-    renderPassInfo.pSubpasses      = &subpass;
+    renderPassInfo.pAttachments = attachments.data();
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies   = &dependency;
+    renderPassInfo.pDependencies = &dependency;
 
     try {
         m_renderPass = m_device.createRenderPass(renderPassInfo);
@@ -429,7 +430,7 @@ void VulkanBackend::createRenderPass()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create Pipeline Cache
 //
 void VulkanBackend::createPipelineCache()
@@ -442,7 +443,7 @@ void VulkanBackend::createPipelineCache()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // multisampled buffer 
 //
 void VulkanBackend::createColorBuffer()
@@ -453,22 +454,22 @@ void VulkanBackend::createColorBuffer()
 
     // Color Info
     vk::ImageCreateInfo colorImageInfo = {};
-    colorImageInfo.imageType    = vk::ImageType::e2D;
-    colorImageInfo.extent       = vk::Extent3D(m_size.width, m_size.height, 1);
-    colorImageInfo.format       = m_colorFormat;
-    colorImageInfo.mipLevels    = 1;
-    colorImageInfo.arrayLayers  = 1;
-    colorImageInfo.samples      = m_sampleCount;
-    colorImageInfo.usage        = vk::ImageUsageFlagBits::eTransientAttachment
-                                | vk::ImageUsageFlagBits::eColorAttachment;
-    
+    colorImageInfo.imageType = vk::ImageType::e2D;
+    colorImageInfo.extent = vk::Extent3D(m_size.width, m_size.height, 1);
+    colorImageInfo.format = m_colorFormat;
+    colorImageInfo.mipLevels = 1;
+    colorImageInfo.arrayLayers = 1;
+    colorImageInfo.samples = m_sampleCount;
+    colorImageInfo.usage = vk::ImageUsageFlagBits::eTransientAttachment
+        | vk::ImageUsageFlagBits::eColorAttachment;
+
     try {
         m_colorImage = m_device.createImage(colorImageInfo);
     }
     catch (vk::SystemError err) {
         throw std::runtime_error("failed to create color image!");
     }
-    
+
     // Allocate the memory
     const vk::MemoryRequirements memReqs = m_device.getImageMemoryRequirements(m_colorImage);
     uint32_t memoryTypeIdx = -1;
@@ -511,7 +512,7 @@ void VulkanBackend::createColorBuffer()
 
     // barrier on top, barrier inside set up cmdbuffer
     vk::ImageSubresourceRange subresourceRange;
-    subresourceRange.aspectMask = {vk::ImageAspectFlagBits::eColor};
+    subresourceRange.aspectMask = { vk::ImageAspectFlagBits::eColor };
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 1;
 
@@ -524,7 +525,7 @@ void VulkanBackend::createColorBuffer()
     imageMemoryBarrier.subresourceRange = subresourceRange;
     imageMemoryBarrier.srcAccessMask = vk::AccessFlags();
     imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead
-                                     | vk::AccessFlagBits::eColorAttachmentWrite;
+        | vk::AccessFlagBits::eColorAttachmentWrite;
 
     const vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eTopOfPipe;
     const vk::PipelineStageFlags destStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
@@ -541,10 +542,10 @@ void VulkanBackend::createColorBuffer()
 
     // Setting up the view
     vk::ImageViewCreateInfo colorView;
-    colorView.viewType         = vk::ImageViewType::e2D;
-    colorView.format           = m_colorFormat;
+    colorView.viewType = vk::ImageViewType::e2D;
+    colorView.format = m_colorFormat;
     colorView.subresourceRange = { {vk::ImageAspectFlagBits::eColor}, 0, 1, 0, 1 };
-    colorView.image            = m_colorImage;
+    colorView.image = m_colorImage;
     try {
         m_colorView = m_device.createImageView(colorView);
     }
@@ -553,7 +554,7 @@ void VulkanBackend::createColorBuffer()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Image to be used as depth buffer
 //
 void VulkanBackend::createDepthBuffer()
@@ -567,14 +568,14 @@ void VulkanBackend::createDepthBuffer()
         vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 
     vk::ImageCreateInfo depthStencilCreateInfo = {};
-    depthStencilCreateInfo.imageType   = vk::ImageType::e2D;
-    depthStencilCreateInfo.extent      = vk::Extent3D(m_size.width, m_size.height, 1);
-    depthStencilCreateInfo.format      = m_depthFormat;
-    depthStencilCreateInfo.mipLevels   = 1;
+    depthStencilCreateInfo.imageType = vk::ImageType::e2D;
+    depthStencilCreateInfo.extent = vk::Extent3D(m_size.width, m_size.height, 1);
+    depthStencilCreateInfo.format = m_depthFormat;
+    depthStencilCreateInfo.mipLevels = 1;
     depthStencilCreateInfo.arrayLayers = 1;
-    depthStencilCreateInfo.samples     = m_sampleCount;
-    depthStencilCreateInfo.usage       = vk::ImageUsageFlagBits::eDepthStencilAttachment
-                                       | vk::ImageUsageFlagBits::eTransferSrc;
+    depthStencilCreateInfo.samples = m_sampleCount;
+    depthStencilCreateInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment
+        | vk::ImageUsageFlagBits::eTransferSrc;
 
     try {
         m_depthImage = m_device.createImage(depthStencilCreateInfo);
@@ -595,12 +596,12 @@ void VulkanBackend::createDepthBuffer()
                 break;
             }
         }
-        if(memoryTypeIdx == -1)
+        if (memoryTypeIdx == -1)
             throw std::runtime_error("failed to find suitable memory type!");
     }
 
     vk::MemoryAllocateInfo memAllocInfo = {};
-    memAllocInfo.allocationSize  = memReqs.size;
+    memAllocInfo.allocationSize = memReqs.size;
     memAllocInfo.memoryTypeIndex = memoryTypeIdx;
 
     try {
@@ -615,8 +616,8 @@ void VulkanBackend::createDepthBuffer()
 
     // Create an image barrier to change the layout from undefined to DepthStencilAttachmentOptimal
     vk::CommandBufferAllocateInfo cmdBufAllocateInfo = {};
-    cmdBufAllocateInfo.commandPool        = m_commandPool;
-    cmdBufAllocateInfo.level              = vk::CommandBufferLevel::ePrimary;
+    cmdBufAllocateInfo.commandPool = m_commandPool;
+    cmdBufAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
     cmdBufAllocateInfo.commandBufferCount = 1;
 
     vk::CommandBuffer cmdBuffer;
@@ -630,35 +631,35 @@ void VulkanBackend::createDepthBuffer()
     subresourceRange.layerCount = 1;
 
     vk::ImageMemoryBarrier imageMemoryBarrier;
-    imageMemoryBarrier.oldLayout           = vk::ImageLayout::eUndefined;
-    imageMemoryBarrier.newLayout           = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+    imageMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
+    imageMemoryBarrier.newLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
     imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    imageMemoryBarrier.image               = m_depthImage;
-    imageMemoryBarrier.subresourceRange    = subresourceRange;
-    imageMemoryBarrier.srcAccessMask       = vk::AccessFlags();
-    imageMemoryBarrier.dstAccessMask       = vk::AccessFlagBits::eDepthStencilAttachmentWrite
-                                           | vk::AccessFlagBits::eDepthStencilAttachmentRead;
-    
-    const vk::PipelineStageFlags srcStageMask  = vk::PipelineStageFlagBits::eTopOfPipe;
+    imageMemoryBarrier.image = m_depthImage;
+    imageMemoryBarrier.subresourceRange = subresourceRange;
+    imageMemoryBarrier.srcAccessMask = vk::AccessFlags();
+    imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite
+        | vk::AccessFlagBits::eDepthStencilAttachmentRead;
+
+    const vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eTopOfPipe;
     const vk::PipelineStageFlags destStageMask = vk::PipelineStageFlagBits::eEarlyFragmentTests;
 
-    cmdBuffer.pipelineBarrier(srcStageMask, destStageMask, vk::DependencyFlags(), 
+    cmdBuffer.pipelineBarrier(srcStageMask, destStageMask, vk::DependencyFlags(),
         nullptr, nullptr, imageMemoryBarrier);
     cmdBuffer.end();
 
     m_graphicsQueue.submit(vk::SubmitInfo{ 0, nullptr, nullptr, 1, &cmdBuffer }, vk::Fence());
 
     m_graphicsQueue.waitIdle();
-     
+
     m_device.freeCommandBuffers(m_commandPool, cmdBuffer);
 
     // Setting up the view
     vk::ImageViewCreateInfo depthStencilView;
-    depthStencilView.viewType         = vk::ImageViewType::e2D;
-    depthStencilView.format           = m_depthFormat;
-    depthStencilView.subresourceRange = { aspect, 0, 1, 0, 1 } ;
-    depthStencilView.image            = m_depthImage;
+    depthStencilView.viewType = vk::ImageViewType::e2D;
+    depthStencilView.format = m_depthFormat;
+    depthStencilView.subresourceRange = { aspect, 0, 1, 0, 1 };
+    depthStencilView.image = m_depthImage;
     try {
         m_depthView = m_device.createImageView(depthStencilView);
     }
@@ -667,32 +668,33 @@ void VulkanBackend::createDepthBuffer()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
-//  Create the frame buffers where the image will be rendered (Swapchain must be created before)
+//-------------------------------------------------------------------------
+//  Create the frame buffers where the image will be rendered 
+// (Swapchain must be created before)
 //
 void VulkanBackend::createFrameBuffers()
 {
     // recreate frame buffers
-    for (auto framebuffer : m_framebuffers) 
-        m_device.destroyFramebuffer(framebuffer);    
+    for (auto framebuffer : m_framebuffers)
+        m_device.destroyFramebuffer(framebuffer);
     m_framebuffers.resize(m_swapchain.imageCount);
 
     // create frame buffer for every swapchain image
     for (uint32_t i = 0; i < m_swapchain.imageCount; i++) {
         auto imageViews = m_swapchain.images[i];
-    
+
         vk::ImageView attachments[3];
         attachments[2] = imageViews.view;
         attachments[1] = m_depthView;
         attachments[0] = m_colorView;
 
         vk::FramebufferCreateInfo framebufferInfo = {};
-        framebufferInfo.renderPass      = m_renderPass;
+        framebufferInfo.renderPass = m_renderPass;
         framebufferInfo.attachmentCount = 3;
-        framebufferInfo.pAttachments    = attachments;
-        framebufferInfo.width           = m_size.width;
-        framebufferInfo.height          = m_size.height;
-        framebufferInfo.layers          = 1;
+        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.width = m_size.width;
+        framebufferInfo.height = m_size.height;
+        framebufferInfo.layers = 1;
 
         try {
             m_framebuffers[i] = m_device.createFramebuffer(framebufferInfo);
@@ -703,10 +705,11 @@ void VulkanBackend::createFrameBuffers()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Create Sync Objects
-// Fences - are used to synchronize the CPU and the GPU
-// Semaphore - are used to synchronize events across multiples queues and/or hardware
+// Fences    - are used to synchronize the CPU and the GPU
+// Semaphore - are used to synchronize events across multiples 
+//             queues and/or hardware
 //
 void VulkanBackend::createSyncObjects()
 {
@@ -725,7 +728,7 @@ void VulkanBackend::createSyncObjects()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // function to call before rendering
 //
 void VulkanBackend::prepareFrame()
@@ -739,10 +742,10 @@ void VulkanBackend::prepareFrame()
     // Recreate the swapchain if it's no longer compatible with the surface
     if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
         onWindowResize(m_size.width, m_size.height);
-    }  
+    }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // function to call for submitting the rendering command
 //
 void VulkanBackend::submitFrame()
@@ -751,17 +754,17 @@ void VulkanBackend::submitFrame()
 
     // Pipeline stage at which the queue submission will wait (via pWaitSemaphores)
     const vk::PipelineStageFlags waitStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-   
-    vk::SubmitInfo submitInfo = {};
-    submitInfo.waitSemaphoreCount   = 1;                                  // One wait semaphore
-    submitInfo.pWaitSemaphores      = & m_imageAvailable;                 // Semaphore(s) to wait upon before the submitted command buffer starts executing
-    submitInfo.pWaitDstStageMask    = & waitStageMask;                    // Pointer to the list of pipeline stages that the semaphore waits will occur at
 
-    submitInfo.commandBufferCount   = 1;                                  // One Command Buffer
-    submitInfo.pCommandBuffers      = & m_commandBuffers[m_currentFrame]; // Command buffers(s) to execute in this batch (submission)
+    vk::SubmitInfo submitInfo = {};
+    submitInfo.waitSemaphoreCount = 1;                                  // One wait semaphore
+    submitInfo.pWaitSemaphores = &m_imageAvailable;                 // Semaphore(s) to wait upon before the submitted command buffer starts executing
+    submitInfo.pWaitDstStageMask = &waitStageMask;                    // Pointer to the list of pipeline stages that the semaphore waits will occur at
+
+    submitInfo.commandBufferCount = 1;                                  // One Command Buffer
+    submitInfo.pCommandBuffers = &m_commandBuffers[m_currentFrame]; // Command buffers(s) to execute in this batch (submission)
 
     submitInfo.signalSemaphoreCount = 1;                                  // One signal Semaphore
-    submitInfo.pSignalSemaphores    = & m_renderFinished;                 // Semaphore(s) to be signaled when command buffers have completed
+    submitInfo.pSignalSemaphores = &m_renderFinished;                 // Semaphore(s) to be signaled when command buffers have completed
 
     // Submit to the graphics queue passing a wait fence
     try {
@@ -772,7 +775,7 @@ void VulkanBackend::submitFrame()
     }
 
     const vk::Result res = m_swapchain.present(m_currentFrame, m_renderFinished);
-    
+
     if (!((res == vk::Result::eSuccess) || (res == vk::Result::eSuboptimalKHR))) {
         if (res == vk::Result::eErrorOutOfDateKHR) {
             // Swap chain is no longer compatible with the surface and needs to be recreated
@@ -785,7 +788,7 @@ void VulkanBackend::submitFrame()
     //m_currentFrame = (m_currentFrame + 1) % m_swapchain.imageCount;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // When the pipeline is set for using dynamic, this becomes useful
 //
 void VulkanBackend::setViewport(const vk::CommandBuffer& cmdBuffer)
@@ -806,8 +809,160 @@ void VulkanBackend::setViewport(const vk::CommandBuffer& cmdBuffer)
     cmdBuffer.setScissor(0, { scissor });
 }
 
-//--------------------------------------------------------------------------------------------------
-// Window callback when the it is resized
+//-------------------------------------------------------------------------
+// Returns true if window is minimized
+//
+bool VulkanBackend::isMinimized(bool doSleeping)
+{
+    int w, h;
+    glfwGetWindowSize(m_window, &w, &h);
+    bool minimized(w == 0 || h == 0);
+    if (minimized && doSleeping)
+    {
+#ifdef _WIN32
+        Sleep(50);
+#else
+        usleep(50);
+#endif
+    }
+    return minimized;
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+// GLFW Callbacks / ImGUI                                                //
+///////////////////////////////////////////////////////////////////////////
+
+//-------------------------------------------------------------------------
+// GLFW Callback setup
+//
+void VulkanBackend::setupGlfwCallbacks(GLFWwindow* window)
+{
+    m_window = window;
+    glfwSetWindowUserPointer(window, this);
+    glfwSetKeyCallback(window, &onKeyCallback);
+    glfwSetCharCallback(window, &onCharCallback);
+    glfwSetCursorPosCallback(window, &onMouseMoveCallback);
+    glfwSetMouseButtonCallback(window, &onMouseButtonCallback);
+    glfwSetScrollCallback(window, &onScrollCallback);
+    glfwSetWindowSizeCallback(window, &onWindowSizeCallback);
+}
+
+//-------------------------------------------------------------------------
+// On Key Callback
+// - Handling ImGui and a default camera
+//
+void VulkanBackend::onKeyboard(int key, int scancode, int action, int mods)
+{
+    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
+        return;
+
+    if (action == GLFW_RELEASE)
+        return; // No action on key up
+
+    if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)
+        glfwSetWindowShouldClose(m_window, 1);
+}
+
+void VulkanBackend::onKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    auto app = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
+    app->onKeyboard(key, scancode, action, mods);
+}
+
+//-------------------------------------------------------------------------
+// On Char Callback
+//
+void VulkanBackend::onKeyboardChar(unsigned int key)
+{
+    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
+        return;
+
+    // Toggling vsync TODO
+    if (key == 'v') {
+
+    }
+}
+
+void VulkanBackend::onCharCallback(GLFWwindow* window, unsigned int key)
+{
+    auto app = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
+    app->onKeyboardChar(key);
+}
+
+//-------------------------------------------------------------------------
+// On Mouse Mouve Callback
+// - Handling ImGui and a default camera
+//
+void VulkanBackend::onMouseMove(int x, int y)
+{
+    if (ImGui::GetCurrentContext() != nullptr) {
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.WantCaptureKeyboard || io.WantCaptureMouse) return;
+    }
+
+    tools::Manipulator::Inputs inputs;
+    inputs.lmb = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT)   == GLFW_PRESS;
+    inputs.mmb = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
+    inputs.rmb = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT)  == GLFW_PRESS;
+    if (!inputs.lmb && !inputs.rmb && !inputs.mmb) {
+        return;  // no mouse button pressed
+    }
+
+    inputs.ctrl  = glfwGetKey(m_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+    inputs.shift = glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS;
+    inputs.alt   = glfwGetKey(m_window, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS;
+
+    CameraManipulator.mouseMove(static_cast<int>(x), static_cast<int>(y), inputs);
+}
+
+void VulkanBackend::onMouseMoveCallback(GLFWwindow* window, double x, double y)
+{
+    auto app = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
+    app->onMouseMove(static_cast<int>(x), static_cast<int>(y));
+}
+
+//-------------------------------------------------------------------------
+// On Mouse Button Callback
+// - Handling ImGui and a default camera
+//
+void VulkanBackend::onMouseButton(int button, int action, int mod)
+{
+    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
+        return;
+
+    double xpos, ypos;
+    glfwGetCursorPos(m_window, &xpos, &ypos);
+    CameraManipulator.setMousePosition(static_cast<int>(xpos), static_cast<int>(ypos));
+}
+
+void VulkanBackend::onMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    auto app = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
+    app->onMouseButton(button, action, mods);
+}
+
+//-------------------------------------------------------------------------
+// On Scroll Callback 
+// - Handling ImGui and a default camera
+//
+void VulkanBackend::onScroll(int delta)
+{
+    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
+        return;
+
+    CameraManipulator.wheel(static_cast<int>(delta));
+}
+
+void VulkanBackend::onScrollCallback(GLFWwindow* window, double x, double y)
+{
+    auto app = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
+    app->onScroll(static_cast<int>(y));
+}
+
+//-------------------------------------------------------------------------
+// On Window Size Callback
+// - Destroy allocated frames, then rebuild with new size
 //
 void VulkanBackend::onWindowResize(uint32_t width, uint32_t height)
 {
@@ -825,11 +980,82 @@ void VulkanBackend::onWindowResize(uint32_t width, uint32_t height)
     createFrameBuffers();
 }
 
-///////////////////////////////////////////////////////////////////////////
-// Debug
-///////////////////////////////////////////////////////////////////////////
+void VulkanBackend::onWindowSizeCallback(GLFWwindow* window, int w, int h)
+{
+    auto app = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
+    app->onWindowResize(w, h);
+}
 
 //--------------------------------------------------------------------------------------------------
+// 
+//
+static void checkVkResult(VkResult err)
+{
+    if (err == 0)
+        return;
+    printf("VkResult %d\n", err);
+    if (err < 0)
+        abort();
+}
+//-------------------------------------------------------------------------
+// Initialization of the GUI
+// - Called AFTER device creation
+//
+void VulkanBackend::initGUI()
+{
+    assert(m_renderPass && "Render Pass must be set");
+
+    // create pool onfo descriptor used by ImGUI
+    std::vector<vk::DescriptorPoolSize> counters{ {vk::DescriptorType::eCombinedImageSampler, 2} };
+
+    vk::DescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.poolSizeCount = static_cast<uint32_t>(counters.size());
+    poolInfo.pPoolSizes    = counters.data();
+    poolInfo.maxSets       = static_cast<uint32_t>(counters.size());
+
+    m_imguiDescPool = m_device.createDescriptorPool(poolInfo);
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    ImGui_ImplGlfw_InitForVulkan(m_window, true);
+    ImGui_ImplVulkan_InitInfo imGuiInitInfo = {};
+    imGuiInitInfo.Allocator       = nullptr;
+    imGuiInitInfo.DescriptorPool  = m_imguiDescPool;
+    imGuiInitInfo.Device          = m_device;;
+    imGuiInitInfo.ImageCount      = (uint32_t)m_framebuffers.size();
+    imGuiInitInfo.Instance        = m_instance;
+    imGuiInitInfo.MinImageCount   = (uint32_t)m_framebuffers.size();
+    imGuiInitInfo.PhysicalDevice  = m_physicalDevice;
+    imGuiInitInfo.PipelineCache   = m_pipelineCache;
+    imGuiInitInfo.Queue           = m_graphicsQueue;
+    imGuiInitInfo.QueueFamily     = m_graphicsQueueIdx;
+    imGuiInitInfo.MSAASamples     = VK_SAMPLE_COUNT_2_BIT;
+    imGuiInitInfo.CheckVkResultFn = checkVkResult;
+
+    ImGui_ImplVulkan_Init(&imGuiInitInfo, m_renderPass);
+
+    // Setup style
+    ImGui::StyleColorsDark();
+
+    // Upload Fonts
+    app::SingleCommandBuffer cmdBufferGen(m_device, m_graphicsQueueIdx);
+
+    auto cmdBuffer = cmdBufferGen.createCommandBuffer();
+    ImGui_ImplVulkan_CreateFontsTexture(cmdBuffer);
+    cmdBufferGen.flushCommandBuffer(cmdBuffer);
+
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
+
+    ImGui::GetIO().IniFilename = nullptr;
+}
+
+///////////////////////////////////////////////////////////////////////////
+// Debug                                                                 //
+///////////////////////////////////////////////////////////////////////////
+
+//-------------------------------------------------------------------------
 // 
 //
 static VKAPI_ATTR VkBool32 VKAPI_CALL
@@ -842,7 +1068,7 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     return VK_FALSE;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // Set up Debug Messenger
 //
 void VulkanBackend::setupDebugMessenger(bool enableValidationLayers)
@@ -866,33 +1092,7 @@ void VulkanBackend::setupDebugMessenger(bool enableValidationLayers)
     }
 }
 
-/*
-//--------------------------------------------------------------------------------------------------
-// 
-//
-void VulkanBackend::destroyDebugUtilsMessengerEXT(vk::Instance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator)
-{
-    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        func(instance, callback, pAllocator);
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
-// 
-//
-VkResult VulkanBackend::createDebugUtilsMessengerEXT(vk::Instance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
-{
-    auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-    }
-    else {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-}*/
-
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // check Validation Layer Support
 //
 bool VulkanBackend::checkValidationLayerSupport(const ContextCreateInfo& info)
@@ -918,7 +1118,7 @@ bool VulkanBackend::checkValidationLayerSupport(const ContextCreateInfo& info)
     return true;
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // check Device Extension Support
 //
 bool VulkanBackend::checkDeviceExtensionSupport(const ContextCreateInfo& info, std::vector<vk::ExtensionProperties>& extensionProperties)
@@ -934,10 +1134,10 @@ bool VulkanBackend::checkDeviceExtensionSupport(const ContextCreateInfo& info, s
 
 
 ///////////////////////////////////////////////////////////////////////////
-// ContextCreateInfo
+// ContextCreateInfo                                                     //
 ///////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // 
 //
 ContextCreateInfo::ContextCreateInfo()
@@ -960,7 +1160,7 @@ ContextCreateInfo::ContextCreateInfo()
     }
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // 
 //
 void ContextCreateInfo::addDeviceExtension(const char* name)
@@ -970,7 +1170,7 @@ void ContextCreateInfo::addDeviceExtension(const char* name)
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // 
 //
 void ContextCreateInfo::addInstanceExtension(const char* name)
@@ -979,7 +1179,7 @@ void ContextCreateInfo::addInstanceExtension(const char* name)
     instanceExtensions.emplace_back(name);
 }
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 // 
 //
 void ContextCreateInfo::addValidationLayer(const char* name)

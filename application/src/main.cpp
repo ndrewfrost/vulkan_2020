@@ -10,14 +10,13 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
-#include <iostream>
 #include <array>
-
 #include <vulkan/vulkan.hpp>
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 #include "../external/imgui/imgui.h"
-#include "../external/imgui/imgui_impl_glfw.h"
 #include "../external/imgui/imgui_impl_vulkan.h"
+#include "../external/imgui/imgui_impl_glfw.h"
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -34,177 +33,13 @@
 
 static int  g_winWidth      = 800;
 static int  g_winHeight     = 600;
-static bool g_resizeRequest = false;
 
-static vk::DescriptorPool g_imguiDescPool;
-
-///////////////////////////////////////////////////////////////////////////
-// GLFW Callback functions                                               //
-///////////////////////////////////////////////////////////////////////////
-
-
-// onErrorCallback
+//-------------------------------------------------------------------------
+// GLFW on Error Callback
 //
 static void onErrorCallback(int error, const char* description)
 {
     std::cerr << "GLFW Error " << error << ": " << description << std::endl;
-}
-
-//-------------------------------------------------------------------------
-// onScrollCallback
-//
-static void onScrollCallback(GLFWwindow* window, double xOffset, double yOffset)
-{
-    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
-        return;
-
-    CameraManipulator.wheel(static_cast<int>(yOffset));
-}
-
-//-------------------------------------------------------------------------
-// onKeyCallback
-//
-static void onKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
-        return;
-
-    if (action == GLFW_RELEASE)
-        return; // No action on key up
-
-    if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)
-        glfwSetWindowShouldClose(window, 1);
-}
-
-//-------------------------------------------------------------------------
-// onMouseMoveCallback
-//
-static void onMouseMoveCallback(GLFWwindow* window, double mouseX, double mouseY)
-{
-    if (ImGui::GetCurrentContext() != nullptr) {
-        ImGuiIO& io = ImGui::GetIO();
-        if (io.WantCaptureKeyboard || io.WantCaptureMouse) return;
-    }
-    
-    tools::Manipulator::Inputs inputs;
-    inputs.lmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)   == GLFW_PRESS;
-    inputs.mmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
-    inputs.rmb = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT)  == GLFW_PRESS;
-    if (!inputs.lmb && !inputs.rmb && !inputs.mmb) {
-        return;  // no mouse button pressed
-    }
-
-    inputs.ctrl  = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
-    inputs.shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS;
-    inputs.alt   = glfwGetKey(window, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS;
-
-    CameraManipulator.mouseMove(static_cast<int>(mouseX), static_cast<int>(mouseY), inputs);
-}
-
-//-------------------------------------------------------------------------
-// onMouseButtonCallback
-//
-static void onMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
-{
-    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
-        return;
-
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    CameraManipulator.setMousePosition(static_cast<int>(xpos), static_cast<int>(ypos));
-}
-
-//-------------------------------------------------------------------------
-// onResizeCallback
-//
-static void onResizeCallback(GLFWwindow* window, int w, int h)
-{
-    (void)(window);
-    CameraManipulator.setWindowSize(w, h);
-    g_resizeRequest = true;
-    g_winWidth      = w;
-    g_winHeight     = h;
-}
-
-///////////////////////////////////////////////////////////////////////////
-// IMGUI                                                                 //
-///////////////////////////////////////////////////////////////////////////
-
-//-------------------------------------------------------------------------
-// 
-//
-static void checkVkResult(VkResult err)
-{
-    if (err == 0)
-        return;
-    printf("VkResult %d\n", err);
-    if (err < 0)
-        abort();
-}
-
-//-------------------------------------------------------------------------
-// Setup ImGUI
-//
-static void setupImGUI(app::VulkanBackend& vkBackend, GLFWwindow* window)
-{
-    // create pool onfo descriptor used by ImGUI
-    std::vector<vk::DescriptorPoolSize> counters{ {vk::DescriptorType::eCombinedImageSampler, 2} };
-
-    vk::DescriptorPoolCreateInfo poolInfo = {};
-    poolInfo.poolSizeCount = static_cast<uint32_t>(counters.size());
-    poolInfo.pPoolSizes    = counters.data();
-    poolInfo.maxSets       = static_cast<uint32_t>(counters.size());
-
-    vk::Device device(vkBackend.getDevice());
-    g_imguiDescPool = device.createDescriptorPool(poolInfo);
-
-    // Setup Dear ImGUI binding
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
-    ImGui_ImplGlfw_InitForVulkan(window, true);
-    ImGui_ImplVulkan_InitInfo imGuiInitInfo = {};
-    imGuiInitInfo.Allocator       = nullptr;
-    imGuiInitInfo.DescriptorPool  = g_imguiDescPool;
-    imGuiInitInfo.Device          = vkBackend.getDevice();
-    imGuiInitInfo.ImageCount      = (uint32_t)vkBackend.getFramebuffers().size();
-    imGuiInitInfo.Instance        = vkBackend.getInstance();
-    imGuiInitInfo.MinImageCount   = (uint32_t)vkBackend.getFramebuffers().size();
-    imGuiInitInfo.PhysicalDevice  = vkBackend.getPhysicalDevice();
-    imGuiInitInfo.PipelineCache   = vkBackend.getPipelineCache();
-    imGuiInitInfo.Queue           = vkBackend.getGraphicsQueue();
-    imGuiInitInfo.QueueFamily     = vkBackend.getGraphicsQueueIdx();
-    imGuiInitInfo.MSAASamples     = VK_SAMPLE_COUNT_2_BIT;
-    imGuiInitInfo.CheckVkResultFn = checkVkResult;
-
-    ImGui_ImplVulkan_Init(&imGuiInitInfo, vkBackend.getRenderPass());
-
-    // Setup style
-    ImGui::StyleColorsDark();
-
-    // Upload Fonts
-    app::SingleCommandBuffer cmdBufferGen(vkBackend.getDevice(), vkBackend.getGraphicsQueueIdx());
-
-    auto cmdBuffer = cmdBufferGen.createCommandBuffer();
-    ImGui_ImplVulkan_CreateFontsTexture(cmdBuffer);
-    cmdBufferGen.flushCommandBuffer(cmdBuffer);
-
-    ImGui_ImplVulkan_DestroyFontUploadObjects();
-}
-
-//-------------------------------------------------------------------------
-// Destroy ImGUI
-//
-static void destroyImGUI(const vk::Device& device)
-{
-    if (ImGui::GetCurrentContext() != nullptr) {
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-
-        device.destroyDescriptorPool(g_imguiDescPool);
-    }
 }
 
 //-------------------------------------------------------------------------
@@ -237,13 +72,7 @@ void application()
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     GLFWwindow* window = glfwCreateWindow(g_winWidth, g_winHeight, "Vulkan", nullptr, nullptr);
-
-    glfwSetScrollCallback(window, onScrollCallback);
-    glfwSetKeyCallback(window, onKeyCallback);
-    glfwSetCursorPosCallback(window, onMouseMoveCallback);
-    glfwSetMouseButtonCallback(window, onMouseButtonCallback);
-    glfwSetFramebufferSizeCallback(window, onResizeCallback);
-
+    
     // Setup Camera
     CameraManipulator.setWindowSize(g_winWidth, g_winHeight);
     CameraManipulator.setLookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
@@ -264,108 +93,109 @@ void application()
     contextInfo.addDeviceExtension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
     contextInfo.addDeviceExtension(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
 
-    app::VulkanBackend vkBackend;
-    vkBackend.setupVulkan(contextInfo, window);
-
-    // Imgui
-    setupImGUI(vkBackend, window);
-
     // Vulkan
     ExampleVulkan vkExample;
-    vkExample.init(vkBackend.getDevice(), vkBackend.getPhysicalDevice(), 
-                   vkBackend.getInstance(), vkBackend.getGraphicsQueueIdx(), 
-                   vkBackend.getPresentQueueIdx(), vkBackend.getSize(),
-                   vkBackend.getSampleCount());
+    vkExample.setupVulkan(contextInfo, window);
+
+    // Imgui
+    vkExample.initGUI();
 
     vkExample.loadModel(".../../media/scenes/cube_multi.obj");
-
     vkExample.createOffscreenRender();
     vkExample.createDescriptorSetLayout();
-    vkExample.createGraphicsPipeline(vkBackend.getRenderPass());
+    vkExample.createGraphicsPipeline();
     vkExample.createUniformBuffer();
     vkExample.createSceneDescriptionBuffer();
     vkExample.updateDescriptorSet();
 
     vkExample.createPostDescriptor();
-    vkExample.createPostPipeline(vkBackend.getRenderPass());
+    vkExample.createPostPipeline();
     vkExample.updatePostDescriptorSet();
     glm::vec4 clearColor = glm::vec4(1, 1, 1, 1.00f);
+
+    vkExample.setupGlfwCallbacks(window);
+    ImGui_ImplGlfw_InitForVulkan(window, true);
     
     // Main Loop
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
-        if (g_resizeRequest) {
-            vkBackend.onWindowResize(g_winWidth, g_winHeight);
-            vkExample.resize(vkBackend.getSize());
-            g_resizeRequest = false;
-        }
+        if (vkExample.isMinimized())
+            continue;
 
+        // Start ImGUI frame
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+
+        // update camera buffer
         vkExample.updateUniformBuffer();
 
-        // ImGui Frame
+        // Show UI window
         {
-            ImGui_ImplVulkan_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
+            ImGui::ColorEdit3("Clear color", reinterpret_cast<float*>(&clearColor));
+            
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            
             renderUI();
-
+            
             ImGui::Render();
         }
-        
-        // Render the scene
-        vkBackend.prepareFrame();
-        auto                     currentFrame = vkBackend.getCurrentFrame();
-        const vk::CommandBuffer& cmdBuffer    = vkBackend.getCommandBuffers()[currentFrame];
+
+        // Start rendering the scene
+        vkExample.prepareFrame();
+
+        // Start command buffer of this frame
+        auto                     currentFrame = vkExample.getCurrentFrame();
+        const vk::CommandBuffer& cmdBuffer    = vkExample.getCommandBuffers()[currentFrame];
 
         cmdBuffer.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
 
+        // clearing the screen
         vk::ClearValue clearValues[2];
         clearValues[0].setColor(app::util::clearColor(clearColor));
         clearValues[1].setDepthStencil({ 1.0f, 0 });
 
-        // Begin render pass
+        // Offscreen render pass
         vk::RenderPassBeginInfo offscreenRenderPassBeginInfo = {};
         offscreenRenderPassBeginInfo.clearValueCount = 2;
         offscreenRenderPassBeginInfo.pClearValues    = clearValues;
         offscreenRenderPassBeginInfo.renderPass      = vkExample.m_offscreenRenderPass;
         offscreenRenderPassBeginInfo.framebuffer     = vkExample.m_offscreenFramebuffer;
-        offscreenRenderPassBeginInfo.renderArea      = vk::Rect2D({}, vkBackend.getSize());
+        offscreenRenderPassBeginInfo.renderArea      = vk::Rect2D({}, vkExample.getSize());
 
-        // Rendering scene
+        // Rendering the scene
         cmdBuffer.beginRenderPass(offscreenRenderPassBeginInfo, vk::SubpassContents::eInline);
         vkExample.rasterize(cmdBuffer);
         cmdBuffer.endRenderPass();
 
-        // Post render pass
+        // 2nd Render Pass : tone mapper, UI
         vk::RenderPassBeginInfo postRenderPassBeginInfo = {};
         postRenderPassBeginInfo.clearValueCount = 2;
         postRenderPassBeginInfo.pClearValues    = clearValues;
-        postRenderPassBeginInfo.renderPass      = vkBackend.getRenderPass(); 
-        postRenderPassBeginInfo.framebuffer     = vkBackend.getFramebuffers()[currentFrame];
-        postRenderPassBeginInfo.renderArea      = vk::Rect2D({}, vkBackend.getSize());
+        postRenderPassBeginInfo.renderPass      = vkExample.getRenderPass();
+        postRenderPassBeginInfo.framebuffer     = vkExample.getFramebuffers()[currentFrame];
+        postRenderPassBeginInfo.renderArea      = vk::Rect2D({}, vkExample.getSize());
 
         cmdBuffer.beginRenderPass(postRenderPassBeginInfo, vk::SubpassContents::eInline);
+
+        // Rendering tonemapper
         vkExample.drawPost(cmdBuffer);
 
-        // rendering UI
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
-
+        // Rendering UI
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer); 
         cmdBuffer.endRenderPass();
+
+        // Submit for Display
         cmdBuffer.end();
-        vkBackend.submitFrame();
+        vkExample.submitFrame();
     }
 
     // Cleanup
-    vkBackend.getDevice().waitIdle();
-    destroyImGUI(vkBackend.getDevice());
-
+    vkExample.getDevice().waitIdle();
+    vkExample.destroyResources();
     vkExample.destroy();
-    vkBackend.destroy();
 
     glfwDestroyWindow(window);
     glfwTerminate();

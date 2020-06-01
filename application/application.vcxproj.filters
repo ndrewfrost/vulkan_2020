@@ -18,6 +18,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="general_helpers\manipulator.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="vk_helpers\images.cpp">
+      <Filter>vk</Filter>
+    </ClCompile>
+    <ClCompile Include="vk_helpers\vulkanbackend.cpp">
+      <Filter>vk</Filter>
+    </ClCompile>
+    <ClCompile Include="src\examplevulkan.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="external\imgui\imgui.cpp">
       <Filter>External\imgui</Filter>
     </ClCompile>
@@ -35,21 +50,6 @@
     </ClCompile>
     <ClCompile Include="external\imgui\imgui_widgets.cpp">
       <Filter>External\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="general_helpers\manipulator.cpp">
-      <Filter>helper</Filter>
-    </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="vk_helpers\images.cpp">
-      <Filter>vk</Filter>
-    </ClCompile>
-    <ClCompile Include="vk_helpers\vulkanbackend.cpp">
-      <Filter>vk</Filter>
-    </ClCompile>
-    <ClCompile Include="src\examplevulkan.cpp">
-      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

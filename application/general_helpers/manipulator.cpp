@@ -47,7 +47,7 @@ Manipulator::Manipulator()
 //
 void Manipulator::update()
 {
-    m_matrix = glm::lookAt(m_pos, m_int, m_up);
+    m_matrix = glm::lookAt(m_current.eye, m_current.ctr, m_current.up);
 
     if (!isZero(m_roll)) {
         glm::mat4 rotate = glm::rotate(m_roll, glm::vec3(0, 0, 1));
@@ -65,10 +65,10 @@ void Manipulator::pan(float dx, float dy)
         dy *= -1;
     }
 
-    glm::vec3 z(m_pos - m_int);
+    glm::vec3 z(m_current.eye - m_current.ctr);
     float length = static_cast<float>(glm::length(z)) / 0.785f;  // 45 degrees
     z = glm::normalize(z);
-    glm::vec3 x = glm::cross(m_up, z);
+    glm::vec3 x = glm::cross(m_current.up, z);
     x = glm::normalize(x);
     glm::vec3 y = glm::cross(z, x);
     y = glm::normalize(y);
@@ -76,8 +76,8 @@ void Manipulator::pan(float dx, float dy)
     x *= -dx * length;
     y *= dy * length;
 
-    m_pos += x + y;
-    m_int += x + y;
+    m_current.eye += x + y;
+    m_current.up += x + y;
 
 }
 
@@ -96,8 +96,8 @@ void Manipulator::orbit(float dx, float dy, bool invert)
     dy *= float(glm::two_pi<float>());
 
     // Get the camera
-    glm::vec3 origin(invert ? m_pos : m_int);
-    glm::vec3 position(invert ? m_int : m_pos);
+    glm::vec3 origin(invert ? m_current.eye : m_current.ctr);
+    glm::vec3 position(invert ? m_current.ctr : m_current.eye);
 
     // Get the length of sight
     glm::vec3 centerToEye(position - origin);
@@ -108,14 +108,14 @@ void Manipulator::orbit(float dx, float dy, bool invert)
 
     // Find the rotation around the UP axis (Y)
     glm::vec3 axe_z(glm::normalize(centerToEye));
-    rot_y = glm::rotate(-dx, m_up);
+    rot_y = glm::rotate(-dx, m_current.up);
 
     // Apply the (Y) rotation to the eye-center vector
     glm::vec4 vect_tmp = rot_y * glm::vec4(centerToEye.x, centerToEye.y, centerToEye.z, 0);
     centerToEye = glm::vec3(vect_tmp.x, vect_tmp.y, vect_tmp.z);
 
     // Find the rotation around the X vector: cross between eye-center and up (X)
-    glm::vec3 axe_x = glm::cross(m_up, axe_z);
+    glm::vec3 axe_x = glm::cross(m_current.up, axe_z);
     axe_x = glm::normalize(axe_x);
     rot_x = glm::rotate(-dy, axe_x);
 
@@ -133,10 +133,10 @@ void Manipulator::orbit(float dx, float dy, bool invert)
     glm::vec3 newPosition = centerToEye + origin;
 
     if (!invert) {
-        m_pos = newPosition;  // Normal: change the position of the camera
+        m_current.eye = newPosition;  // Normal: change the position of the camera
     }
     else {
-        m_int = newPosition;  // Inverted: change the interest point
+        m_current.eye = newPosition;  // Inverted: change the interest point
     }
 }
 
@@ -145,7 +145,7 @@ void Manipulator::orbit(float dx, float dy, bool invert)
 //
 void Manipulator::dolly(float dx, float dy)
 {
-    glm::vec3 z(m_pos - m_int);
+    glm::vec3 z(m_current.eye - m_current.ctr);
     float length = static_cast<float>(glm::length(z));
 
     if (isZero(length)) {
@@ -177,7 +177,7 @@ void Manipulator::dolly(float dx, float dy)
 
     // Not going up
     if (m_mode == Walk) {
-        if (m_up.y > m_up.z) {
+        if (m_current.up.y > m_current.up.z) {
             z.y = 0;
         }
         else {
@@ -185,11 +185,11 @@ void Manipulator::dolly(float dx, float dy)
         }
     }
 
-    m_pos += z;
+    m_current.eye += z;
 
     // In fly mode, the interest moves with us.
     if (m_mode != Examine) {
-        m_int += z;
+        m_current.ctr += z;
     }
 }
 
@@ -233,12 +233,12 @@ void Manipulator::trackball(int x, int y)
 
     glm::vec4 rot_axis = m_matrix * glm::vec4(axis, 0);
     glm::mat4 rot_mat = glm::rotate(rad, glm::vec3(rot_axis.x, rot_axis.y, rot_axis.z));
-    glm::vec3 pnt = m_pos - m_int;
+    glm::vec3 pnt = m_current.eye - m_current.ctr;
 
     glm::vec4 pnt2 = rot_mat * glm::vec4(pnt.x, pnt.y, pnt.z, 1);
-    m_pos = m_int + glm::vec3(pnt2.x, pnt2.y, pnt2.z);
-    glm::vec4 up2 = rot_mat * glm::vec4(m_up.x, m_up.y, m_up.z, 0);
-    m_up = glm::vec3(up2.x, up2.y, up2.z);
+    m_current.eye = m_current.ctr + glm::vec3(pnt2.x, pnt2.y, pnt2.z);
+    glm::vec4 up2 = rot_mat * glm::vec4(m_current.up.x, m_current.up.y, m_current.up.z, 0);
+    m_current.up = glm::vec3(up2.x, up2.y, up2.z);
 }
 
 //-------------------------------------------------------------------------
@@ -351,7 +351,7 @@ void Manipulator::wheel(int value)
     auto fval(static_cast<float>(value));
     float dx = (fval * fabs(fval)) / static_cast<float>(m_width);
 
-    glm::vec3 z(m_pos - m_int);
+    glm::vec3 z(m_current.eye - m_current.ctr);
     float length = z.length() * 0.1f;
     length = length < 0.001f ? 0.001f : length;
 
@@ -364,9 +364,9 @@ void Manipulator::wheel(int value)
 //
 void Manipulator::setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up)
 {
-    m_pos = eye;
-    m_int = center;
-    m_up = up;
+    m_current.eye = eye;
+    m_current.ctr = center;
+    m_current.up = up;
     update();
 }
 
@@ -394,9 +394,9 @@ void Manipulator::setMousePosition(int x, int y)
 //
 void Manipulator::getLookAt(glm::vec3& eye, glm::vec3& center, glm::vec3& up) const
 {
-    eye = m_pos;
-    center = m_int;
-    up = m_up;
+    eye = m_current.eye;
+    center = m_current.ctr;
+    up = m_current.up;
 }
 
 //-------------------------------------------------------------------------
@@ -479,6 +479,22 @@ int Manipulator::getWidth() const
 int Manipulator::getHeight() const
 {
     return m_height;
+}
+
+//-------------------------------------------------------------------------
+// Set FOV
+//
+void Manipulator::setFov(float fov)
+{
+    m_fov = fov;
+}
+
+//-------------------------------------------------------------------------
+// Retreives FOV
+//
+float Manipulator::getFov() const
+{
+    return m_fov;
 }
 
 
