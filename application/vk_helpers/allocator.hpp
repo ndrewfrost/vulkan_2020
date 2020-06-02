@@ -81,9 +81,6 @@ public:
     void init(vk::Device device, vk::PhysicalDevice physicalDevice, vk::Instance instance)
     {
         m_device = device;
-        m_physicalDevice = physicalDevice;
-        m_instance = instance;
-        m_physicalMemoryProperties = m_physicalDevice.getMemoryProperties();
 
         VmaAllocatorCreateInfo allocatorInfo = {};
         allocatorInfo.physicalDevice = physicalDevice;
@@ -147,9 +144,9 @@ public:
         return createBuffer(info, memUsage);
     }
 
-    BufferVma createBuffer(VkDeviceSize                  size, 
-                           VkBufferUsageFlags            usage,
-                           const vk::MemoryPropertyFlags memProps)
+    BufferVma createBuffer(VkDeviceSize            size, 
+                           VkBufferUsageFlags      usage,
+                           vk::MemoryPropertyFlags memProps)
     {
         createBuffer(size, usage, vkToVmaMemoryUsage(memProps));
     }
@@ -157,10 +154,10 @@ public:
     //-------------------------------------------------------------------------
     // Staging buffer creation, uploading data to device buffer
     //
-    BufferVma createBuffer(const vk::CommandBuffer  cmdBuffer,
-                           const VkDeviceSize       size,
-                           const void*              data,
-                           const VkBufferUsageFlags usage,
+    BufferVma createBuffer(vk::CommandBuffer  cmdBuffer,
+                           VkDeviceSize       size,
+                           const void*        data,
+                           VkBufferUsageFlags usage,
                            VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
     {
         BufferVma resultBuffer = createBuffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, memUsage);
@@ -172,10 +169,10 @@ public:
         return resultBuffer;
     }
 
-    BufferVma createBuffer(const vk::CommandBuffer cmdBuffer,
-                           const VkDeviceSize& size,
-                           const void* data,
-                           const VkBufferUsageFlags usage,
+    BufferVma createBuffer(vk::CommandBuffer  cmdBuffer,
+                           VkDeviceSize       size,
+                           const void*        data,
+                           VkBufferUsageFlags usage,
                            vk::MemoryPropertyFlags memProps)
     {
         createBuffer(cmdBuffer, size, data, usage, vkToVmaMemoryUsage(memProps));
@@ -185,10 +182,10 @@ public:
     // Staging buffer creation, uploading data to device buffer
     //
     template <typename T>
-    BufferVma createBuffer(const vk::CommandBuffer  cmdBuffer,
+    BufferVma createBuffer(vk::CommandBuffer     cmdBuffer,
                            const std::vector<T>& data,
-                           const VkBufferUsageFlags usage,
-                           VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
+                           VkBufferUsageFlags    usage,
+                           VmaMemoryUsage        memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
     {
         VkDeviceSize size = sizeof(T) * data.size();
         BufferVma resultBuffer = createBuffer(size, usage, memUsage);
@@ -200,10 +197,10 @@ public:
     }
 
     template <typename T>
-    BufferVma createBuffer(const vk::CommandBuffer  cmdBuffer,
-                           const std::vector<T>&    data,
-                           const VkBufferUsageFlags usage,
-                           vk::MemoryPropertyFlags  memProps)
+    BufferVma createBuffer(vk::CommandBuffer       cmdBuffer,
+                           const std::vector<T>&   data,
+                           VkBufferUsageFlags      usage,
+                           vk::MemoryPropertyFlags memProps)
     {
         return createBuffer(cmdBuffer, data, usage, vkToVmaMemoryUsage(memProps));
     }
@@ -213,44 +210,34 @@ public:
     //
     ImageVma createImage(
         const VkImageCreateInfo& imageInfo,
-        const VkMemoryPropertyFlags memUsage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+        const VmaMemoryUsage     memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
     {
-        ImageDedicated  result;
+        ImageVma imageResult;
 
         VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        allocInfo.requiredFlags = memUsage;
+        allocInfo.usage = memUsage;
 
-        vmaCreateImage(m_allocator, &imageInfo, &allocInfo, &result.image, &result.allocation, nullptr);
+        VkResult result = vmaCreateImage(m_allocator, &imageInfo, &allocInfo, &imageResult.image, &imageResult.allocation, nullptr);
+        assert(result == VK_SUCCESS);
 
-        return result;
+        return imageResult;
     }
 
     //-------------------------------------------------------------------------
     // Create Image with data
     //
     ImageVma createImage(
-        const vk::CommandBuffer& cmdBuffer,
-        size_t                   size,
+        const vk::CommandBuffer  cmdBuffer,
+        vk::DeviceSize           size,
         const void*              data,
         const VkImageCreateInfo& info,
-        const vk::ImageLayout&   layout = vk::ImageLayout::eShaderReadOnlyOptimal)
+        VkImageLayout            layout   = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VmaMemoryUsage           memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
     {
-        ImageDedicated result = createImage(info);
+        ImageVma imageResult = createImage(info);
 
         // Copy the data to staging buffer than to image
         if (data != nullptr) {
-            BufferDedicated stageBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-            m_stagingBuffers.push_back(stageBuffer);
-
-            // copy data to buffer
-            void* mappedData;
-            vmaMapMemory(m_allocator, stageBuffer.allocation, &mappedData);
-            memcpy(mappedData, data, size);
-            vmaUnmapMemory(m_allocator, stageBuffer.allocation);
-
             // copy buffer to image
             vk::ImageSubresourceRange subresourceRange = {};
             subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
@@ -259,28 +246,106 @@ public:
             subresourceRange.baseArrayLayer = 0;
             subresourceRange.layerCount     = 1;
 
-            app::image::setImageLayout(cmdBuffer, result.image, vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eTransferDstOptimal, subresourceRange);
+            // doing these transitions per copy is not efficient, should do in bulk for many images
+            app::cmdBarrierImageLayout(cmdBuffer, resultImage.image, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 
-            vk::BufferImageCopy bufferCopyRegion = {};
-            bufferCopyRegion.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-            bufferCopyRegion.imageSubresource.layerCount = 1;
-            bufferCopyRegion.imageExtent                 = info.extent;
+            VkOffset3D offset = { 0 };
+            VkImageSubresourceLayers subresource = { 0 };
+            subresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            subresource.layerCount = 1;
 
-            cmdBuffer.copyBufferToImage(stageBuffer.buffer, result.image, 
-                                    vk::ImageLayout::eTransferDstOptimal, bufferCopyRegion);
+            m_staging.cmdToImage(cmdBuffer, resultImage.image, offset, info.extent, subresource, size, data);
 
             // Setting final image Layout
-            subresourceRange.levelCount = 1;
-            app::image::setImageLayout(cmdBuffer, result.image, vk::ImageLayout::eTransferDstOptimal,
-                layout, subresourceRange);
-
+            app::cmdBarrierImageLayout(cmdBuffer, resultImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout);
         }
         else {
-            app::image::setImageLayout(cmdBuffer, result.image, vk::ImageLayout::eUndefined, layout );
+            // Setting final image layout
+            app::cmdBarrierImageLayout(cmdBuffer, resultImage.image, VK_IMAGE_LAYOUT_UNDEFINED, layout );
         }
 
         return result;
+    }
+
+    //-------------------------------------------------------------------------
+    // Create Textures
+    // 
+    TextureVma createTexture(
+        const ImageVma& image,
+        const VkImageViewCreateInfo& imageViewCreateInfo)
+    {
+        TextureVma textureResult;
+        textureResult.image      = image.image;
+        textureResult.allocation = image.allocation;
+        textureResult.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        assert(imageViewCreateInfo.image == image.image);
+
+        try {
+            textureResult.descriptor.imageView = m_device.createImageView(imageViewCreateInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create texture imageView!");
+        }
+        return textureResult;
+    }
+
+    TextureVma createTexture(
+        const ImageVma& image,
+        const VkImageViewCreateInfo& imageViewCreateInfo,
+        const VkSamplerCreateInfo& samplerCreateInfo)
+    {
+        TextureVma resultTexture = createTexture(image, imageViewCreateInfo);
+        resultTexture.descriptor.sampler = m_samplerPool.acquireSampler(samplerCreateInfo);
+
+        return resultTexture;
+    }
+
+    //-------------------------------------------------------------------------
+    // creates image for the texture
+    // - creates image
+    // - creates texture part associating image and sampler
+    // 
+    TextureVma createTexture(
+        const vk::CommandBuffer&     cmdBuffer,
+        size_t                       size,
+        const void*                  data,
+        const vk::ImageCreateInfo&   info,
+        const vk::SamplerCreateInfo& samplerCreateInfo,
+        const vk::ImageLayout&       layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        bool                         isCube = false)
+    {
+        ImageVma image = createImage(static_cast<VkCommandBuffer>(cmdBuffer), size, data, info, static_cast<VkImageLayout>(layout));
+    
+        VkImageViewCreateInfo viewInfo = {};
+        viewInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewInfo.image                           = image.image;
+        viewInfo.format                          = static_cast<VkFormat>(info.format);
+        viewInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.subresourceRange.baseMipLevel   = 0;
+        viewInfo.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+        viewInfo.subresourceRange.baseArrayLayer = 0;
+        viewInfo.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        viewInfo.pNext                           = nullptr;
+        
+        switch (info.imageType) {
+        case vk::ImageType::e1D:
+            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_1D;
+            break;
+        case vk::ImageType::e2D:
+            viewInfo.viewType = isCube ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
+            break;
+        case vk::ImageType::e3D:
+            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_3D;
+            break;
+        default:
+            assert(0);
+        }
+
+        TextureVma resultTexture = createTexture(image, viewInfo, samplerCreateInfo);
+        resultTexture.descriptor.imageLayout = static_cast<VkImageLayout>(layout);
+        return resultTexture;
     }
 
     //-------------------------------------------------------------------------
@@ -293,35 +358,53 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    // Flushing staging buffers, must be done after the command buffer is submitted
+    // implicit staging operations triggered by creates
     //
-    void flushStaging(vk::Fence fence = vk::Fence())
+    void finalizeStaging(VkFence fence = VK_NULL_HANDLE) { m_staging.finalizeResources(fence); }
+    void finalizeAndReleaseStaging(VkFence fence = VK_NULL_HANDLE)
     {
-        if(!m_stagingBuffers.empty()) {
-            m_garbageBuffers.push_back({ fence, m_stagingBuffers });
-            m_stagingBuffers.clear();
-        }
-        cleanGarbage();
+        m_staging.finalizeResources(fence);
+        m_staging.releaseResources();
     }
+    void releaseStaging() { m_staging.releaseResources(); }
+
+    StagingMemoryManager* getStaging() { return &m_staging; }
+    const StagingMemoryManager* getStaging() const { return &m_staging; }
 
     //-------------------------------------------------------------------------
     // Destroy
     //
     void destroy(BufferVma& buffer)
     {
-        vmaDestroyBuffer(m_allocator, buffer.buffer, buffer.allocation);
+        if (buffer.buffer)
+            vkDestroyBuffer(static_cast<VkDevice>(m_device), buffer.buffer, nullptr);
+        if (buffer.allocation)
+            vmaFreeMemory(m_allocator, buffer.allocation);      
+
+        buffer = BufferVma();
     }
 
     void destroy(ImageVma& image)
     {
-        vmaDestroyImage(m_allocator, image.image, image.allocation);
+        if (image.image)
+            vkDestroyImage(static_cast<VkDevice>(m_device), image.image, nullptr);
+        if (image.allocation)
+            vmaFreeMemory(m_allocator, image.allocation);
+
+        image = ImageVma();
     }
 
-    void destroy(TextureDedicated& texture)
+    void destroy(TextureVma& texture)
     {
-        m_device.destroyImageView(texture.descriptor.imageView);
-        m_device.destroySampler(texture.descriptor.sampler);
-        vmaDestroyImage(m_allocator, texture.image, texture.allocation);
+        vkDestroyImageView(static_cast<VkDevice>(m_device), texture.descriptor.imageView, nullptr);
+        vkDestroyImage(static_cast<VkDevice>(m_device), texture.image, nullptr);
+
+        if (texture.descriptor.sampler)
+            m_samplerPool.releaseSampler(texture.descriptor.sampler);
+        if (texture.allocation)
+            vmaFreeMemory(m_allocator, texture.allocation);
+
+        texture = TextureVma();
     }
 
     void destroy(AccelerationDedicated& acceleration)
@@ -334,55 +417,21 @@ public:
     //
     VmaAllocator& getAllocator() { return m_allocator; }
 
-protected:
-
     //-------------------------------------------------------------------------
-    // Find memory type for memory alloc
+    // Other
     //
-    uint32_t getMemoryType(uint32_t memoryTypeBits, const vk::MemoryPropertyFlags& properties)
-    {    
-        for (uint32_t i = 0; i < m_physicalMemoryProperties.memoryTypeCount; ++i) {
-            if (((memoryTypeBits & (1 << i)) > 0) 
-                && (m_physicalMemoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-                return i;
-            }
-        }
-
-        return UINT32_MAX;
-    }
-
-    //-------------------------------------------------------------------------
-    // Clean All Staging buffers, only if associated fence is set to ready
-    //
-    void cleanGarbage()
+    void* map(const BufferVma& buffer)
     {
-        auto garBuffer = m_garbageBuffers.begin();
-        while (garBuffer != m_garbageBuffers.end()) {
-            vk::Result result = vk::Result::eSuccess;
-
-            if (garBuffer->fence) // fence could not be set
-                result = m_device.getFenceStatus(garBuffer->fence);
-
-            if (result == vk::Result::eSuccess) {
-                for (auto & staging : garBuffer ->stagingBuffers) {
-                    // Delete all buffers and free memory
-                    vmaDestroyBuffer(m_allocator, staging.buffer, staging.allocation);
-                }
-                garBuffer = m_garbageBuffers.erase(garBuffer);
-            }
-            else {
-                ++garBuffer;
-            }
-        }
+        void* mapped;
+        vmaMapMemory(m_allocator, buffer.allocation, &mapped);
+        return mapped;
     }
-    
+
+    void unmap(const BufferVma& buffer) { vmaUnmapMemory(m_allocator, buffer.allocation); }
+
+protected:    
     vk::Device                         m_device;
-    vk::PhysicalDevice                 m_physicalDevice;
-    vk::PhysicalDeviceMemoryProperties m_physicalMemoryProperties;
-    vk::Instance                       m_instance;
-
     VmaAllocator                       m_allocator;
-
     app::StagingMemoryManager          m_staging;
     app::SamplerPool                   m_samplerPool;
 
