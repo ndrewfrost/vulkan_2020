@@ -199,36 +199,47 @@ void ExampleVulkan::createDescriptorSetLayout()
     uint32_t nTextures = static_cast<uint32_t>(m_textures.size());
     uint32_t nObjects  = static_cast<uint32_t>(m_objModel.size());
 
-    // Camera matrices   (binding = 0)
-    vk::DescriptorSetLayoutBinding binding = {};
-    binding.binding         = 0;
-    binding.descriptorType  = vk::DescriptorType::eUniformBuffer;
-    binding.descriptorCount = 1;
-    binding.stageFlags      = vk::ShaderStageFlagBits::eVertex;
-    m_descSetLayoutBind.emplace_back(binding);
+    // Camera matrices (binding = 0)
+    vk::DescriptorSetLayoutBinding bindingCamera = {};
+    bindingCamera.binding         = 0;
+    bindingCamera.descriptorType  = vk::DescriptorType::eUniformBuffer;
+    bindingCamera.descriptorCount = 1;
+    bindingCamera.stageFlags      = vk::ShaderStageFlagBits::eVertex;
+    m_descSetLayoutBind.addBinding(bindingCamera);
 
-    // Materials        (binding = 1)
-    binding.binding         = 1;
-    binding.descriptorType  = vk::DescriptorType::eStorageBuffer;
-    binding.descriptorCount = nObjects;
-    binding.stageFlags      = vk::ShaderStageFlagBits::eVertex
-                            | vk::ShaderStageFlagBits::eFragment;
-    m_descSetLayoutBind.emplace_back(binding);
+    // Materials (binding = 1)
+    vk::DescriptorSetLayoutBinding bindingMat = {};
+    bindingMat.binding         = 1;
+    bindingMat.descriptorType  = vk::DescriptorType::eStorageBuffer;
+    bindingMat.descriptorCount = nObjects;
+    bindingMat.stageFlags      = vk::ShaderStageFlagBits::eVertex
+                               | vk::ShaderStageFlagBits::eFragment;
+    m_descSetLayoutBind.addBinding(bindingMat);
 
     // Scene Decription (binding = 2)
-    binding.binding         = 2;
-    binding.descriptorType  = vk::DescriptorType::eStorageBuffer;
-    binding.descriptorCount = nTextures;
-    binding.stageFlags      = vk::ShaderStageFlagBits::eVertex
-                            | vk::ShaderStageFlagBits::eFragment;
-    m_descSetLayoutBind.emplace_back(binding);
+    vk::DescriptorSetLayoutBinding bindingScene = {};
+    bindingScene.binding         = 2;
+    bindingScene.descriptorType  = vk::DescriptorType::eStorageBuffer;
+    bindingScene.descriptorCount = 1;
+    bindingScene.stageFlags      = vk::ShaderStageFlagBits::eVertex
+                                 | vk::ShaderStageFlagBits::eFragment;
+    m_descSetLayoutBind.addBinding(bindingScene);
 
-    // Textures         (binding = 3)
-    binding.binding         = 3;
-    binding.descriptorType  = vk::DescriptorType::eCombinedImageSampler;
-    binding.descriptorCount = 1;
-    binding.stageFlags      = vk::ShaderStageFlagBits::eFragment;
-    m_descSetLayoutBind.emplace_back(binding);
+    // Textures (binding = 3)
+    vk::DescriptorSetLayoutBinding bindingTextures = {};
+    bindingTextures.binding         = 3;
+    bindingTextures.descriptorType  = vk::DescriptorType::eCombinedImageSampler;
+    bindingTextures.descriptorCount = nTextures;
+    bindingTextures.stageFlags      = vk::ShaderStageFlagBits::eFragment;
+    m_descSetLayoutBind.addBinding(bindingTextures);
+
+    // Materials (binding = 4)
+    vk::DescriptorSetLayoutBinding bindingMat = {};
+    bindingMat.binding         = 4;
+    bindingMat.descriptorType  = vk::DescriptorType::eStorageBuffer;
+    bindingMat.descriptorCount = nObjects;
+    bindingMat.stageFlags      = vk::ShaderStageFlagBits::eFragment;
+    m_descSetLayoutBind.addBinding(bindingMat);
 
     m_descriptorSetLayout = app::util::createDescriptorSetLayout(m_device, m_descSetLayoutBind);
     m_descriptorPool      = app::util::createDescriptorPool(m_device, m_descSetLayoutBind, 1);

@@ -54,6 +54,9 @@
     <ClCompile Include="vk_helpers\swapchain.cpp">
       <Filter>vk</Filter>
     </ClCompile>
+    <ClCompile Include="vk_helpers\descriptorsets.cpp">
+      <Filter>vk</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\vk_mem_alloc.h">

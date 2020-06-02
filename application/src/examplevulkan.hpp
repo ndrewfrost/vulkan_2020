@@ -15,18 +15,19 @@
 #include "glm/gtc/matrix_inverse.hpp"
 
 #include "../external/obj_loader.h"
-#include "../vk_helpers/commands.hpp"
-#include "../general_helpers/manipulator.h"
-#include "../vk_helpers/pipeline.hpp"
-#include "../vk_helpers/allocator.hpp"
+
 #include "../vk_helpers/utilities.hpp"
-#include "../vk_helpers/descriptorsets.hpp"
 #include "../vk_helpers/renderpass.hpp"
 #include "../vk_helpers/images.hpp"
+
+#include "../vk_helpers/pipeline.hpp"
+#include "../general_helpers/manipulator.h"
+#include "../vk_helpers/commands.hpp"
+
 #include "../vk_helpers/vulkanbackend.hpp"
-#ifdef _DEBUG
 #include "../vk_helpers/debug.hpp"
-#endif // _DEBUG
+#include "../vk_helpers/descriptorsets.hpp"
+#include "../vk_helpers/allocator.hpp"
 
  ///////////////////////////////////////////////////////////////////////////
  // Example Vulkan                                                        //
@@ -115,23 +116,23 @@ public:
     ObjPushConstant m_pushConstant;
 
     // Array of objects and instances in the scene
-    std::vector<ObjModel>    m_objModel;
-    std::vector<ObjInstance> m_objInstance;
+    std::vector<ObjModel>              m_objModel;
+    std::vector<ObjInstance>           m_objInstance;
 
     // Graphic pipeline
-    vk::PipelineLayout                          m_pipelineLayout;
-    vk::Pipeline                                m_graphicsPipeline;
-    std::vector<vk::DescriptorSetLayoutBinding> m_descSetLayoutBind;
-    vk::DescriptorPool                          m_descriptorPool;
-    vk::DescriptorSetLayout                     m_descriptorSetLayout;
-    vk::DescriptorSet                           m_descriptorSet;
+    vk::PipelineLayout                 m_pipelineLayout;
+    vk::Pipeline                       m_graphicsPipeline;
+    app::DescriptorSetBindings         m_descSetLayoutBind;
+    vk::DescriptorPool                 m_descriptorPool;
+    vk::DescriptorSetLayout            m_descriptorSetLayout;
+    vk::DescriptorSet                  m_descriptorSet;
 
     app::BufferDedicated               m_cameraMat;  // Device-Host of the camera matrices
     app::BufferDedicated               m_sceneDesc;  // Device buffer of the OBJ instances
     std::vector<app::TextureDedicated> m_textures;   // vector of all textures of the scene
     
-    app::Allocator        m_allocator;
-    app::debug::DebugUtil m_debug;
+    app::Allocator                     m_allocator;
+    app::debug::DebugUtil              m_debug;
 
 ///////////////////////////////////////////////////////////////////////////
 // Post-processing                                                       //
