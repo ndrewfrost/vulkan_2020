@@ -34,10 +34,13 @@ inline vk::RenderPass createRenderPass(
 
     for (const auto& format : colorAttachmentFormats) {
         vk::AttachmentDescription colorAttachment = {};
-        colorAttachment.format        = format;
-        colorAttachment.loadOp        = clearColor ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare;
-        colorAttachment.initialLayout = initialLayout;
-        colorAttachment.finalLayout   = finalLayout;
+        colorAttachment.format         = format;
+        colorAttachment.loadOp         = clearColor ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare;
+        colorAttachment.storeOp        = vk::AttachmentStoreOp::eStore;
+        colorAttachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+        colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+        colorAttachment.initialLayout  = initialLayout;
+        colorAttachment.finalLayout    = finalLayout;
 
         vk::AttachmentReference colorAttachmentRef = {};
         colorAttachmentRef.attachment = static_cast<uint32_t>(allAttachments.size());
@@ -51,10 +54,13 @@ inline vk::RenderPass createRenderPass(
 
     if (hasDepth) {
         vk::AttachmentDescription depthAttachment = {};
-        depthAttachment.format        = depthAttachmentFormat;
-        depthAttachment.loadOp        = clearDepth ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad;
-        depthAttachment.initialLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-        depthAttachment.finalLayout   = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+        depthAttachment.format         = depthAttachmentFormat;
+        depthAttachment.loadOp         = clearDepth ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad;
+        depthAttachment.storeOp        = vk::AttachmentStoreOp::eStore;
+        depthAttachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+        depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+        depthAttachment.initialLayout  = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+        depthAttachment.finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
         depthAttachmentRef.attachment = static_cast<uint32_t>(allAttachments.size());
         depthAttachmentRef.layout     = vk::ImageLayout::eDepthStencilAttachmentOptimal;
