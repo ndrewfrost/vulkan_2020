@@ -8,7 +8,7 @@
 
 #define VK_NO_PROTOTYPES
 #include "vulkanbackend.hpp"
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;;
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 namespace app {
 
@@ -66,6 +66,8 @@ void VulkanBackend::destroy()
         m_device.destroyDescriptorPool(m_imguiDescPool);
     }
 
+    m_device.destroyRenderPass(m_renderPass);
+
     m_device.destroyImageView(m_depthView);
     m_device.destroyImage(m_depthImage);
     m_device.freeMemory(m_depthMemory);
@@ -74,23 +76,14 @@ void VulkanBackend::destroy()
     m_device.destroyImage(m_colorImage);
     m_device.freeMemory(m_colorMemory);
 
-    for (auto framebuffer : m_framebuffers) {
-        m_device.destroyFramebuffer(framebuffer);
-    }
-
-    m_device.freeCommandBuffers(m_commandPool, m_commandBuffers);
-
     m_device.destroyPipelineCache(m_pipelineCache);
-
-    m_device.destroyRenderPass(m_renderPass);
-
-    m_device.destroySemaphore(m_imageAvailable);
-    m_device.destroySemaphore(m_renderFinished);
 
     for (uint32_t i = 0; i < m_swapchain.getImageCount(); i++)
     {
-        m_device.destroyFence(m_fences[i]);
+
         m_device.destroyFramebuffer(m_framebuffers[i]);
+        m_device.destroyFence(m_fences[i]);
+        m_device.freeCommandBuffers(m_commandPool, m_commandBuffers[i]);
     }
 
     m_swapchain.destroy();
@@ -450,6 +443,11 @@ void VulkanBackend::createRenderPass()
     catch (vk::SystemError err) {
         throw std::runtime_error("failed to create render pass!");
     }
+
+#ifdef _DEBUG
+    m_device.setDebugUtilsObjectNameEXT(
+        { vk::ObjectType::eRenderPass, reinterpret_cast<const uint64_t&>(m_renderPass), "VulkanBackend" });
+#endif  
 }
 
 //-------------------------------------------------------------------------
@@ -606,7 +604,7 @@ void VulkanBackend::createDepthBuffer()
         throw std::runtime_error("failed to create depth images!");
     }
 
-    // Allocate the memory
+    // find memory requirements
     const vk::MemoryRequirements memReqs = m_device.getImageMemoryRequirements(m_depthImage);
     uint32_t memoryTypeIdx = -1;
     {
@@ -622,8 +620,9 @@ void VulkanBackend::createDepthBuffer()
             throw std::runtime_error("failed to find suitable memory type!");
     }
 
+    //Allocate the memory
     vk::MemoryAllocateInfo memAllocInfo = {};
-    memAllocInfo.allocationSize = memReqs.size;
+    memAllocInfo.allocationSize  = memReqs.size;
     memAllocInfo.memoryTypeIndex = memoryTypeIdx;
 
     try {
@@ -653,17 +652,17 @@ void VulkanBackend::createDepthBuffer()
     subresourceRange.layerCount = 1;
 
     vk::ImageMemoryBarrier imageMemoryBarrier;
-    imageMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
-    imageMemoryBarrier.newLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+    imageMemoryBarrier.oldLayout           = vk::ImageLayout::eUndefined;
+    imageMemoryBarrier.newLayout           = vk::ImageLayout::eDepthStencilAttachmentOptimal;
     imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    imageMemoryBarrier.image = m_depthImage;
-    imageMemoryBarrier.subresourceRange = subresourceRange;
-    imageMemoryBarrier.srcAccessMask = vk::AccessFlags();
-    imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite
-        | vk::AccessFlagBits::eDepthStencilAttachmentRead;
+    imageMemoryBarrier.image               = m_depthImage;
+    imageMemoryBarrier.subresourceRange    = subresourceRange;
+    imageMemoryBarrier.srcAccessMask       = vk::AccessFlags();
+    imageMemoryBarrier.dstAccessMask       = vk::AccessFlagBits::eDepthStencilAttachmentWrite
+                                           | vk::AccessFlagBits::eDepthStencilAttachmentRead;
 
-    const vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eTopOfPipe;
+    const vk::PipelineStageFlags srcStageMask  = vk::PipelineStageFlagBits::eTopOfPipe;
     const vk::PipelineStageFlags destStageMask = vk::PipelineStageFlagBits::eEarlyFragmentTests;
 
     cmdBuffer.pipelineBarrier(srcStageMask, destStageMask, vk::DependencyFlags(),
@@ -678,10 +677,10 @@ void VulkanBackend::createDepthBuffer()
 
     // Setting up the view
     vk::ImageViewCreateInfo depthStencilView;
-    depthStencilView.viewType = vk::ImageViewType::e2D;
-    depthStencilView.format = m_depthFormat;
+    depthStencilView.viewType         = vk::ImageViewType::e2D;
+    depthStencilView.format           = m_depthFormat;
     depthStencilView.subresourceRange = { aspect, 0, 1, 0, 1 };
-    depthStencilView.image = m_depthImage;
+    depthStencilView.image            = m_depthImage;
     try {
         m_depthView = m_device.createImageView(depthStencilView);
     }
@@ -703,18 +702,18 @@ void VulkanBackend::createFrameBuffers()
 
     // create frame buffer for every swapchain image
     for (uint32_t i = 0; i < m_swapchain.getImageCount(); i++) {
-        vk::ImageView attachments[3];
-        attachments[2] = m_swapchain.getImageView(i);
-        attachments[1] = m_depthView;
+        std::array<vk::ImageView, 3> attachments;
         attachments[0] = m_colorView;
+        attachments[1] = m_depthView;
+        attachments[2] = m_swapchain.getImageView(i);
 
         vk::FramebufferCreateInfo framebufferInfo = {};
-        framebufferInfo.renderPass = m_renderPass;
+        framebufferInfo.renderPass      = m_renderPass;
         framebufferInfo.attachmentCount = 3;
-        framebufferInfo.pAttachments = attachments;
-        framebufferInfo.width = m_size.width;
-        framebufferInfo.height = m_size.height;
-        framebufferInfo.layers = 1;
+        framebufferInfo.pAttachments    = attachments.data();
+        framebufferInfo.width           = m_size.width;
+        framebufferInfo.height          = m_size.height;
+        framebufferInfo.layers          = 1;
 
         try {
             m_framebuffers[i] = m_device.createFramebuffer(framebufferInfo);
@@ -989,6 +988,14 @@ void VulkanBackend::onWindowResize(uint32_t width, uint32_t height)
     m_size.width = width;
     m_size.height = height;
 
+    if (ImGui::GetCurrentContext() != nullptr)
+    {
+        auto& imgui_io = ImGui::GetIO();
+        imgui_io.DisplaySize = ImVec2(static_cast<float>(width), static_cast<float>(height));
+    }
+    CameraManipulator.setWindowSize(width, height);
+
+
     m_device.waitIdle();
     m_graphicsQueue.waitIdle();
 
@@ -1015,6 +1022,7 @@ static void checkVkResult(VkResult err)
     if (err < 0)
         abort();
 }
+
 //-------------------------------------------------------------------------
 // Initialization of the GUI
 // - Called AFTER device creation

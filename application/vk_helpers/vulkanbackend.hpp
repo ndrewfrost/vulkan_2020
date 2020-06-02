@@ -211,9 +211,7 @@ protected:
     vk::ImageView                  m_colorView;        
 
     std::vector<vk::Fence>         m_fences;            // Fences per nb element in Swapchain
-    vk::Semaphore                  m_imageAvailable;    // Swap chain image presentation
-    vk::Semaphore                  m_renderFinished;    // Command buffer submission and execution
-
+    
     vk::Extent2D                   m_size{ 0, 0 };      // Size of the window
     bool                           m_vsync{ false };    // Swapchain v-Sync
     GLFWwindow*                    m_window{ nullptr }; // GLFW Window
