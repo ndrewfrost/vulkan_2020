@@ -100,7 +100,7 @@ void SwapChain::destroy()
 //-------------------------------------------------------------------------
 // Update the swapchain configuration
 //
-void SwapChain::update(int width, int height, bool vsync)
+void SwapChain::update(uint32_t width, uint32_t height, bool vsync)
 {
     m_changeID++;
 

@@ -42,8 +42,8 @@ public:
     void destroy();
 
     // Update swapchain Configuration
-    void update(int width, int height, bool vsync);
-    void update(int width, int height) { update(width, height, m_vsync); }
+    void update(uint32_t width, uint32_t height, bool vsync);
+    void update(uint32_t width, uint32_t height) { update(width, height, m_vsync); }
     
     // Aquire active index
     vk::Result acquire();

@@ -162,20 +162,23 @@ public:
     //-------------------------------------------------------------------------
     // Collection of Getter Methods
     //
-    vk::Instance                          getInstance()         { return m_instance; }
-    vk::Device                            getDevice()           { return m_device; }
-    vk::PhysicalDevice                    getPhysicalDevice()   { return m_physicalDevice; }
-    vk::Queue                             getGraphicsQueue()    { return m_graphicsQueue; }
-    uint32_t                              getGraphicsQueueIdx() { return m_graphicsQueueIdx; }
-    vk::Queue                             getPresentQueue()     { return m_presentQueue; }
-    uint32_t                              getPresentQueueIdx()  { return m_presentQueueIdx; }
-    vk::Extent2D                          getSize()             { return m_size; }
-    vk::RenderPass                        getRenderPass()       { return m_renderPass; }
-    vk::PipelineCache                     getPipelineCache()    { return m_pipelineCache; }
-    const std::vector<vk::Framebuffer>&   getFramebuffers()     { return m_framebuffers; }
-    const std::vector<vk::CommandBuffer>& getCommandBuffers()   { return m_commandBuffers; }
-    uint32_t                              getCurrentFrame()     { return m_swapchain.getActiveImageIndex; }
-    vk::SampleCountFlagBits               getSampleCount()      { return m_sampleCount;  }
+    vk::Instance                          getInstance()           { return m_instance; }
+    vk::Device                            getDevice()             { return m_device; }
+    vk::PhysicalDevice                    getPhysicalDevice()     { return m_physicalDevice; }
+    vk::SurfaceKHR                        getSurface()            { return m_surface; }
+    vk::Queue                             getGraphicsQueue()      { return m_graphicsQueue; }
+    uint32_t                              getGraphicsQueueIdx()   { return m_graphicsQueueIdx; }
+    vk::Queue                             getPresentQueue()       { return m_presentQueue; }
+    uint32_t                              getPresentQueueIdx()    { return m_presentQueueIdx; }
+    vk::Extent2D                          getSize()               { return m_size; }
+    vk::RenderPass                        getRenderPass()         { return m_renderPass; }
+    vk::PipelineCache                     getPipelineCache()      { return m_pipelineCache; }
+    const std::vector<vk::Framebuffer>&   getFramebuffers()       { return m_framebuffers; }
+    const std::vector<vk::CommandBuffer>& getCommandBuffers()     { return m_commandBuffers; }
+    uint32_t                              getCurrentFrame() const { return m_swapchain.getActiveImageIndex(); }
+    vk::Format                            getColorFormat()  const { return m_colorFormat; }
+    vk::Format                            getDepthFormat()  const { return m_depthFormat; }
+    vk::SampleCountFlagBits               getSampleCount()        { return m_sampleCount;  }
      
 protected:
     vk::Instance                   m_instance;
