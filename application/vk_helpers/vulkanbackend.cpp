@@ -87,13 +87,13 @@ void VulkanBackend::destroy()
     m_device.destroySemaphore(m_imageAvailable);
     m_device.destroySemaphore(m_renderFinished);
 
-    for (uint32_t i = 0; i < m_swapchain.imageCount; i++)
+    for (uint32_t i = 0; i < m_swapchain.getImageCount(); i++)
     {
         m_device.destroyFence(m_fences[i]);
         m_device.destroyFramebuffer(m_framebuffers[i]);
     }
 
-    m_swapchain.deinit();
+    m_swapchain.destroy();
 
     m_device.destroyCommandPool(m_commandPool);
 
@@ -318,10 +318,12 @@ void VulkanBackend::createLogicalDeviceAndQueues(const ContextCreateInfo& info)
 //
 void VulkanBackend::createSwapChain()
 {
-    m_swapchain.init(m_physicalDevice, m_device, m_graphicsQueue, m_graphicsQueueIdx,
-        m_presentQueue, m_presentQueueIdx, m_surface);
+    m_swapchain.init(m_instance, m_device, m_physicalDevice, m_graphicsQueue, m_graphicsQueueIdx,
+        m_presentQueue, m_presentQueueIdx, m_surface, vk::Format::eB8G8R8A8Unorm);
 
-    m_swapchain.update(m_size, m_vsync);
+    m_swapchain.update(m_size.width, m_size.height, m_vsync);
+
+    m_colorFormat = m_swapchain.getFormat();
 }
 
 //-------------------------------------------------------------------------
@@ -347,12 +349,12 @@ void VulkanBackend::createCommandPool()
 //
 void VulkanBackend::createCommandBuffer()
 {
-    m_commandBuffers.resize(m_swapchain.imageCount);
+    m_commandBuffers.resize(m_swapchain.getImageCount());
 
     vk::CommandBufferAllocateInfo cmdBufferAllocInfo = {};
     cmdBufferAllocInfo.commandPool = m_commandPool;
     cmdBufferAllocInfo.level = vk::CommandBufferLevel::ePrimary;
-    cmdBufferAllocInfo.commandBufferCount = m_swapchain.imageCount;
+    cmdBufferAllocInfo.commandBufferCount = m_swapchain.getImageCount();
 
     try {
         m_commandBuffers = m_device.allocateCommandBuffers(cmdBufferAllocInfo);
@@ -360,6 +362,15 @@ void VulkanBackend::createCommandBuffer()
     catch (vk::SystemError err) {
         throw std::runtime_error("failed to allocate command buffers!");
     }
+
+#if _DEBUG
+    for (size_t i = 0; i < m_commandBuffers.size(); i++) {
+        std::string name = std::string("VulkanBackend") + std::to_string(i);
+        m_device.setDebugUtilsObjectNameEXT(
+            { vk::ObjectType::eCommandBuffer, 
+            reinterpret_cast<const uint64_t&>(m_commandBuffers[i]), name.c_str() });
+    }
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -688,14 +699,12 @@ void VulkanBackend::createFrameBuffers()
     // recreate frame buffers
     for (auto framebuffer : m_framebuffers)
         m_device.destroyFramebuffer(framebuffer);
-    m_framebuffers.resize(m_swapchain.imageCount);
+    m_framebuffers.resize(m_swapchain.getImageCount());
 
     // create frame buffer for every swapchain image
-    for (uint32_t i = 0; i < m_swapchain.imageCount; i++) {
-        auto imageViews = m_swapchain.images[i];
-
+    for (uint32_t i = 0; i < m_swapchain.getImageCount(); i++) {
         vk::ImageView attachments[3];
-        attachments[2] = imageViews.view;
+        attachments[2] = m_swapchain.getImageView(i);
         attachments[1] = m_depthView;
         attachments[0] = m_colorView;
 
@@ -714,23 +723,26 @@ void VulkanBackend::createFrameBuffers()
             throw std::runtime_error("failed to create framebuffer!");
         }
     }
+
+#ifdef _DEBUG
+    for (size_t i = 0; i < m_framebuffers.size(); i++) {
+        std::string name = std::string("VulkanBackend") + std::to_string(i);
+        m_device.setDebugUtilsObjectNameEXT(
+            { vk::ObjectType::eFramebuffer, reinterpret_cast<const uint64_t&>(m_framebuffers[i]), name.c_str() });
+    }
+#endif
 }
 
 //-------------------------------------------------------------------------
 // Create Sync Objects
-// Fences    - are used to synchronize the CPU and the GPU
-// Semaphore - are used to synchronize events across multiples 
-//             queues and/or hardware
+// Fences - are used to synchronize the CPU and the GPU
 //
 void VulkanBackend::createSyncObjects()
 {
-    m_fences.resize(m_swapchain.imageCount);
+    m_fences.resize(m_swapchain.getImageCount());
 
     try {
-        m_imageAvailable = m_device.createSemaphore({});
-        m_renderFinished = m_device.createSemaphore({});
-
-        for (uint32_t i = 0; i < m_swapchain.imageCount; ++i) {
+        for (uint32_t i = 0; i < m_swapchain.getImageCount(); ++i) {
             m_fences[i] = m_device.createFence({ vk::FenceCreateFlagBits::eSignaled });
         }
     }
@@ -744,16 +756,19 @@ void VulkanBackend::createSyncObjects()
 //
 void VulkanBackend::prepareFrame()
 {
-    // fence until cmd buffer has finished executing before using again
-    m_device.waitForFences(m_fences[m_currentFrame], VK_TRUE, 10000);
-
-    // Acquire the next image from the swapchain
-    const vk::Result result = m_swapchain.acquire(m_imageAvailable, &m_currentFrame);
-
+    // Acquire the next image from the swap chain
+    auto result = m_swapchain.acquire();    
     // Recreate the swapchain if it's no longer compatible with the surface
     if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
         onWindowResize(m_size.width, m_size.height);
     }
+    else if (result != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to acquire image from swapchain!");
+    }
+
+    // fence until cmd buffer has finished executing before using again
+    uint32_t imageIndex = m_swapchain.getActiveImageIndex();
+    while (m_device.waitForFences(m_fences[imageIndex], VK_TRUE, 10000) == vk::Result::eTimeout) {}
 }
 
 //-------------------------------------------------------------------------
@@ -761,42 +776,33 @@ void VulkanBackend::prepareFrame()
 //
 void VulkanBackend::submitFrame()
 {
-    m_device.resetFences(m_fences[m_currentFrame]);
+    uint32_t imageIndex = m_swapchain.getActiveImageIndex();
+    m_device.resetFences(m_fences[imageIndex]);
+
+    vk::Semaphore semaphoreRead  = m_swapchain.getActiveReadSemaphore();
+    vk::Semaphore semaphoreWrite = m_swapchain.getActiveWrittenSemaphore();
 
     // Pipeline stage at which the queue submission will wait (via pWaitSemaphores)
     const vk::PipelineStageFlags waitStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
     vk::SubmitInfo submitInfo = {};
-    submitInfo.waitSemaphoreCount = 1;                                  // One wait semaphore
-    submitInfo.pWaitSemaphores = &m_imageAvailable;                 // Semaphore(s) to wait upon before the submitted command buffer starts executing
-    submitInfo.pWaitDstStageMask = &waitStageMask;                    // Pointer to the list of pipeline stages that the semaphore waits will occur at
-
-    submitInfo.commandBufferCount = 1;                                  // One Command Buffer
-    submitInfo.pCommandBuffers = &m_commandBuffers[m_currentFrame]; // Command buffers(s) to execute in this batch (submission)
-
-    submitInfo.signalSemaphoreCount = 1;                                  // One signal Semaphore
-    submitInfo.pSignalSemaphores = &m_renderFinished;                 // Semaphore(s) to be signaled when command buffers have completed
+    submitInfo.waitSemaphoreCount   = 1;                              // One wait semaphore
+    submitInfo.pWaitSemaphores      = &semaphoreRead;                 // Semaphore(s) to wait upon before the submitted command buffer starts executing
+    submitInfo.pWaitDstStageMask    = &waitStageMask;                 // Pointer to the list of pipeline stages that the semaphore waits will occur at
+    submitInfo.commandBufferCount   = 1;                              // One Command Buffer
+    submitInfo.pCommandBuffers      = &m_commandBuffers[imageIndex];  // Command buffers(s) to execute in this batch (submission)
+    submitInfo.signalSemaphoreCount = 1;                              // One signal Semaphore
+    submitInfo.pSignalSemaphores    = &semaphoreWrite;                // Semaphore(s) to be signaled when command buffers have completed
 
     // Submit to the graphics queue passing a wait fence
     try {
-        m_graphicsQueue.submit(submitInfo, m_fences[m_currentFrame]);
+        m_graphicsQueue.submit(submitInfo, m_fences[imageIndex]);
     }
     catch (vk::SystemError err) {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
 
-    const vk::Result res = m_swapchain.present(m_currentFrame, m_renderFinished);
-
-    if (!((res == vk::Result::eSuccess) || (res == vk::Result::eSuboptimalKHR))) {
-        if (res == vk::Result::eErrorOutOfDateKHR) {
-            // Swap chain is no longer compatible with the surface and needs to be recreated
-            onWindowResize(m_size.width, m_size.height);
-            return;
-        }
-    }
-
-    // Increasing the current frame buffer
-    //m_currentFrame = (m_currentFrame + 1) % m_swapchain.imageCount;
+    m_swapchain.present(m_graphicsQueue);
 }
 
 //-------------------------------------------------------------------------
@@ -986,7 +992,7 @@ void VulkanBackend::onWindowResize(uint32_t width, uint32_t height)
     m_device.waitIdle();
     m_graphicsQueue.waitIdle();
 
-    m_swapchain.update(m_size, m_vsync);
+    m_swapchain.update(m_size.width, m_size.height, m_vsync);
     createColorBuffer();
     createDepthBuffer();
     createFrameBuffers();

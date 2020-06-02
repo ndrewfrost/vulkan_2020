@@ -25,14 +25,17 @@ public:
 
     SwapChain() {}
     SwapChain(vk::Instance instance, vk::Device device, vk::PhysicalDevice physicalDevice,
-        vk::Queue graphicsQueue, uint32_t graphicsQueueIdx, vk::SurfaceKHR surface, vk::Format format = vk::Format::eB8G8R8A8Unorm)
+              vk::Queue graphicsQueue, uint32_t graphicsQueueIdx, vk::Queue presentQueue, 
+              uint32_t presentQueueIdx, vk::SurfaceKHR surface, vk::Format format = vk::Format::eB8G8R8A8Unorm)
     {
-        init(instance, device, physicalDevice, graphicsQueue, graphicsQueueIdx, surface, format);
+        init(instance, device, physicalDevice, graphicsQueue, graphicsQueueIdx, 
+             presentQueue, presentQueueIdx, surface, format);
     }
     ~SwapChain() { destroy(); }
 
-    bool init(vk::Instance instance, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue graphicsQueue,
-        uint32_t graphicsQueueIdx, vk::SurfaceKHR surface, vk::Format format = vk::Format::eB8G8R8A8Unorm);
+    bool init(vk::Instance instance, vk::Device device, vk::PhysicalDevice physicalDevice,
+              vk::Queue graphicsQueue, uint32_t graphicsQueueIdx, vk::Queue presentQueue,
+              uint32_t presentQueueIdx, vk::SurfaceKHR surface, vk::Format format = vk::Format::eB8G8R8A8Unorm);
 
     // Clear swapchain
     void deinitResources();
@@ -111,34 +114,6 @@ private:
     uint32_t                            m_width{ 0 };
     uint32_t                            m_height{ 0 };
     bool                                m_vsync = false;
-
-    /*
-    //--------------------------------------------------------------------------------------------------
-    //
-    //
-    
-    std::vector<vk::Framebuffer> createFramebuffer(vk::FramebufferCreateInfo framebufferCreateInfo)
-    {
-        // Verify that the first attachment is null
-        assert(framebufferCreateInfo.pAttachments[0] == vk::ImageView());
-
-        std::vector<vk::ImageView> attachments;
-        attachments.resize(framebufferCreateInfo.attachmentCount);
-        for (size_t i = 0; i < framebufferCreateInfo.attachmentCount; ++i) {
-            attachments[i] = framebufferCreateInfo.pAttachments[i];
-        }
-
-        framebufferCreateInfo.pAttachments = attachments.data();
-
-        std::vector<vk::Framebuffer> framebuffers;
-        framebuffers.resize(imageCount);
-        for (uint32_t i = 0; i < imageCount; i++) {
-            attachments[0] = images[i].view;
-            framebuffers[i] = device.createFramebuffer(framebufferCreateInfo);
-        }
-        return framebuffers;
-    }
-*/
 
 }; // class SwapChain
 

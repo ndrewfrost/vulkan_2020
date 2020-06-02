@@ -174,7 +174,7 @@ public:
     vk::PipelineCache                     getPipelineCache()    { return m_pipelineCache; }
     const std::vector<vk::Framebuffer>&   getFramebuffers()     { return m_framebuffers; }
     const std::vector<vk::CommandBuffer>& getCommandBuffers()   { return m_commandBuffers; }
-    uint32_t                              getCurrentFrame()     { return m_currentFrame; }
+    uint32_t                              getCurrentFrame()     { return m_swapchain.getActiveImageIndex; }
     vk::SampleCountFlagBits               getSampleCount()      { return m_sampleCount;  }
      
 protected:
@@ -191,7 +191,7 @@ protected:
 
     vk::CommandPool                m_commandPool;
 
-    app::Swapchain                 m_swapchain;
+    app::SwapChain                 m_swapchain;
     std::vector<vk::Framebuffer>   m_framebuffers;      // All framebuffers, correspond to the Swapchain
     std::vector<vk::CommandBuffer> m_commandBuffers;    // Command buffer per nb element in Swapchain
 
@@ -215,8 +215,6 @@ protected:
     bool                           m_vsync{ false };    // Swapchain v-Sync
     GLFWwindow*                    m_window{ nullptr }; // GLFW Window
         
-    uint32_t                       m_currentFrame{0};   // Current Frame in use
-
     // Surface buffer formats
     vk::Format                     m_colorFormat{ vk::Format::eB8G8R8A8Unorm };
     vk::Format                     m_depthFormat{ vk::Format::eUndefined };

@@ -24,15 +24,17 @@ namespace app {
 //-------------------------------------------------------------------------
 // Initialization of swapchain class variables
 //
-bool SwapChain::init(vk::Instance instance, vk::Device device, 
-    vk::PhysicalDevice physicalDevice, vk::Queue graphicsQueue, 
-    uint32_t graphicsQueueIdx, vk::SurfaceKHR surface, vk::Format format)
+bool SwapChain::init(vk::Instance instance, vk::Device device, vk::PhysicalDevice physicalDevice,
+                     vk::Queue graphicsQueue, uint32_t graphicsQueueIdx, vk::Queue presentQueue,
+                     uint32_t presentQueueIdx, vk::SurfaceKHR surface, vk::Format format)
 {
     assert(!m_device && "VkDevice must exist for swapchain");
     m_device           = device;
     m_physicalDevice   = physicalDevice;
     m_graphicsQueue    = graphicsQueue;
     m_graphicsQueueIdx = graphicsQueueIdx;
+    m_presentQueue     = presentQueue;
+    m_presentQueueIdx  = presentQueueIdx;
     m_surface          = surface;
 
     m_changeID = 0;
