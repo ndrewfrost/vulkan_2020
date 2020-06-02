@@ -104,5 +104,8 @@
     <ClInclude Include="src\examplevulkan.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="vk_helpers\samplers.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

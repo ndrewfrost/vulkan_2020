@@ -46,6 +46,7 @@
     <ClInclude Include="vk_helpers\images.hpp" />
     <ClInclude Include="vk_helpers\pipeline.hpp" />
     <ClInclude Include="vk_helpers\renderpass.hpp" />
+    <ClInclude Include="vk_helpers\samplers.hpp" />
     <ClInclude Include="vk_helpers\swapchain.hpp" />
     <ClInclude Include="vk_helpers\utilities.hpp" />
     <ClInclude Include="vk_helpers\vulkanbackend.hpp" />

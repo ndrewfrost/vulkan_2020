@@ -10,40 +10,45 @@
 
 #include "..//external/vk_mem_alloc.h"
 #include "vulkan/vulkan.hpp"
+//nclude "memorymanagement.hpp"
+#include "samplers.hpp"
 #include "images.hpp"
 
 namespace app {
 
 // Objects
-
-struct BufferDedicated
+struct BufferVma
 {
-    VkBuffer      buffer;
-    VmaAllocation allocation;
+    VkBuffer buffer = VK_NULL_HANDLE;
+    VmaAllocation allocation = nullptr;
 };
 
-struct ImageDedicated
+struct ImageVma
 {
-    VkImage       image;
-    VmaAllocation allocation;
+    VkImage image = VK_NULL_HANDLE;
+    VmaAllocation allocation = nullptr;
 };
 
-struct TextureDedicated : public ImageDedicated
+struct TextureVma : public ImageVma
 {
-    vk::DescriptorImageInfo descriptor;
-
-    TextureDedicated& operator=(const ImageDedicated& buffer)
-    {
-        static_cast<ImageDedicated&>(*this) = buffer;
-        return *this;
-    }
+    VkImage image = VK_NULL_HANDLE;
+    VmaAllocation allocation = nullptr;
+    VkDescriptorImageInfo descriptor{};
 };
 
 struct AccelerationDedicated
 {
-    VkAccelerationStructureNV   acceleration;
-    VmaAllocation               allocation;
+    VkAccelerationStructureNV acceleration{ VK_NULL_HANDLE };
+    VmaAllocation             allocation;
 };
+
+///////////////////////////////////////////////////////////////////////////
+// Staging Memory Manager                                                //
+///////////////////////////////////////////////////////////////////////////
+
+class StagingMemoryManager
+{
+}; // StagingMemoryManager
 
 ///////////////////////////////////////////////////////////////////////////
 // Allocator                                                             //
@@ -55,9 +60,20 @@ class Allocator
 {
 public:
     //-------------------------------------------------------------------------
+    //
+    //
+    Allocator(Allocator const&) = delete;
+    Allocator& operator=(Allocator const&) = delete;
+    Allocator() = default;
+
+    //-------------------------------------------------------------------------
     // All staging buffers must be cleared before
     //
-    ~Allocator() { assert(m_stagingBuffers.empty()); }
+    void deinit()
+    {
+        m_samplerPool.deinit();
+        m_staging.deinit();
+    }
 
     //-------------------------------------------------------------------------
     // Initialization of the allocator
@@ -77,90 +93,125 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    // Basic Buffer creation
+    // Converter utility from Vulkan memory property to VMA
     //
-    BufferDedicated createBuffer(
-        const VkBufferCreateInfo& bufferInfo,
-        const VkMemoryPropertyFlags memUsage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-    {
-        BufferDedicated result;
+    VmaMemoryUsage vkToVmaMemoryUsage(vk::MemoryPropertyFlags flags) {
+        if ((flags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal)
+            return VMA_MEMORY_USAGE_GPU_ONLY;
+        else if ((flags & (vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent))
+            == (vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent))
+            return VMA_MEMORY_USAGE_CPU_ONLY;
+        else if ((flags & vk::MemoryPropertyFlagBits::eHostVisible) == vk::MemoryPropertyFlagBits::eHostVisible)
+            return VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-        VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        allocInfo.requiredFlags = memUsage;
-
-        vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &result.buffer, &result.allocation, nullptr);
-        
-        return result;
+        return VMA_MEMORY_USAGE_UNKNOWN;
     }
 
     //-------------------------------------------------------------------------
+    // Basic Buffer creation
+    //
+    BufferVma createBuffer(
+        const VkBufferCreateInfo& info, VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
+    {
+        BufferVma resultBuffer;
+
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = memUsage;
+
+        VkResult result = vmaCreateBuffer(m_allocator, &info, &allocInfo, &resultBuffer.buffer, &resultBuffer.allocation, nullptr);
+        assert(result = VK_SUCCESS);
+        return resultBuffer;
+    }
+    
+    BufferVma createBuffer(
+        const VkBufferCreateInfo& bufferInfo, const vk::MemoryPropertyFlags memProps)
+    {
+        return createBuffer(bufferInfo, vkToVmaMemoryUsage(memProps));
+    }
+    
+    
+    //-------------------------------------------------------------------------
     // Simple Buffer creation
     //
-    BufferDedicated createBuffer(
-        VkDeviceSize                size     = 0,
-        VkBufferUsageFlags          usage    = VkBufferUsageFlags(),
-        const VkMemoryPropertyFlags memUsage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+    BufferVma createBuffer(
+        VkDeviceSize       size,
+        VkBufferUsageFlags usage,
+        VmaMemoryUsage     memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
     {
+        BufferVma resultBuffer;
+
         VkBufferCreateInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        info.size  = size;
-        info.usage =  usage;
-        return createBuffer(info , memUsage);
+        info.size = size;
+        info.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        return createBuffer(info, memUsage);
+    }
+
+    BufferVma createBuffer(VkDeviceSize                  size, 
+                           VkBufferUsageFlags            usage,
+                           const vk::MemoryPropertyFlags memProps)
+    {
+        createBuffer(size, usage, vkToVmaMemoryUsage(memProps));
     }
 
     //-------------------------------------------------------------------------
     // Staging buffer creation, uploading data to device buffer
     //
-    BufferDedicated createBuffer(const vk::CommandBuffer&   cmdBuffer,
-                                 const VkDeviceSize&        size  = 0,
-                                 const void*                data  = nullptr,
-                                 const VkBufferUsageFlags & usage = VkBufferUsageFlags())
+    BufferVma createBuffer(const vk::CommandBuffer  cmdBuffer,
+                           const VkDeviceSize       size,
+                           const void*              data,
+                           const VkBufferUsageFlags usage,
+                           VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
     {
-        // Create Staging Buffer
-        BufferDedicated stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-        m_stagingBuffers.push_back(stagingBuffer);
-
-        // Copy Data to memory
+        BufferVma resultBuffer = createBuffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, memUsage);
+        
         if (data) {
-            void* mappedData;
-            vmaMapMemory(m_allocator, stagingBuffer.allocation, &mappedData);
-            memcpy(mappedData, data, size);
-            vmaUnmapMemory(m_allocator, stagingBuffer.allocation);
+            m_staging.cmdToBuffer(cmd, resultBuffer.buffer, 0, size, data);
         }
 
-        // Create Result buffer
-        VkBufferCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        info.size  = size;
-        info.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        return resultBuffer;
+    }
 
-        BufferDedicated result = createBuffer(info);
-
-        // Copy staging
-        cmdBuffer.copyBuffer(stagingBuffer.buffer, result.buffer, vk::BufferCopy(0, 0, size));
-
-        return result;
-        
+    BufferVma createBuffer(const vk::CommandBuffer cmdBuffer,
+                           const VkDeviceSize& size,
+                           const void* data,
+                           const VkBufferUsageFlags usage,
+                           vk::MemoryPropertyFlags memProps)
+    {
+        createBuffer(cmdBuffer, size, data, usage, vkToVmaMemoryUsage(memProps));
     }
 
     //-------------------------------------------------------------------------
     // Staging buffer creation, uploading data to device buffer
     //
     template <typename T>
-    BufferDedicated createBuffer(const vk::CommandBuffer&  cmdBuffer,
-                                 const std::vector<T>&     data,
-                                 const VkBufferUsageFlags& usage = VkBufferUsageFlags())
+    BufferVma createBuffer(const vk::CommandBuffer  cmdBuffer,
+                           const std::vector<T>& data,
+                           const VkBufferUsageFlags usage,
+                           VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_GPU_ONLY)
     {
-        return createBuffer(cmdBuffer, sizeof(T) * data.size(), data.data(), usage);
+        VkDeviceSize size = sizeof(T) * data.size();
+        BufferVma resultBuffer = createBuffer(size, usage, memUsage);
+        if (!data.empty()) {
+            m_staging.cmdToBuffer(cmdBuffer, resultBuffer.buffer, 0, size, data.data());
+        }
+
+        return resultBuffer;
+    }
+
+    template <typename T>
+    BufferVma createBuffer(const vk::CommandBuffer  cmdBuffer,
+                           const std::vector<T>&    data,
+                           const VkBufferUsageFlags usage,
+                           vk::MemoryPropertyFlags  memProps)
+    {
+        return createBuffer(cmdBuffer, data, usage, vkToVmaMemoryUsage(memProps));
     }
 
     //-------------------------------------------------------------------------
     // Create Image
     //
-    ImageDedicated createImage(
+    ImageVma createImage(
         const VkImageCreateInfo& imageInfo,
         const VkMemoryPropertyFlags memUsage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
     {
@@ -178,7 +229,7 @@ public:
     //-------------------------------------------------------------------------
     // Create Image with data
     //
-    ImageDedicated createImage(
+    ImageVma createImage(
         const vk::CommandBuffer& cmdBuffer,
         size_t                   size,
         const void*              data,
@@ -256,12 +307,12 @@ public:
     //-------------------------------------------------------------------------
     // Destroy
     //
-    void destroy(BufferDedicated& buffer)
+    void destroy(BufferVma& buffer)
     {
         vmaDestroyBuffer(m_allocator, buffer.buffer, buffer.allocation);
     }
 
-    void destroy(ImageDedicated& image)
+    void destroy(ImageVma& image)
     {
         vmaDestroyImage(m_allocator, image.image, image.allocation);
     }
@@ -324,21 +375,16 @@ protected:
             }
         }
     }
-
-    struct GarbageCollection
-    {
-        vk::Fence                    fence;
-        std::vector<BufferDedicated> stagingBuffers;
-    };
-    std::vector<GarbageCollection>     m_garbageBuffers;
-
-    std::vector<BufferDedicated>       m_stagingBuffers;
-
+    
     vk::Device                         m_device;
     vk::PhysicalDevice                 m_physicalDevice;
     vk::PhysicalDeviceMemoryProperties m_physicalMemoryProperties;
     vk::Instance                       m_instance;
+
     VmaAllocator                       m_allocator;
+
+    app::StagingMemoryManager          m_staging;
+    app::SamplerPool                   m_samplerPool;
 
 }; // class Allocator
 
