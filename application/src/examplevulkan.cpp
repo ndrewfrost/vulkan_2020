@@ -241,9 +241,9 @@ void ExampleVulkan::createDescriptorSetLayout()
     bindingMat.stageFlags      = vk::ShaderStageFlagBits::eFragment;
     m_descSetLayoutBind.addBinding(bindingMat);
 
-    m_descriptorSetLayout = app::util::createDescriptorSetLayout(m_device, m_descSetLayoutBind);
-    m_descriptorPool      = app::util::createDescriptorPool(m_device, m_descSetLayoutBind, 1);
-    m_descriptorSet       = app::util::createDescriptorSet(m_device, m_descriptorPool, m_descriptorSetLayout);
+    m_descriptorSetLayout = m_descSetLayoutBind.createLayout(m_device);
+    m_descriptorPool      = m_descSetLayoutBind.createPool(m_device, 1);
+    m_descriptorSet       = app::util::allocateDescriptorSet(m_device, m_descriptorPool, m_descriptorSetLayout);
 }
 
 //-------------------------------------------------------------------------
@@ -332,28 +332,32 @@ void ExampleVulkan::updateDescriptorSet()
     cameraBufferInfo.buffer = m_cameraMat.buffer;
     cameraBufferInfo.offset = 0;
     cameraBufferInfo.range  = VK_WHOLE_SIZE;
-    writes.emplace_back(app::util::createWrite(m_descriptorSet, m_descSetLayoutBind[0], &cameraBufferInfo));
+    writes.emplace_back(m_descSetLayoutBind.makeWrite(m_descriptorSet, 0, &cameraBufferInfo));
     
     // Scene Description
     vk::DescriptorBufferInfo SceneBufferInfo = {};
     SceneBufferInfo.buffer = m_sceneDesc.buffer;
     SceneBufferInfo.offset = 0;
     SceneBufferInfo.range  = VK_WHOLE_SIZE;
-    writes.emplace_back(app::util::createWrite(m_descriptorSet, m_descSetLayoutBind[2], &SceneBufferInfo));
+    writes.emplace_back(m_descSetLayoutBind.makeWrite(m_descriptorSet, 2, &SceneBufferInfo));
 
     // All material buffers, 1 buffer per Obj
     std::vector<vk::DescriptorBufferInfo> materialBuffersInfo;
+    std::vector<vk::DescriptorBufferInfo> materialBuffersIdxInfo;
+
     for (size_t i = 0; i < m_objModel.size(); ++i) {
         materialBuffersInfo.push_back({ m_objModel[i].matColorBuffer.buffer, 0, VK_WHOLE_SIZE });
+        materialBuffersIdxInfo.push_back({ m_objModel[i].matIndexBuffer.buffer, 0, VK_WHOLE_SIZE });
     }
-    writes.emplace_back(app::util::createWrite(m_descriptorSet, m_descSetLayoutBind[1], materialBuffersInfo.data()));
+    writes.emplace_back(m_descSetLayoutBind.makeWriteArray(m_descriptorSet, 1, materialBuffersInfo.data()));
+    writes.emplace_back(m_descSetLayoutBind.makeWriteArray(m_descriptorSet, 4, materialBuffersIdxInfo.data()));
 
     // All texture samplers
     std::vector<vk::DescriptorImageInfo> textureImageInfo;
     for (size_t i = 0; i < m_textures.size(); ++i) {
         textureImageInfo.push_back(m_textures[i].descriptor);
     }
-    writes.emplace_back(app::util::createWrite(m_descriptorSet, m_descSetLayoutBind[3], textureImageInfo.data()));
+    writes.emplace_back(m_descSetLayoutBind.makeWriteArray(m_descriptorSet, 3, textureImageInfo.data()));
 
     // writing the information
     m_device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
@@ -537,11 +541,11 @@ void ExampleVulkan::createPostDescriptor()
     postBinding.descriptorType  = vk::DescriptorType::eCombinedImageSampler;
     postBinding.descriptorCount = 1;
     postBinding.stageFlags      = vk::ShaderStageFlagBits::eFragment;
-
-    m_postDescSetLayoutBind.emplace_back(postBinding);
-    m_postDescriptorSetLayout = app::util::createDescriptorSetLayout(m_device, m_postDescSetLayoutBind);
-    m_postDescriptorPool      = app::util::createDescriptorPool(m_device, m_postDescSetLayoutBind);
-    m_postDescriptorSet       = app::util::createDescriptorSet(m_device, m_postDescriptorPool, m_postDescriptorSetLayout);
+    m_postDescSetLayoutBind.addBinding(postBinding);
+    
+    m_postDescriptorSetLayout = m_descSetLayoutBind.createLayout(m_device);
+    m_postDescriptorPool      = m_descSetLayoutBind.createPool(m_device);
+    m_postDescriptorSet       = app::util::allocateDescriptorSet(m_device, m_postDescriptorPool, m_postDescriptorSetLayout);
 }
 
 //-------------------------------------------------------------------------
@@ -584,9 +588,9 @@ void ExampleVulkan::createPostPipeline()
 //
 void ExampleVulkan::updatePostDescriptorSet()
 {
-    vk::WriteDescriptorSet writeDescSet = 
-        app::util::createWrite(m_postDescriptorSet, m_postDescSetLayoutBind[0],
-                               &m_offscreenColor.descriptor);
+    vk::WriteDescriptorSet writeDescSet =
+        m_postDescSetLayoutBind.makeWrite(m_postDescriptorSet, 0, &m_offscreenColor.descriptor);
+    m_device.updateDescriptorSets(writeDescSet, nullptr);
 }
 
 //-------------------------------------------------------------------------

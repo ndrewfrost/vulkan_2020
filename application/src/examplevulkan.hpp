@@ -94,6 +94,7 @@ public:
         app::BufferDedicated vertexBuffer;   // Device buffer of all vertex
         app::BufferDedicated indexBuffer;    // Device buffer of all indices forming triangles
         app::BufferDedicated matColorBuffer; // Device buffer of array of wavefront material
+        app::BufferDedicated matIndexBuffer; // Device buffer of array of Wavefront material
     };
 
     // Instance of the OBJ
@@ -148,19 +149,19 @@ public:
 
     void drawPost(vk::CommandBuffer cmdBuffer);
 
-    std::vector<vk::DescriptorSetLayoutBinding> m_postDescSetLayoutBind;
-    vk::DescriptorPool      m_postDescriptorPool;
-    vk::DescriptorSetLayout m_postDescriptorSetLayout;
-    vk::DescriptorSet       m_postDescriptorSet;
+    app::DescriptorSetBindings m_postDescSetLayoutBind;
+    vk::DescriptorPool         m_postDescriptorPool;
+    vk::DescriptorSetLayout    m_postDescriptorSetLayout;
+    vk::DescriptorSet          m_postDescriptorSet;
 
-    vk::Pipeline            m_postPipeline;
-    vk::PipelineLayout      m_postPipelineLayout;
-    vk::RenderPass          m_offscreenRenderPass;
-    vk::Framebuffer         m_offscreenFramebuffer;
+    vk::Pipeline               m_postPipeline;
+    vk::PipelineLayout         m_postPipelineLayout;
+    vk::RenderPass             m_offscreenRenderPass;
+    vk::Framebuffer            m_offscreenFramebuffer;
 
-    app::TextureDedicated   m_offscreenColor;
-    app::TextureDedicated   m_offscreenDepth;
-    vk::Format              m_offscreenColorFormat{ vk::Format::eR32G32B32A32Sfloat };
-    vk::Format              m_offscreenDepthFormat{ vk::Format::eD32Sfloat };
+    app::TextureDedicated      m_offscreenColor;
+    app::TextureDedicated      m_offscreenDepth;
+    vk::Format                 m_offscreenColorFormat{ vk::Format::eR32G32B32A32Sfloat };
+    vk::Format                 m_offscreenDepthFormat{ vk::Format::eD32Sfloat };
     
 }; // class ExampleVulkan

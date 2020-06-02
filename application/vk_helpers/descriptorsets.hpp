@@ -16,6 +16,23 @@ namespace app {
 ///////////////////////////////////////////////////////////////////////////
 // Descriptor Sets Helpers                                               //
 ///////////////////////////////////////////////////////////////////////////
+namespace util {
+
+inline vk::DescriptorPool createDescriptorPool(
+    vk::Device device, size_t poolSizeCount, const vk::DescriptorPoolSize* poolSizes, uint32_t maxSets);
+
+inline vk::DescriptorPool createDescriptorPool(
+    vk::Device device, const std::vector<vk::DescriptorPoolSize>& poolSizes, uint32_t maxSets);
+
+
+inline vk::DescriptorSet allocateDescriptorSet(
+    vk::Device device, vk::DescriptorPool pool, vk::DescriptorSetLayout layout);
+
+inline void allocateDescriptorSets(
+    vk::Device device, vk::DescriptorPool pool, vk::DescriptorSetLayout layout, uint32_t count,
+    std::vector<vk::DescriptorSet>& sets);
+
+} // namespace util
 
 ///////////////////////////////////////////////////////////////////////////
 // Descriptor Set Bindings                                               //
@@ -152,76 +169,9 @@ private:
     std::vector<vk::DescriptorBindingFlags>     m_bindingFlags;
 };
 
-///////////////////////////////////////////////////////////////////////////
-// Descriptor Set Container                                              //
-///////////////////////////////////////////////////////////////////////////
-
 class DescriptorSetContainer
 {
 
 };
 
 } // namespace app
-
-/*
-///////////////////////////////////////////////////////////////////////////
-// Descriptor Sets                                                       //
-///////////////////////////////////////////////////////////////////////////
-
-namespace app {
-namespace util {
-
-//-------------------------------------------------------------------------
-// Descriptor Set 
-//
-inline vk::DescriptorSet createDescriptorSet(vk::Device device, 
-                                             vk::DescriptorPool pool, 
-                                             vk::DescriptorSetLayout layout)
-{
-    vk::DescriptorSetAllocateInfo allocInfo(pool, 1, &layout);
-
-    try {
-        vk::DescriptorSet set = device.allocateDescriptorSets(allocInfo)[0];
-        return set;
-    }
-    catch (vk::SystemError err) {
-        throw std::runtime_error("failed to allocate descriptor set!");
-    }
-}
-
-//-------------------------------------------------------------------------
-// Write Descriptor Sets 
-//
-inline vk::WriteDescriptorSet createWrite(
-    vk::DescriptorSet                     ds,
-    const vk::DescriptorSetLayoutBinding& binding,
-    const vk::DescriptorBufferInfo*       info,
-    uint32_t                              arrayElement = 0)
-{
-    return { ds, binding.binding, arrayElement, binding.descriptorCount, binding.descriptorType, nullptr, info };
-}
-
-inline vk::WriteDescriptorSet createWrite(
-    vk::DescriptorSet                     ds,
-    const vk::DescriptorSetLayoutBinding& binding,
-    const vk::DescriptorImageInfo*        info,
-    uint32_t                              arrayElement = 0)
-{
-    return { ds, binding.binding, arrayElement, binding.descriptorCount, binding.descriptorType, info };
-}
-
-inline vk::WriteDescriptorSet createWrite(
-    vk::DescriptorSet                                    ds,
-    const vk::DescriptorSetLayoutBinding&                binding,
-    const vk::WriteDescriptorSetAccelerationStructureNV* info,
-    uint32_t                                             arrayElement = 0)
-{
-    vk::WriteDescriptorSet res(ds, binding.binding, arrayElement, binding.descriptorCount, binding.descriptorType);
-    res.setPNext(info);
-    return res;
-}
-
-} // namespeace util
-} // namespace app
-
-*/

@@ -14,6 +14,76 @@ namespace app {
 // Descriptor Set Helpers                                                //
 ///////////////////////////////////////////////////////////////////////////
 
+namespace util {
+//-------------------------------------------------------------------------
+//
+//
+vk::DescriptorPool createDescriptorPool(vk::Device device, size_t poolSizeCount,
+    const vk::DescriptorPoolSize* poolSizes, uint32_t maxSets)
+{
+    vk::DescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.maxSets = maxSets;
+    poolInfo.poolSizeCount = uint32_t(poolSizeCount);
+    poolInfo.pPoolSizes = poolSizes;
+
+    try {
+        return device.createDescriptorPool(poolInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create descriptor pool!");
+    }
+}
+
+//-------------------------------------------------------------------------
+//
+//
+vk::DescriptorPool createDescriptorPool(vk::Device device,
+    const std::vector<vk::DescriptorPoolSize>& poolSizes, uint32_t maxSets)
+{
+    return createDescriptorPool(device, poolSizes.size(), poolSizes.data(), maxSets);
+}
+
+//-------------------------------------------------------------------------
+//
+//
+vk::DescriptorSet allocateDescriptorSet(vk::Device device, vk::DescriptorPool pool,
+    vk::DescriptorSetLayout layout)
+{
+    vk::DescriptorSetAllocateInfo allocInfo(pool, 1, &layout);
+
+    try {
+        vk::DescriptorSet set = device.allocateDescriptorSets(allocInfo)[0];
+        return set;
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to allocate descriptor set!");
+    }
+}
+
+//-------------------------------------------------------------------------
+//
+//
+void allocateDescriptorSets(vk::Device device, vk::DescriptorPool pool,
+    vk::DescriptorSetLayout layout, uint32_t count, std::vector<vk::DescriptorSet>& sets)
+{
+    sets.resize(count);
+    std::vector<vk::DescriptorSetLayout> layouts(count, layout);
+
+    vk::DescriptorSetAllocateInfo allocInfo = {};
+    allocInfo.descriptorPool = pool;
+    allocInfo.descriptorSetCount = count;
+    allocInfo.pSetLayouts = layouts.data();
+
+    try {
+        sets = device.allocateDescriptorSets(allocInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to allocate descriptor sets!");
+    }
+}
+
+} // namespace util
+
 ///////////////////////////////////////////////////////////////////////////
 // Descriptor Set Bindings                                               //
 ///////////////////////////////////////////////////////////////////////////
@@ -290,9 +360,5 @@ vk::WriteDescriptorSet DescriptorSetBindings::makeWriteArray(vk::DescriptorSet d
     return writeSet;
 }
 
-
-///////////////////////////////////////////////////////////////////////////
-// Descriptor Set Container                                              //
-///////////////////////////////////////////////////////////////////////////
 
 } // namespace app
