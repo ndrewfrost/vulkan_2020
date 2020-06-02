@@ -279,11 +279,96 @@ void SwapChain::update(int width, int height, bool vsync)
 }
 
 //-------------------------------------------------------------------------
+// Sets active index
 //
-//
-bool SwapChain::acquire()
+vk::Result SwapChain::acquire()
 {
-    return false;
+    return acquireSemaphore(getActiveReadSemaphore());
+}
+
+//-------------------------------------------------------------------------
+// Sets active index
+// Can provide own semaphore
+//
+vk::Result SwapChain::acquireSemaphore(vk::Semaphore semaphore)
+{
+    const vk::Result result 
+        = m_device.acquireNextImageKHR(m_swapchain, UINT64_MAX, semaphore, {}, &m_currentImage);
+    
+    if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
+        throw std::error_code(result);
+    }
+    return result;
+}
+
+//-------------------------------------------------------------------------
+// present on provided queue
+//
+void SwapChain::present(vk::Queue queue)
+{
+    //vk::Semaphore& written = m_entries[(m_currentSemaphore % m_imageCount)].writtenSemaphore;
+    const vk::Semaphore& written = getActiveWrittenSemaphore();
+
+    vk::PresentInfoKHR presentInfo = {};
+    presentInfo.swapchainCount     = 1;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores    = &written;
+    presentInfo.pSwapchains        = &m_swapchain;
+    presentInfo.pImageIndices      = &m_currentImage;
+
+    m_currentSemaphore++;
+
+    m_graphicsQueue.presentKHR(presentInfo);
+}
+
+//-------------------------------------------------------------------------
+// vkCmdPipelineBarrier for VK_IMAGE_LAYOUT_UNDEFINED to 
+// VK_IMAGE_LAYOUT_PRESENT_SRC_KHR. Must apply resource transitions
+// after update calls
+//
+void SwapChain::cmdUpdateBarriers(vk::CommandBuffer cmdBuffer) const
+{
+    cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe,
+                              vk::PipelineStageFlagBits::eTopOfPipe, 
+                              vk::DependencyFlags(), 0, NULL, 0, NULL, m_imageCount, 
+                              m_barriers.data());
+}
+
+//-------------------------------------------------------------------------
+// Get Methods
+//
+VkSemaphore SwapChain::getActiveReadSemaphore() const
+{
+    return m_entries[(m_currentSemaphore % m_imageCount)].readSemaphore;
+}
+
+VkSemaphore SwapChain::getActiveWrittenSemaphore() const
+{
+    return m_entries[(m_currentSemaphore % m_imageCount)].writtenSemaphore;
+}
+
+VkImage SwapChain::getActiveImage() const
+{
+    return m_entries[m_currentImage].image;
+}
+
+VkImageView SwapChain::getActiveImageView() const
+{
+    return m_entries[m_currentImage].imageView;
+}
+
+vk::Image SwapChain::getImage(uint32_t i) const
+{
+    if (i >= m_imageCount)
+        return nullptr;
+    return m_entries[i].image;
+}
+
+vk::ImageView SwapChain::getImageView(uint32_t i) const
+{
+    if (i >= m_imageCount)
+        return nullptr;
+    return m_entries[i].imageView;
 }
 
 } // namespace app
