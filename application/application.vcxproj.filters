@@ -57,6 +57,9 @@
     <ClCompile Include="vk_helpers\descriptorsets.cpp">
       <Filter>vk</Filter>
     </ClCompile>
+    <ClCompile Include="vk_helpers\memorymanagement.cpp">
+      <Filter>vk</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\vk_mem_alloc.h">
@@ -109,6 +112,9 @@
     </ClInclude>
     <ClInclude Include="vk_helpers\memorymanagement.hpp">
       <Filter>vk</Filter>
+    </ClInclude>
+    <ClInclude Include="general_helpers\trangeallocator.hpp">
+      <Filter>helper</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

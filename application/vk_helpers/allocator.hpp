@@ -61,7 +61,7 @@ public:
     //-------------------------------------------------------------------------
     // Initialization
     //
-    void init(VkDevice device, VkPhysicalDevice physicalDevice, VmaAllocator memAllocator, VkDeviceSize stagingBlockSize = NVVK_DEFAULT_STAGING_BLOCKSIZE)
+    void init(VkDevice device, VkPhysicalDevice physicalDevice, VmaAllocator memAllocator, VkDeviceSize stagingBlockSize = APP_DEFAULT_STAGING_BLOCKSIZE)
     {
         StagingMemoryManager::init(device, physicalDevice, stagingBlockSize);
         m_allocator = memAllocator;
@@ -211,7 +211,7 @@ public:
         BufferVma resultBuffer = createBuffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, memUsage);
         
         if (data) {
-            m_staging.cmdToBuffer(cmd, resultBuffer.buffer, 0, size, data);
+            m_staging.cmdToBuffer(cmdBuffer, resultBuffer.buffer, 0, size, data);
         }
 
         return resultBuffer;
@@ -295,7 +295,7 @@ public:
             subresourceRange.layerCount     = 1;
 
             // doing these transitions per copy is not efficient, should do in bulk for many images
-            app::cmdBarrierImageLayout(cmdBuffer, resultImage.image, VK_IMAGE_LAYOUT_UNDEFINED,
+            app::cmdBarrierImageLayout(cmdBuffer, imageResult.image, VK_IMAGE_LAYOUT_UNDEFINED,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 
             VkOffset3D offset = { 0 };

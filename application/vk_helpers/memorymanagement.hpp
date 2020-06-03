@@ -10,7 +10,7 @@
 
 #include <assert.h>
 #include <vector>
-
+#include "../general_helpers/trangeallocator.hpp"
 #include <vulkan/vulkan.hpp>
 
 namespace app {
@@ -21,6 +21,7 @@ namespace app {
 
 #define APP_DEFAULT_STAGING_BLOCKSIZE (VkDeviceSize(64) * 1024 * 1024)
 
+static const uint32_t INVALID_ID_INDEX = ~0;
 
 ///////////////////////////////////////////////////////////////////////////
 // Staging Memory Manager                                                //
@@ -29,13 +30,19 @@ namespace app {
 class StagingMemoryManager
 {
 protected:
+    //-------------------------------------------------------------------------
+    // Block stores vk::Buffers taht we sub-allocate the staging space from.
+    // The "index" element in the struct refers to the next free list item,
+    // or itself when in use.
+    //
     struct Block
     {
-        uint32_t         index = INVALID_ID_INDEX;
-        vk::DeviceSize   size = 0;
-        vk::Buffer       buffer = nullptr;
-        vk::DeviceMemory memory = nullptr;
-        uint8_t* mapping;
+        uint32_t                    index = INVALID_ID_INDEX;
+        vk::DeviceSize              size = 0;
+        vk::Buffer                  buffer = nullptr;
+        vk::DeviceMemory            memory = nullptr;
+        tools::TRangeAllocator<256> range;
+        uint8_t*                    mapping;
     };
 
     struct Entry
@@ -45,6 +52,10 @@ protected:
         uint32_t size;
     };
 
+    //-------------------------------------------------------------------------
+    // Staging set stores all such sub allocation ^ that were used in one 
+    // batch of operations. 
+    //
     struct StagingSet
     {
         uint32_t           index = INVALID_ID_INDEX;
@@ -73,29 +84,42 @@ public:
     //
     void setFreeUnusedOnRelease(bool state) { m_freeOnRelease = state; }
 
-    void fitsInAllocated(vk::DeviceSize size) const;
+    bool fitsInAllocated(vk::DeviceSize size) const;
 
     void* cmdToImage(
         vk::CommandBuffer                 cmdBuffer,
         vk::Image                         image,
-        const vk::Offset3D&               offset,
-        const vk::Extent3D&               extent,
+        const vk::Offset3D& offset,
+        const vk::Extent3D& extent,
         const vk::ImageSubresourceLayers& subresource,
         vk::DeviceSize                    size,
-        const void*                       data);
+        const void* data);
 
-    void* cmdToBuffer();
+    void* cmdToBuffer(
+        vk::CommandBuffer cmdBuffer,
+        vk::Buffer buffer,
+        vk::DeviceSize offset,
+        vk::DeviceSize size,
+        const void* data);
 
     template <class T>
-    T* cmdToBufferT();
+    T* cmdToBufferT(vk::CommandBuffer cmd, vk::Buffer buffer, vk::DeviceSize offset, vk::DeviceSize size)
+    {
+        return (T*)cmdToBuffer(cmd, buffer, offset, size, nullptr);
+    }
 
     void finalizeResources(vk::Fence fence = nullptr);
 
     void releaseResources();
 
-    void freeUnused();
+    //-------------------------------------------------------------------------
+    // free staging memory no longer in use 
+    //
+    void freeUnused() { free(true); }
 
-    float getUtilisation();
+    float getUtilisation(vk::DeviceSize& allocatedSize, vk::DeviceSize& usedSize) const;
+
+protected:
 
     uint32_t setIndexValue(uint32_t& index, uint32_t newValue)
     {
@@ -120,28 +144,29 @@ public:
 
     void releaseResources(uint32_t stagingID);
 
-    virtual VkResult allocBlockMemory(uint32_t id, VkDeviceSize size, bool toDevice, Block& block);
-    virtual void     freeBlockMemory(uint32_t id, const Block& block);
-    virtual void     resizeBlocks(uint32_t num) {}
+    //-------------------------------------------------------------------------
+    // must fill block.buffer, memory and mapping
+    //
+    virtual vk::Result allocBlockMemory(uint32_t id, vk::DeviceSize size, bool toDevice, Block& block) {}
+    virtual void       freeBlockMemory(uint32_t id, const Block& block) {}
+    virtual void       resizeBlocks(uint32_t num) {}
 
-protected:
+
     vk::Device         m_device = nullptr;
-    vk::PhysicalDevice m_physicalMemory = nullptr;
+    vk::PhysicalDevice m_physicalDevice = nullptr;
     uint32_t           m_memoryTypeIndex;
     vk::DeviceSize     m_stagingBlockSize;
     bool               m_freeOnRelease;
 
     std::vector<Block>      m_blocks;
     std::vector<StagingSet> m_sets;
-        
+
     uint32_t m_stagingIndex;     // active staging Index, must be valid    
     uint32_t m_freeStagingIndex; // linked-list to next free staging set    
     uint32_t m_freeBlockIndex;   // linked list to next free block
 
     vk::DeviceSize m_allocatedSize;
     vk::DeviceSize m_usedSize;
-
-    
 
 
 }; // class StagingMemoryManager

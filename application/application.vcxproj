@@ -30,6 +30,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="vk_helpers\descriptorsets.cpp" />
     <ClCompile Include="vk_helpers\images.cpp" />
+    <ClCompile Include="vk_helpers\memorymanagement.cpp" />
     <ClCompile Include="vk_helpers\swapchain.cpp" />
     <ClCompile Include="vk_helpers\vulkanbackend.cpp" />
   </ItemGroup>
@@ -38,6 +39,7 @@
     <ClInclude Include="external\tiny_obj_loader.h" />
     <ClInclude Include="external\vk_mem_alloc.h" />
     <ClInclude Include="general_helpers\manipulator.h" />
+    <ClInclude Include="general_helpers\trangeallocator.hpp" />
     <ClInclude Include="src\examplevulkan.hpp" />
     <ClInclude Include="vk_helpers\allocator.hpp" />
     <ClInclude Include="vk_helpers\commands.hpp" />
