@@ -75,8 +75,6 @@ void ExampleVulkan::onWindowResize(uint32_t width, uint32_t height)
 //-------------------------------------------------------------------------
 // Loading the OBJ file and setting up all buffers
 //
-// TODO: FIX Buffer Staging (Maybe build another class)
-//
 void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
 {
     ObjLoader<Vertex> loader;
@@ -100,16 +98,16 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     model.nVertices = static_cast<uint32_t>(loader.m_vertices.size());
 
     // create buffers on device and copy vertices, indices and materials
-    app::SingleCommandBuffer cmdBufferGet(m_device, m_graphicsQueueIdx);
-    vk::CommandBuffer commandBuffer = cmdBufferGet.createCommandBuffer();
+    app::CommandPool cmdBufferGet(m_device, m_graphicsQueueIdx);
+    vk::CommandBuffer commandBuffer = cmdBufferGet.createBuffer();
     model.vertexBuffer   = m_allocator.createBuffer(commandBuffer, loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     model.indexBuffer    = m_allocator.createBuffer(commandBuffer, loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
     model.matColorBuffer = m_allocator.createBuffer(commandBuffer, loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
     // creates all textures found
     createTextureImages(commandBuffer, loader.m_textures);
-    cmdBufferGet.flushCommandBuffer(commandBuffer);
-    m_allocator.flushStaging();
+    cmdBufferGet.submitAndWait(commandBuffer);
+    m_allocator.finalizeAndReleaseStaging();
 
 #if _DEBUG
     std::string objNb = std::to_string(instance.objIndex);
@@ -140,26 +138,27 @@ void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer,
     if (textures.empty() && m_textures.empty()) {
         app::TextureVma texture;
 
-        glm::u8vec4* color = new glm::u8vec4(255, 255, 255, 255);
+        glm::u8vec4*   color      = new glm::u8vec4(255, 255, 255, 255);
         vk::DeviceSize bufferSize = sizeof(glm::u8vec4);
-        vk::Extent2D   imgSize = vk::Extent2D(1, 1);
+        vk::Extent2D   imgSize    = vk::Extent2D(1, 1);
         
-        VkImageCreateInfo imageCreateInfo = app::image::create2DInfo(imgSize, format);
+        vk::ImageCreateInfo imageCreateInfo = app::image::create2DInfo(imgSize, format);
 
-        // Creating the vkImage
-        texture = m_allocator.createImage(cmdBuffer, bufferSize, color, imageCreateInfo);
-
-        // Setting up the descriptor used by the shader
-        texture.descriptor = app::image::create2DDescriptor(m_device, texture.image, samplerCreateInfo, format);
+        // Creating the dummy texture
+        app::ImageVma image = m_allocator.createImage(cmdBuffer, bufferSize, reinterpret_cast<stbi_uc*>(color), imageCreateInfo);
+        vk::ImageViewCreateInfo imageViewCreateInfo = app::image::makeImageViewCreateInfo(image.image, imageCreateInfo);
+        texture = m_allocator.createTexture(image, imageViewCreateInfo, samplerCreateInfo);
 
         // The image format must be in VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        app::image::cmdBarrierImageLayout(cmdBuffer, texture.image, vk::ImageLayout::eUndefined,
+                                          vk::ImageLayout::eShaderReadOnlyOptimal);
         m_textures.push_back(texture);
     }
     else {
         // Uploading all images
         for (const auto& texture : textures) {
             std::stringstream ss;
-            int               texWidth, texHeight, texChannels;
+            int texWidth, texHeight, texChannels;
             ss << "../media/textures/" << texture;
 
             stbi_uc* pixels =
@@ -178,13 +177,12 @@ void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer,
             auto imageSize = vk::Extent2D(texWidth, texHeight);
             auto imageCreateInfo = app::image::create2DInfo(imageSize, format, vk::ImageUsageFlagBits::eSampled, true);
 
-            app::TextureVma texture;
-            texture = m_allocator.createImage(cmdBuffer, bufferSize, pixels, imageCreateInfo);
+            app::ImageVma image = m_allocator.createImage(cmdBuffer, bufferSize, pixels, imageCreateInfo);
+            app::image::generateMipmaps(cmdBuffer, image.image, format, imageSize, imageCreateInfo.mipLevels);
+            
+            vk::ImageViewCreateInfo imageViewCreateInfo = app::image::makeImageViewCreateInfo(image.image, imageCreateInfo);
 
-            app::image::generateMipmaps(cmdBuffer, texture.image, format, imageSize, imageCreateInfo.mipLevels);
-        
-            texture.descriptor =
-                app::image::create2DDescriptor(m_device, texture.image, samplerCreateInfo, format);
+            app::TextureVma texture = m_allocator.createTexture(image, imageViewCreateInfo, samplerCreateInfo);
 
             m_textures.push_back(texture);
         }
@@ -295,8 +293,8 @@ void ExampleVulkan::createGraphicsPipeline()
 //
 void ExampleVulkan::createUniformBuffer()
 {
-    m_cameraMat = m_allocator.createBuffer(sizeof(CameraMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    m_cameraMat = m_allocator.createBuffer(sizeof(CameraMatrices), vk::BufferUsageFlagBits::eUniformBuffer,
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 #if _DEBUG
     m_debug.setObjectName(m_cameraMat.buffer, "cameraMatBuffer");
 #endif
@@ -310,10 +308,13 @@ void ExampleVulkan::createUniformBuffer()
 //
 void ExampleVulkan::createSceneDescriptionBuffer()
 {
-    app::SingleCommandBuffer commandGen(m_device, m_graphicsQueueIdx);
-    auto commandBuffer = commandGen.createCommandBuffer();
+    app::CommandPool commandGen(m_device, m_graphicsQueueIdx);
+    auto commandBuffer = commandGen.createBuffer();
+
     m_sceneDesc = m_allocator.createBuffer(commandBuffer, m_objInstance, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    commandGen.flushCommandBuffer(commandBuffer);
+    commandGen.submitAndWait(commandBuffer);
+    m_allocator.finalizeAndReleaseStaging();
+
 #if _DEBUG
     m_debug.setObjectName(m_sceneDesc.buffer, "sceneDescBuffer");
 #endif
@@ -594,7 +595,7 @@ void ExampleVulkan::createPostPipeline()
 void ExampleVulkan::updatePostDescriptorSet()
 {
     vk::WriteDescriptorSet writeDescSet =
-        m_postDescSetLayoutBind.makeWrite(m_postDescriptorSet, 0, &m_offscreenColor.descriptor);
+        m_postDescSetLayoutBind.makeWrite(m_postDescriptorSet, 0, reinterpret_cast<vk::DescriptorImageInfo*>(&m_offscreenColor.descriptor));
     m_device.updateDescriptorSets(writeDescSet, nullptr);
 }
 

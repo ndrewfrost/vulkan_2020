@@ -221,7 +221,7 @@ void DescriptorSetBindings::addRequiredPoolSizes(std::vector<vk::DescriptorPoolS
 // Write Descriptor Sets 
 //
 vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet, uint32_t dstBinding, 
-    uint32_t arrayElement) const
+    uint32_t arrayElement = 0) const
 {
     for (size_t i = 0; i < m_bindings.size(); i++) {
         if (m_bindings[i].binding == dstBinding)
@@ -232,7 +232,7 @@ vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet
 }
 
 vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet, uint32_t dstBinding, 
-    const vk::DescriptorImageInfo* pImageInfo, uint32_t arrayElement) const
+    const vk::DescriptorImageInfo* pImageInfo, uint32_t arrayElement = 0) const
 {
     vk::WriteDescriptorSet writeSet = makeWrite(dstSet, dstBinding, arrayElement);
     assert(writeSet.descriptorType == vk::DescriptorType::eSampler ||
@@ -246,7 +246,7 @@ vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet
 }
 
 vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet, uint32_t dstBinding, 
-    const vk::DescriptorBufferInfo* pBufferInfo, uint32_t arrayElement) const
+    const vk::DescriptorBufferInfo* pBufferInfo, uint32_t arrayElement = 0) const
 {
     vk::WriteDescriptorSet writeSet = makeWrite(dstSet, dstBinding, arrayElement);
     assert(writeSet.descriptorType == vk::DescriptorType::eStorageBuffer ||
@@ -259,7 +259,7 @@ vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet
 }
 
 vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet, uint32_t dstBinding, 
-    const vk::BufferView* pTexelBufferView, uint32_t arrayElement) const
+    const vk::BufferView* pTexelBufferView, uint32_t arrayElement = 0) const
 {
     vk::WriteDescriptorSet writeSet = makeWrite(dstSet, dstBinding, arrayElement);
     assert(writeSet.descriptorType == vk::DescriptorType::eUniformTexelBuffer ||
@@ -270,7 +270,7 @@ vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet
 }
 
 vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet, uint32_t dstBinding, 
-    const vk::WriteDescriptorSetAccelerationStructureNV* pAccel, uint32_t arrayElement) const
+    const vk::WriteDescriptorSetAccelerationStructureNV* pAccel, uint32_t arrayElement = 0) const
 {
     vk::WriteDescriptorSet writeSet = makeWrite(dstSet, dstBinding);
     assert(writeSet.descriptorType == vk::DescriptorType::eAccelerationStructureNV);
@@ -280,7 +280,7 @@ vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet
 }
 
 vk::WriteDescriptorSet DescriptorSetBindings::makeWrite(vk::DescriptorSet dstSet, uint32_t dstBinding, 
-    const vk::WriteDescriptorSetInlineUniformBlockEXT* pInlineUniform, uint32_t arrayElement) const
+    const vk::WriteDescriptorSetInlineUniformBlockEXT* pInlineUniform, uint32_t arrayElement = 0) const
 {
     vk::WriteDescriptorSet writeSet = makeWrite(dstSet, dstBinding);
     assert(writeSet.descriptorType == vk::DescriptorType::eInlineUniformBlockEXT);

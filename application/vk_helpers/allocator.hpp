@@ -211,11 +211,11 @@ public:
         return createBuffer(info, memUsage);
     }
 
-    BufferVma createBuffer(VkDeviceSize            size, 
-                           VkBufferUsageFlags      usage,
+    BufferVma createBuffer(vk::DeviceSize            size, 
+                           vk::BufferUsageFlags      usage,
                            vk::MemoryPropertyFlags memProps)
     {
-        createBuffer(size, usage, vkToVmaMemoryUsage(memProps));
+        createBuffer(static_cast<VkDeviceSize>(size), static_cast<VkBufferUsageFlags>(usage), vkToVmaMemoryUsage(memProps));
     }
 
     //-------------------------------------------------------------------------
