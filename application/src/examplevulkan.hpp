@@ -89,12 +89,12 @@ public:
     // The OBJ model
     struct ObjModel
     {
-        uint32_t             nIndices{ 0 };
-        uint32_t             nVertices{ 0 };
-        app::BufferDedicated vertexBuffer;   // Device buffer of all vertex
-        app::BufferDedicated indexBuffer;    // Device buffer of all indices forming triangles
-        app::BufferDedicated matColorBuffer; // Device buffer of array of wavefront material
-        app::BufferDedicated matIndexBuffer; // Device buffer of array of Wavefront material
+        uint32_t       nIndices{ 0 };
+        uint32_t       nVertices{ 0 };
+        app::BufferVma vertexBuffer;   // Device buffer of all vertex
+        app::BufferVma indexBuffer;    // Device buffer of all indices forming triangles
+        app::BufferVma matColorBuffer; // Device buffer of array of wavefront material
+        app::BufferVma matIndexBuffer; // Device buffer of array of Wavefront material
     };
 
     // Instance of the OBJ
@@ -117,23 +117,23 @@ public:
     ObjPushConstant m_pushConstant;
 
     // Array of objects and instances in the scene
-    std::vector<ObjModel>              m_objModel;
-    std::vector<ObjInstance>           m_objInstance;
+    std::vector<ObjModel>        m_objModel;
+    std::vector<ObjInstance>     m_objInstance;
 
     // Graphic pipeline
-    vk::PipelineLayout                 m_pipelineLayout;
-    vk::Pipeline                       m_graphicsPipeline;
-    app::DescriptorSetBindings         m_descSetLayoutBind;
-    vk::DescriptorPool                 m_descriptorPool;
-    vk::DescriptorSetLayout            m_descriptorSetLayout;
-    vk::DescriptorSet                  m_descriptorSet;
+    vk::PipelineLayout           m_pipelineLayout;
+    vk::Pipeline                 m_graphicsPipeline;
+    app::DescriptorSetBindings   m_descSetLayoutBind;
+    vk::DescriptorPool           m_descriptorPool;
+    vk::DescriptorSetLayout      m_descriptorSetLayout;
+    vk::DescriptorSet            m_descriptorSet;
 
-    app::BufferDedicated               m_cameraMat;  // Device-Host of the camera matrices
-    app::BufferDedicated               m_sceneDesc;  // Device buffer of the OBJ instances
-    std::vector<app::TextureDedicated> m_textures;   // vector of all textures of the scene
+    app::BufferVma               m_cameraMat;  // Device-Host of the camera matrices
+    app::BufferVma               m_sceneDesc;  // Device buffer of the OBJ instances
+    std::vector<app::TextureVma> m_textures;   // vector of all textures of the scene
     
-    app::Allocator                     m_allocator;
-    app::debug::DebugUtil              m_debug;
+    app::Allocator               m_allocator;
+    app::debug::DebugUtil        m_debug;
 
 ///////////////////////////////////////////////////////////////////////////
 // Post-processing                                                       //
@@ -159,8 +159,8 @@ public:
     vk::RenderPass             m_offscreenRenderPass;
     vk::Framebuffer            m_offscreenFramebuffer;
 
-    app::TextureDedicated      m_offscreenColor;
-    app::TextureDedicated      m_offscreenDepth;
+    app::TextureVma            m_offscreenColor;
+    app::TextureVma            m_offscreenDepth;
     vk::Format                 m_offscreenColorFormat{ vk::Format::eR32G32B32A32Sfloat };
     vk::Format                 m_offscreenDepthFormat{ vk::Format::eD32Sfloat };
     

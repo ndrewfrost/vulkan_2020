@@ -52,7 +52,7 @@ public:
     //-------------------------------------------------------------------------
     // 
     //
-    StagingMemoryManagerVma(vk::Device device, vk::PhysicalDevice physicalDevice, VmaAllocator memAllocator, VkDeviceSize stagingBlockSize = APP_DEFAULT_STAGING_BLOCKSIZE)
+    StagingMemoryManagerVma(vk::Device device, vk::PhysicalDevice physicalDevice, VmaAllocator memAllocator, vk::DeviceSize stagingBlockSize = APP_DEFAULT_STAGING_BLOCKSIZE)
     {
         init(device, physicalDevice, memAllocator, stagingBlockSize);
     }
@@ -61,19 +61,33 @@ public:
     //-------------------------------------------------------------------------
     // Initialization
     //
-    void init(VkDevice device, VkPhysicalDevice physicalDevice, VmaAllocator memAllocator, VkDeviceSize stagingBlockSize = APP_DEFAULT_STAGING_BLOCKSIZE)
+    void init(vk::Device device, vk::PhysicalDevice physicalDevice, VmaAllocator memAllocator, vk::DeviceSize stagingBlockSize = APP_DEFAULT_STAGING_BLOCKSIZE)
     {
         StagingMemoryManager::init(device, physicalDevice, stagingBlockSize);
         m_allocator = memAllocator;
     }
 
 protected:
+    
     //-------------------------------------------------------------------------
     // 
     //
-    VkResult allocBlockMemory(uint32_t index, VkDeviceSize size, bool toDevice, Block& block) override
+    vk::Result allocBlockMemory(uint32_t index, vk::DeviceSize size, bool toDevice, Block& block) override
     {
+        VkBufferCreateInfo createInfo = {};
+        createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        createInfo.usage = toDevice ? VK_BUFFER_USAGE_TRANSFER_SRC_BIT : VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        createInfo.size  = size;
 
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = toDevice ? VMA_MEMORY_USAGE_CPU_TO_GPU : VMA_MEMORY_USAGE_GPU_TO_CPU;
+
+        VkResult result = vmaCreateBuffer(m_allocator, &createInfo, &allocInfo, reinterpret_cast<VkBuffer*>(&block.buffer), &m_blockAllocations[index], nullptr);
+        if (result != VK_SUCCESS)
+            return vk::Result(result);
+
+        result = vmaMapMemory(m_allocator, m_blockAllocations[index], (void**)& block.mapping);
+        return vk::Result(result);
     }
 
     //-------------------------------------------------------------------------
@@ -81,7 +95,9 @@ protected:
     //
     void freeBlockMemory(uint32_t index, const Block& block) override
     {
-
+        m_device.destroyBuffer(block.buffer);
+        vmaUnmapMemory(m_allocator, m_blockAllocations[index]);
+        vmaFreeMemory(m_allocator, m_blockAllocations[index]);
     }
 
     //-------------------------------------------------------------------------
@@ -89,12 +105,15 @@ protected:
     //
     void resizeBlocks(uint32_t num) override
     {
-
+        if (num)
+            m_blockAllocations.resize(num);
+        else {
+            m_blockAllocations.clear();
+        }
     }
 
     VmaAllocator               m_allocator;
     std::vector<VmaAllocation> m_blockAllocations;
-
 
 }; // StagingMemoryManagerVma
 

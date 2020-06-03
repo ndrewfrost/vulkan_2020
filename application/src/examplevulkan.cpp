@@ -138,7 +138,7 @@ void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer,
 
     // if no textures are present, create a dummy one to accomodate the pipeline layout
     if (textures.empty() && m_textures.empty()) {
-        app::TextureDedicated texture;
+        app::TextureVma texture;
 
         glm::u8vec4* color = new glm::u8vec4(255, 255, 255, 255);
         vk::DeviceSize bufferSize = sizeof(glm::u8vec4);
@@ -178,7 +178,7 @@ void ExampleVulkan::createTextureImages(const vk::CommandBuffer& cmdBuffer,
             auto imageSize = vk::Extent2D(texWidth, texHeight);
             auto imageCreateInfo = app::image::create2DInfo(imageSize, format, vk::ImageUsageFlagBits::eSampled, true);
 
-            app::TextureDedicated texture;
+            app::TextureVma texture;
             texture = m_allocator.createImage(cmdBuffer, bufferSize, pixels, imageCreateInfo);
 
             app::image::generateMipmaps(cmdBuffer, texture.image, format, imageSize, imageCreateInfo.mipLevels);
