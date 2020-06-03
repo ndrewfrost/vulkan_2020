@@ -31,6 +31,7 @@
     <ClCompile Include="vk_helpers\descriptorsets.cpp" />
     <ClCompile Include="vk_helpers\images.cpp" />
     <ClCompile Include="vk_helpers\memorymanagement.cpp" />
+    <ClCompile Include="vk_helpers\samplers.cpp" />
     <ClCompile Include="vk_helpers\swapchain.cpp" />
     <ClCompile Include="vk_helpers\vulkanbackend.cpp" />
   </ItemGroup>
