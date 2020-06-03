@@ -10,7 +10,7 @@
 
 #include "..//external/vk_mem_alloc.h"
 #include "vulkan/vulkan.hpp"
-//nclude "memorymanagement.hpp"
+#include "memorymanagement.hpp"
 #include "samplers.hpp"
 #include "images.hpp"
 
@@ -43,12 +43,60 @@ struct AccelerationDedicated
 };
 
 ///////////////////////////////////////////////////////////////////////////
-// Staging Memory Manager                                                //
+// Staging Memory Manager  VMA                                           //
 ///////////////////////////////////////////////////////////////////////////
 
-class StagingMemoryManager
+class StagingMemoryManagerVma : public StagingMemoryManager
 {
-}; // StagingMemoryManager
+public:
+    //-------------------------------------------------------------------------
+    // 
+    //
+    StagingMemoryManagerVma(vk::Device device, vk::PhysicalDevice physicalDevice, VmaAllocator memAllocator, VkDeviceSize stagingBlockSize = APP_DEFAULT_STAGING_BLOCKSIZE)
+    {
+        init(device, physicalDevice, memAllocator, stagingBlockSize);
+    }
+    StagingMemoryManagerVma() {};
+
+    //-------------------------------------------------------------------------
+    // Initialization
+    //
+    void init(VkDevice device, VkPhysicalDevice physicalDevice, VmaAllocator memAllocator, VkDeviceSize stagingBlockSize = NVVK_DEFAULT_STAGING_BLOCKSIZE)
+    {
+        StagingMemoryManager::init(device, physicalDevice, stagingBlockSize);
+        m_allocator = memAllocator;
+    }
+
+protected:
+    //-------------------------------------------------------------------------
+    // 
+    //
+    VkResult allocBlockMemory(uint32_t index, VkDeviceSize size, bool toDevice, Block& block) override
+    {
+
+    }
+
+    //-------------------------------------------------------------------------
+    // 
+    //
+    void freeBlockMemory(uint32_t index, const Block& block) override
+    {
+
+    }
+
+    //-------------------------------------------------------------------------
+    // 
+    //
+    void resizeBlocks(uint32_t num) override
+    {
+
+    }
+
+    VmaAllocator               m_allocator;
+    std::vector<VmaAllocation> m_blockAllocations;
+
+
+}; // StagingMemoryManagerVma
 
 ///////////////////////////////////////////////////////////////////////////
 // Allocator                                                             //
@@ -432,7 +480,7 @@ public:
 protected:    
     vk::Device                         m_device;
     VmaAllocator                       m_allocator;
-    app::StagingMemoryManager          m_staging;
+    app::StagingMemoryManagerVma       m_staging;
     app::SamplerPool                   m_samplerPool;
 
 }; // class Allocator

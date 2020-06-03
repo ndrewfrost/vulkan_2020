@@ -107,5 +107,8 @@
     <ClInclude Include="vk_helpers\samplers.hpp">
       <Filter>vk</Filter>
     </ClInclude>
+    <ClInclude Include="vk_helpers\memorymanagement.hpp">
+      <Filter>vk</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
