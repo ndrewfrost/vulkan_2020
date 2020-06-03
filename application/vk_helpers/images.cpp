@@ -8,14 +8,16 @@
 
 #include "images.hpp"
 
- //////////////////////////////////////////////////////////////////////////
- // Images                                                               //
- //////////////////////////////////////////////////////////////////////////
+namespace app {
+namespace image {
+//////////////////////////////////////////////////////////////////////////
+// Images                                                               //
+//////////////////////////////////////////////////////////////////////////
 
 //-------------------------------------------------------------------------
 // Return the access flag for an image layout
 //
-vk::AccessFlags app::image::accessFlagsForLayout(vk::ImageLayout layout)
+vk::AccessFlags accessFlagsForLayout(vk::ImageLayout layout)
 {
     switch (layout) {
     case vk::ImageLayout::ePreinitialized:
@@ -38,7 +40,7 @@ vk::AccessFlags app::image::accessFlagsForLayout(vk::ImageLayout layout)
 //-------------------------------------------------------------------------
 // Return the pipeline stage for an image layout
 //
-vk::PipelineStageFlags app::image::pipelineStageForLayout(vk::ImageLayout layout)
+vk::PipelineStageFlags pipelineStageForLayout(vk::ImageLayout layout)
 {
     switch (layout) {
     case vk::ImageLayout::eTransferDstOptimal:
@@ -62,39 +64,39 @@ vk::PipelineStageFlags app::image::pipelineStageForLayout(vk::ImageLayout layout
 //-------------------------------------------------------------------------
 // set Image Layout
 //
-void app::image::cmdBarrierImageLayout(
-    vk::CommandBuffer cmdbuffer, 
-    vk::Image image, 
-    vk::ImageLayout oldImageLayout, 
-    vk::ImageLayout newImageLayout, 
+void cmdBarrierImageLayout(
+    vk::CommandBuffer cmdbuffer,
+    vk::Image image,
+    vk::ImageLayout oldImageLayout,
+    vk::ImageLayout newImageLayout,
     const vk::ImageSubresourceRange& subresourceRange)
 {
     vk::ImageMemoryBarrier imageMemoryBarrier = {};
-    imageMemoryBarrier.oldLayout        = oldImageLayout;
-    imageMemoryBarrier.newLayout        = newImageLayout;
-    imageMemoryBarrier.image            = image;
+    imageMemoryBarrier.oldLayout = oldImageLayout;
+    imageMemoryBarrier.newLayout = newImageLayout;
+    imageMemoryBarrier.image = image;
     imageMemoryBarrier.subresourceRange = subresourceRange;
-    imageMemoryBarrier.srcAccessMask    = accessFlagsForLayout(oldImageLayout);
-    imageMemoryBarrier.dstAccessMask    = accessFlagsForLayout(newImageLayout);
+    imageMemoryBarrier.srcAccessMask = accessFlagsForLayout(oldImageLayout);
+    imageMemoryBarrier.dstAccessMask = accessFlagsForLayout(newImageLayout);
 
-    vk::PipelineStageFlags srcStageMask  = pipelineStageForLayout(oldImageLayout);
+    vk::PipelineStageFlags srcStageMask = pipelineStageForLayout(oldImageLayout);
     vk::PipelineStageFlags destStageMask = pipelineStageForLayout(newImageLayout);
 
     cmdbuffer.pipelineBarrier(srcStageMask, destStageMask,
         vk::DependencyFlags(), nullptr, nullptr, imageMemoryBarrier);
 }
 
-void app::image::cmdBarrierImageLayout(
-    vk::CommandBuffer cmdbuffer, 
-    vk::Image image, 
-    vk::ImageLayout oldImageLayout, 
-    vk::ImageLayout newImageLayout, 
+void cmdBarrierImageLayout(
+    vk::CommandBuffer cmdbuffer,
+    vk::Image image,
+    vk::ImageLayout oldImageLayout,
+    vk::ImageLayout newImageLayout,
     vk::ImageAspectFlags aspectMask)
 {
     vk::ImageSubresourceRange subresourceRange = {};
     subresourceRange.aspectMask = aspectMask;
-    subresourceRange.levelCount = 1;
-    subresourceRange.layerCount = 1;
+    subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+    subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
     subresourceRange.baseMipLevel = 0;
     subresourceRange.baseArrayLayer = 0;
 
@@ -104,28 +106,65 @@ void app::image::cmdBarrierImageLayout(
 //-------------------------------------------------------------------------
 // Create a vk::ImageCreateInfo
 //
-vk::ImageCreateInfo app::image::create2DInfo(
+vk::ImageCreateInfo create2DInfo(
     const vk::Extent2D& size,
     const vk::Format& format,
     const vk::ImageUsageFlags& usage,
     const bool mipmaps)
 {
     vk::ImageCreateInfo createInfo = {};
-    createInfo.imageType   = vk::ImageType::e2D;
-    createInfo.format      = format;
-    createInfo.mipLevels   = mipmaps ? app::image::mipLevels(size) : 1;
+    createInfo.imageType = vk::ImageType::e2D;
+    createInfo.format = format;
+    createInfo.samples = vk::SampleCountFlagBits::e1;
+    createInfo.mipLevels = mipmaps ? mipLevels(size) : 1;
     createInfo.arrayLayers = 1;
-    createInfo.extent      = vk::Extent3D{ size.width, size.height, 1 };
-    createInfo.usage       = usage | vk::ImageUsageFlagBits::eTransferSrc
-                                   | vk::ImageUsageFlagBits::eTransferDst;
+    createInfo.extent = vk::Extent3D{ size.width, size.height, 1 };
+    createInfo.usage = usage | vk::ImageUsageFlagBits::eTransferSrc
+        | vk::ImageUsageFlagBits::eTransferDst;
 
     return createInfo;
 }
 
 //-------------------------------------------------------------------------
+// creates vk::ImageViewCreateInfo
+//
+vk::ImageViewCreateInfo makeImageViewCreateInfo(
+    vk::Image image,
+    const vk::ImageCreateInfo& imageInfo,
+    bool isCube)
+{
+    vk::ImageViewCreateInfo viewInfo = {};
+    viewInfo.pNext = nullptr;
+    viewInfo.image = image;
+
+    switch (imageInfo.imageType) {
+    case vk::ImageType::e1D:
+        viewInfo.viewType = vk::ImageViewType::e1D;
+        break;
+    case vk::ImageType::e2D:
+        viewInfo.viewType = isCube ? vk::ImageViewType::eCube : vk::ImageViewType::e2D;
+        break;
+    case vk::ImageType::e3D:
+        viewInfo.viewType = vk::ImageViewType::e3D;
+        break;
+    default:
+        assert(0);
+    }
+
+    viewInfo.format = imageInfo.format;
+    viewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    return viewInfo;
+}
+
+//-------------------------------------------------------------------------
 // creates vk::create2DDescriptor
 //
-vk::DescriptorImageInfo app::image::create2DDescriptor(
+vk::DescriptorImageInfo create2DDescriptor(
     const vk::Device& device,
     const vk::Image& image,
     const vk::SamplerCreateInfo& samplerCreateInfo,
@@ -133,15 +172,15 @@ vk::DescriptorImageInfo app::image::create2DDescriptor(
     const vk::ImageLayout& layout)
 {
     vk::ImageViewCreateInfo imageViewCreateInfo = {};
-    imageViewCreateInfo.image            = image;
-    imageViewCreateInfo.viewType         = vk::ImageViewType::e2D;
-    imageViewCreateInfo.format           = format;
+    imageViewCreateInfo.image = image;
+    imageViewCreateInfo.viewType = vk::ImageViewType::e2D;
+    imageViewCreateInfo.format = format;
     imageViewCreateInfo.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, ~0u, 0, 1 };
 
     vk::DescriptorImageInfo descriptorInfo = {};
-    descriptorInfo.sampler                 = device.createSampler(samplerCreateInfo);
-    descriptorInfo.imageView               = device.createImageView(imageViewCreateInfo);
-    descriptorInfo.imageLayout             = layout;
+    descriptorInfo.sampler = device.createSampler(samplerCreateInfo);
+    descriptorInfo.imageView = device.createImageView(imageViewCreateInfo);
+    descriptorInfo.imageLayout = layout;
 
     return descriptorInfo;
 }
@@ -150,7 +189,7 @@ vk::DescriptorImageInfo app::image::create2DDescriptor(
 // mipmap generation relies on blitting
 // a more sophisticated version could be done with computer shader <-- TODO
 //
-void app::image::generateMipmaps(
+void generateMipmaps(
     const vk::CommandBuffer& cmdBuffer,
     const vk::Image& image,
     const vk::Format& imageFormat,
@@ -160,15 +199,15 @@ void app::image::generateMipmaps(
     // Transfer the top level image to a layout 'eTransferSrcOptimal` and its access to 'eTransferRead'
     vk::ImageMemoryBarrier barrier = {};
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
-    barrier.subresourceRange.baseMipLevel   = 0;
-    barrier.subresourceRange.layerCount     = 1;
-    barrier.subresourceRange.levelCount     = 1;
-    barrier.image                           = image;
-    barrier.oldLayout                       = vk::ImageLayout::eShaderReadOnlyOptimal;
-    barrier.newLayout                       = vk::ImageLayout::eTransferSrcOptimal;
-    barrier.srcAccessMask                   = vk::AccessFlags();
-    barrier.dstAccessMask                   = vk::AccessFlagBits::eTransferRead;
+    barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.image = image;
+    barrier.oldLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
+    barrier.srcAccessMask = vk::AccessFlags();
+    barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
 
     cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
         vk::DependencyFlags(), nullptr, nullptr, barrier);
@@ -178,31 +217,31 @@ void app::image::generateMipmaps(
 
     for (uint32_t i = 1; i < mipLevels; i++) {
         vk::ImageBlit blit;
-        blit.srcOffsets[0]                 = vk::Offset3D{ 0, 0, 0 };
-        blit.srcOffsets[1]                 = vk::Offset3D{ mipWidth, mipHeight, 1 };
-        blit.srcSubresource.aspectMask     = vk::ImageAspectFlagBits::eColor;
-        blit.srcSubresource.mipLevel       = i - 1;
+        blit.srcOffsets[0] = vk::Offset3D{ 0, 0, 0 };
+        blit.srcOffsets[1] = vk::Offset3D{ mipWidth, mipHeight, 1 };
+        blit.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+        blit.srcSubresource.mipLevel = i - 1;
         blit.srcSubresource.baseArrayLayer = 0;
-        blit.srcSubresource.layerCount     = 1;
-        blit.dstOffsets[0]                 = vk::Offset3D{ 0, 0, 0 };
+        blit.srcSubresource.layerCount = 1;
+        blit.dstOffsets[0] = vk::Offset3D{ 0, 0, 0 };
         blit.dstOffsets[1] =
             vk::Offset3D{ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
-        blit.dstSubresource.aspectMask     = vk::ImageAspectFlagBits::eColor;
-        blit.dstSubresource.mipLevel       = i;
+        blit.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+        blit.dstSubresource.mipLevel = i;
         blit.dstSubresource.baseArrayLayer = 0;
-        blit.dstSubresource.layerCount     = 1;
+        blit.dstSubresource.layerCount = 1;
 
         cmdBuffer.blitImage(image, vk::ImageLayout::eTransferSrcOptimal, image,
             vk::ImageLayout::eTransferDstOptimal, { blit }, vk::Filter::eLinear);
-        
+
         // Next
         if (i + 1 < mipLevels) {
             // Transition the current miplevel into a eTransferSrcOptimal layout, to be used as the source for the next one.
             barrier.subresourceRange.baseMipLevel = i;
-            barrier.oldLayout                     = vk::ImageLayout::eTransferDstOptimal;
-            barrier.newLayout                     = vk::ImageLayout::eTransferSrcOptimal;
-            barrier.srcAccessMask                 = vk::AccessFlags();  //vk::AccessFlagBits::eTransferWrite;
-            barrier.dstAccessMask                 = vk::AccessFlagBits::eTransferRead;
+            barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+            barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
+            barrier.srcAccessMask = vk::AccessFlags();  //vk::AccessFlagBits::eTransferWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
 
             cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
                 vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlags(), nullptr,
@@ -228,3 +267,6 @@ void app::image::generateMipmaps(
         nullptr, barrier);
 
 }
+
+} //namespace image
+} //namespace app

@@ -33,25 +33,6 @@ namespace image {
 vk::AccessFlags        accessFlagsForLayout(vk::ImageLayout layout);
 vk::PipelineStageFlags pipelineStageForLayout(vk::ImageLayout layout);
 
-void cmdBarrierImageLayout(
-    vk::CommandBuffer                cmdbuffer,
-    vk::Image                        image,
-    vk::ImageLayout                  oldImageLayout,
-    vk::ImageLayout                  newImageLayout,
-    const vk::ImageSubresourceRange& subresourceRange);
-
-void cmdBarrierImageLayout(
-    vk::CommandBuffer    cmdbuffer, 
-    vk::Image            image, 
-    vk::ImageLayout      oldImageLayout, 
-    vk::ImageLayout      newImageLayout, 
-    vk::ImageAspectFlags aspectMask);
-
-inline void cmdBarrierImageLayout(vk::CommandBuffer cmdbuffer, vk::Image image, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
-{
-    cmdBarrierImageLayout(cmdbuffer, image, oldImageLayout, newImageLayout, vk::ImageAspectFlagBits::eColor);
-}
-
 //-------------------------------------------------------------------------
 // mipLevels - Returns the number of mipmaps an image can have
 //
@@ -63,27 +44,23 @@ inline uint32_t mipLevels(vk::Extent2D extent)
 //-------------------------------------------------------------------------
 // set Image Layout
 //
-void setImageLayout(
-    const vk::CommandBuffer& commandBuffer,
-    const vk::Image& image,
-    const vk::ImageLayout& oldImageLayout,
-    const vk::ImageLayout& newImageLayout,
+void cmdBarrierImageLayout(
+    vk::CommandBuffer                cmdbuffer,
+    vk::Image                        image,
+    vk::ImageLayout                  oldImageLayout,
+    vk::ImageLayout                  newImageLayout,
     const vk::ImageSubresourceRange& subresourceRange);
 
-void setImageLayout(
-    const vk::CommandBuffer& commandBuffer,
-    const vk::Image& image,
-    const vk::ImageAspectFlags& aspectMask,
-    const vk::ImageLayout& oldImageLayout,
-    const vk::ImageLayout& newImageLayout);
+void cmdBarrierImageLayout(
+    vk::CommandBuffer    cmdbuffer,
+    vk::Image            image,
+    vk::ImageLayout      oldImageLayout,
+    vk::ImageLayout      newImageLayout,
+    vk::ImageAspectFlags aspectMask);
 
-inline void setImageLayout(
-    const vk::CommandBuffer& commandBuffer,
-    const vk::Image& image,
-    const vk::ImageLayout& oldImageLayout,
-    const vk::ImageLayout& newImageLayout)
+inline void cmdBarrierImageLayout(vk::CommandBuffer cmdbuffer, vk::Image image, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
 {
-    setImageLayout(commandBuffer, image, vk::ImageAspectFlagBits::eColor, oldImageLayout, newImageLayout);
+    cmdBarrierImageLayout(cmdbuffer, image, oldImageLayout, newImageLayout, vk::ImageAspectFlagBits::eColor);
 }
 
 //-------------------------------------------------------------------------
@@ -94,6 +71,15 @@ vk::ImageCreateInfo create2DInfo(
     const vk::Format& format = vk::Format::eR8G8B8A8Unorm,
     const vk::ImageUsageFlags& usage = vk::ImageUsageFlagBits::eSampled,
     const bool mipmaps = false);
+
+//-------------------------------------------------------------------------
+// Create a vk::ImageViewCreateInfo
+//
+vk::ImageViewCreateInfo makeImageViewCreateInfo(
+    vk::Image                  image,
+    const vk::ImageCreateInfo& imageInfo,
+    bool                       isCube = false);
+
 //-------------------------------------------------------------------------
 // creates vk::create2DDescriptor
 //

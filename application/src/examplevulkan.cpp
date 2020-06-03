@@ -281,8 +281,7 @@ void ExampleVulkan::createGraphicsPipeline()
       {0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, position)},
       {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, normal)},
       {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)},
-      {3, 0, vk::Format::eR32G32Sfloat,    offsetof(Vertex, texCoord)},
-      {4, 0, vk::Format::eR32Sint,         offsetof(Vertex, matID)} };;
+      {3, 0, vk::Format::eR32G32Sfloat,    offsetof(Vertex, texCoord)}};
 
     m_graphicsPipeline = pipelineGenerator.create();
 #if _DEBUG
@@ -442,24 +441,30 @@ void ExampleVulkan::createOffscreenRender()
         vk::ImageCreateInfo colorCreateInfo = app::image::create2DInfo(m_size, m_offscreenColorFormat,
             vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage);
 
+        app::ImageVma image = {};
+
         try {
-            m_offscreenColor = m_allocator.createImage(colorCreateInfo);
+            image = m_allocator.createImage(colorCreateInfo);
         }
         catch (vk::SystemError err) {
             throw std::runtime_error("failed to create image!");
         }
-
-        m_offscreenColor.descriptor = app::image::create2DDescriptor(m_device, m_offscreenColor.image,
-            vk::SamplerCreateInfo{}, m_offscreenColorFormat, vk::ImageLayout::eGeneral);
+        
+        vk::ImageViewCreateInfo imageViewCreateInfo = app::image::makeImageViewCreateInfo(image.image, colorCreateInfo);
+        m_offscreenColor = m_allocator.createTexture(image, imageViewCreateInfo, vk::SamplerCreateInfo());
+        m_offscreenColor.descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     }
 
     // creating the depth buffer
     {
-        vk::ImageCreateInfo depthCreateInfo = app::image::create2DInfo(m_size, m_offscreenDepthFormat,
-            vk::ImageUsageFlagBits::eDepthStencilAttachment);
+        vk::ImageCreateInfo depthCreateInfo = 
+            app::image::create2DInfo(m_size, m_offscreenDepthFormat,
+                                     vk::ImageUsageFlagBits::eDepthStencilAttachment);
+
+        app::ImageVma image = {};
 
         try {
-            m_offscreenDepth = m_allocator.createImage(depthCreateInfo);
+            app::ImageVma image = m_allocator.createImage(depthCreateInfo);
         }
         catch (vk::SystemError err) {
             throw std::runtime_error("failed to create image!");
@@ -469,10 +474,10 @@ void ExampleVulkan::createOffscreenRender()
         depthStencilView.viewType         = vk::ImageViewType::e2D;
         depthStencilView.format           = m_offscreenDepthFormat;
         depthStencilView.subresourceRange = { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 };
-        depthStencilView.image            = m_offscreenDepth.image;
+        depthStencilView.image            = image.image;
 
         try {
-            m_offscreenDepth.descriptor.imageView = m_device.createImageView(depthStencilView);
+            m_offscreenDepth = m_allocator.createTexture(image, depthStencilView);
         }
         catch (vk::SystemError err) {
             throw std::runtime_error("failed to create image!");
@@ -481,19 +486,19 @@ void ExampleVulkan::createOffscreenRender()
 
     // setting the image layout for both color and depth
     {
-        app::SingleCommandBuffer commandBufferGen(m_device, m_graphicsQueueIdx);
-        vk::CommandBuffer commandBuffer = commandBufferGen.createCommandBuffer();
+        app::CommandPool commandBufferGen(m_device, m_graphicsQueueIdx);
+        vk::CommandBuffer commandBuffer = commandBufferGen.createBuffer();
 
-        app::image::setImageLayout(
+        app::image::cmdBarrierImageLayout(
             commandBuffer, m_offscreenColor.image,
             vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
 
-        app::image::setImageLayout(
-            commandBuffer, m_offscreenDepth.image,
-            vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        app::image::cmdBarrierImageLayout(
+            commandBuffer, m_offscreenDepth.image, vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eDepthStencilAttachmentOptimal,
+            vk::ImageAspectFlagBits::eDepth);
 
-        commandBufferGen.flushCommandBuffer(commandBuffer);
+        commandBufferGen.submitAndWait(commandBuffer);
     }
 
     // creating a render pass for the offscreen
