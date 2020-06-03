@@ -314,25 +314,25 @@ public:
             subresourceRange.layerCount     = 1;
 
             // doing these transitions per copy is not efficient, should do in bulk for many images
-            app::cmdBarrierImageLayout(cmdBuffer, imageResult.image, VK_IMAGE_LAYOUT_UNDEFINED,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+            app::image::cmdBarrierImageLayout(cmdBuffer, imageResult.image, vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eTransferDstOptimal, subresourceRange);
 
             VkOffset3D offset = { 0 };
             VkImageSubresourceLayers subresource = { 0 };
             subresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             subresource.layerCount = 1;
 
-            m_staging.cmdToImage(cmdBuffer, resultImage.image, offset, info.extent, subresource, size, data);
+            m_staging.cmdToImage(cmdBuffer, imageResult.image, offset, info.extent, subresource, size, data);
 
             // Setting final image Layout
-            app::cmdBarrierImageLayout(cmdBuffer, resultImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout);
+            app::image::cmdBarrierImageLayout(vk::CommandBuffer(cmdBuffer), vk::Image(imageResult.image), vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout(layout));
         }
         else {
             // Setting final image layout
-            app::cmdBarrierImageLayout(cmdBuffer, resultImage.image, VK_IMAGE_LAYOUT_UNDEFINED, layout );
+            app::image::cmdBarrierImageLayout(vk::CommandBuffer(cmdBuffer), vk::Image(imageResult.image), vk::ImageLayout::eUndefined, vk::ImageLayout(layout));
         }
 
-        return result;
+        return imageResult;
     }
 
     //-------------------------------------------------------------------------

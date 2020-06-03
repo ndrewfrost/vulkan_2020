@@ -28,15 +28,37 @@ namespace image {
 #endif
 
 //-------------------------------------------------------------------------
+// Transition Pipeline Layout tools
+//
+vk::AccessFlags        accessFlagsForLayout(vk::ImageLayout layout);
+vk::PipelineStageFlags pipelineStageForLayout(vk::ImageLayout layout);
+
+void cmdBarrierImageLayout(
+    vk::CommandBuffer                cmdbuffer,
+    vk::Image                        image,
+    vk::ImageLayout                  oldImageLayout,
+    vk::ImageLayout                  newImageLayout,
+    const vk::ImageSubresourceRange& subresourceRange);
+
+void cmdBarrierImageLayout(
+    vk::CommandBuffer    cmdbuffer, 
+    vk::Image            image, 
+    vk::ImageLayout      oldImageLayout, 
+    vk::ImageLayout      newImageLayout, 
+    vk::ImageAspectFlags aspectMask);
+
+inline void cmdBarrierImageLayout(vk::CommandBuffer cmdbuffer, vk::Image image, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
+{
+    cmdBarrierImageLayout(cmdbuffer, image, oldImageLayout, newImageLayout, vk::ImageAspectFlagBits::eColor);
+}
+
+//-------------------------------------------------------------------------
 // mipLevels - Returns the number of mipmaps an image can have
 //
 inline uint32_t mipLevels(vk::Extent2D extent)
 {
     return static_cast<uint32_t>(std::floor(std::log2(std::max(extent.width, extent.height)))) + 1;
 }
-
-vk::AccessFlags accessFlagsForLayout(vk::ImageLayout layout);
-vk::PipelineStageFlags pipelineStageForLayout(vk::ImageLayout layout);
 
 //-------------------------------------------------------------------------
 // set Image Layout

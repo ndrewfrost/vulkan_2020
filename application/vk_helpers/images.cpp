@@ -62,11 +62,11 @@ vk::PipelineStageFlags app::image::pipelineStageForLayout(vk::ImageLayout layout
 //-------------------------------------------------------------------------
 // set Image Layout
 //
-void app::image::setImageLayout(
-    const vk::CommandBuffer& commandBuffer,
-    const vk::Image& image,
-    const vk::ImageLayout& oldImageLayout,
-    const vk::ImageLayout& newImageLayout,
+void app::image::cmdBarrierImageLayout(
+    vk::CommandBuffer cmdbuffer, 
+    vk::Image image, 
+    vk::ImageLayout oldImageLayout, 
+    vk::ImageLayout newImageLayout, 
     const vk::ImageSubresourceRange& subresourceRange)
 {
     vk::ImageMemoryBarrier imageMemoryBarrier = {};
@@ -80,23 +80,25 @@ void app::image::setImageLayout(
     vk::PipelineStageFlags srcStageMask  = pipelineStageForLayout(oldImageLayout);
     vk::PipelineStageFlags destStageMask = pipelineStageForLayout(newImageLayout);
 
-    commandBuffer.pipelineBarrier(srcStageMask, destStageMask,
+    cmdbuffer.pipelineBarrier(srcStageMask, destStageMask,
         vk::DependencyFlags(), nullptr, nullptr, imageMemoryBarrier);
 }
 
-void app::image::setImageLayout(
-    const vk::CommandBuffer& commandBuffer,
-    const vk::Image& image,
-    const vk::ImageAspectFlags& aspectMask,
-    const vk::ImageLayout& oldImageLayout,
-    const vk::ImageLayout& newImageLayout)
+void app::image::cmdBarrierImageLayout(
+    vk::CommandBuffer cmdbuffer, 
+    vk::Image image, 
+    vk::ImageLayout oldImageLayout, 
+    vk::ImageLayout newImageLayout, 
+    vk::ImageAspectFlags aspectMask)
 {
     vk::ImageSubresourceRange subresourceRange = {};
     subresourceRange.aspectMask = aspectMask;
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 1;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.baseArrayLayer = 0;
 
-    setImageLayout(commandBuffer, image, oldImageLayout, newImageLayout, subresourceRange);
+    cmdBarrierImageLayout(cmdbuffer, image, oldImageLayout, newImageLayout, subresourceRange);
 }
 
 //-------------------------------------------------------------------------
