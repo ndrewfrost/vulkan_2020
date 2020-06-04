@@ -870,14 +870,55 @@ void VulkanBackend::setupGlfwCallbacks(GLFWwindow* window)
 //
 void VulkanBackend::onKeyboard(int key, int scancode, int action, int mods)
 {
-    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
+    const bool capture = 
+        ImGui::GetCurrentContext() != nullptr 
+        && ImGui::GetIO().WantCaptureKeyboard;
+
+    const bool pressed = action != GLFW_RELEASE;
+
+    if (key == GLFW_KEY_LEFT_CONTROL)
+        m_inputs.ctrl = pressed;
+    
+    if (key == GLFW_KEY_LEFT_SHIFT)
+        m_inputs.shift = pressed;
+    
+    if (key == GLFW_KEY_LEFT_ALT)
+        m_inputs.alt = pressed;    
+
+    if (action == GLFW_RELEASE || capture)
         return;
 
-    if (action == GLFW_RELEASE)
-        return; // No action on key up
-
-    if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)
+    switch (key) {
+    case GLFW_KEY_ESCAPE:
         glfwSetWindowShouldClose(m_window, 1);
+        break;
+    case GLFW_KEY_LEFT:
+        m_inertCamera.tau = s_keyTau;
+        m_inertCamera.rotateH(s_moveStep, m_inputs.ctrl);
+        break;
+    case GLFW_KEY_UP:
+        m_inertCamera.tau = s_keyTau;
+        m_inertCamera.rotateV(s_moveStep, m_inputs.ctrl);
+        break;
+    case GLFW_KEY_RIGHT:
+        m_inertCamera.tau = s_keyTau;
+        m_inertCamera.rotateH(-s_moveStep, m_inputs.ctrl);
+        break;
+    case GLFW_KEY_DOWN:
+        m_inertCamera.tau = s_keyTau;
+        m_inertCamera.rotateV(-s_moveStep, m_inputs.ctrl);
+        break;
+    case GLFW_KEY_PAGE_UP:
+        m_inertCamera.tau = s_keyTau;
+        m_inertCamera.move(s_moveStep, m_inputs.ctrl);
+        break;
+    case GLFW_KEY_PAGE_DOWN:
+        m_inertCamera.tau = s_keyTau;
+        m_inertCamera.move(-s_moveStep, m_inputs.ctrl);
+        break;
+    default:
+        break;
+    }
 }
 
 void VulkanBackend::onKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -912,24 +953,45 @@ void VulkanBackend::onCharCallback(GLFWwindow* window, unsigned int key)
 //
 void VulkanBackend::onMouseMove(int x, int y)
 {
-    if (ImGui::GetCurrentContext() != nullptr) {
-        ImGuiIO& io = ImGui::GetIO();
-        if (io.WantCaptureKeyboard || io.WantCaptureMouse) return;
+    if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse) 
+        return;
+    
+    // Old mouse position
+    int ox, oy;  
+    CameraManipulator.getMousePosition(ox, oy);
+
+    if (m_inputs.lmb || m_inputs.rmb || m_inputs.mmb)
+        CameraManipulator.mouseMove(x, y, m_inputs);
+    
+    // difference mouse position
+    const int dx = x - ox, dy = y - oy;  
+
+    // Left Mouse Button
+    if (m_inputs.lmb) {
+        const float hval = 2 * dx / static_cast<float>(m_size.width);
+        const float vval = 2 * dy / static_cast<float>(m_size.height);
+        m_inertCamera.tau = s_cameraTau;
+        m_inertCamera.rotateH(hval);
+        m_inertCamera.rotateV(vval);
     }
 
-    tools::Manipulator::Inputs inputs;
-    inputs.lmb = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT)   == GLFW_PRESS;
-    inputs.mmb = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
-    inputs.rmb = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT)  == GLFW_PRESS;
-    if (!inputs.lmb && !inputs.rmb && !inputs.mmb) {
-        return;  // no mouse button pressed
+    //Middle Mouse Button
+    if (m_inputs.mmb) {
+        const float hval = 2 * dx / static_cast<float>(m_size.width);
+        const float vval = 2 * dy / static_cast<float>(m_size.height);
+        m_inertCamera.tau = s_cameraTau;
+        m_inertCamera.rotateH(hval, true);
+        m_inertCamera.rotateV(vval, true);
     }
 
-    inputs.ctrl  = glfwGetKey(m_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
-    inputs.shift = glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS;
-    inputs.alt   = glfwGetKey(m_window, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS;
-
-    CameraManipulator.mouseMove(static_cast<int>(x), static_cast<int>(y), inputs);
+    //Right mouse button
+    if (m_inputs.rmb) {
+        const float hval = 2 * dx / static_cast<float>(m_size.width);
+        const float vval = -2 * dy / static_cast<float>(m_size.height);
+        m_inertCamera.tau = s_cameraTau;
+        m_inertCamera.rotateH(hval, m_inputs.ctrl);
+        m_inertCamera.move(vval, m_inputs.ctrl);
+    }
 }
 
 void VulkanBackend::onMouseMoveCallback(GLFWwindow* window, double x, double y)
@@ -950,6 +1012,10 @@ void VulkanBackend::onMouseButton(int button, int action, int mod)
     double xpos, ypos;
     glfwGetCursorPos(m_window, &xpos, &ypos);
     CameraManipulator.setMousePosition(static_cast<int>(xpos), static_cast<int>(ypos));
+
+    m_inputs.lmb = (button == GLFW_MOUSE_BUTTON_LEFT) && (action == GLFW_PRESS);
+    m_inputs.mmb = (button == GLFW_MOUSE_BUTTON_MIDDLE) && (action == GLFW_PRESS);
+    m_inputs.rmb = (button == GLFW_MOUSE_BUTTON_RIGHT) && (action == GLFW_PRESS);
 }
 
 void VulkanBackend::onMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
@@ -967,7 +1033,10 @@ void VulkanBackend::onScroll(int delta)
     if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse)
         return;
 
-    CameraManipulator.wheel(static_cast<int>(delta));
+    CameraManipulator.wheel(delta > 0 ? 1 : -1, m_inputs);
+
+    m_inertCamera.tau = s_keyTau;
+    m_inertCamera.move(delta > 0 ? s_moveStep : -s_moveStep, m_inputs.ctrl);
 }
 
 void VulkanBackend::onScrollCallback(GLFWwindow* window, double x, double y)
@@ -1074,6 +1143,14 @@ void VulkanBackend::initGUI(GLFWwindow* window)
     ImGui_ImplVulkan_DestroyFontUploadObjects();
 
     ImGui::GetIO().IniFilename = nullptr;
+}
+
+//-------------------------------------------------------------------------
+// Fit the camera to the Bounding box
+//
+void VulkanBackend::fitCamera(const glm::vec3& boxMin, const glm::vec3 boxMax, bool instantFit)
+{
+    CameraManipulator.fit(boxMin, boxMax, instantFit);
 }
 
 ///////////////////////////////////////////////////////////////////////////

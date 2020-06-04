@@ -11,6 +11,7 @@
 #include <array>
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <chrono>
 
 namespace tools {
 
@@ -44,7 +45,11 @@ public:
 
     Actions mouseMove(int x, int y, const Inputs& inputs);
 
-    void setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up);
+    void setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up, bool instantSet = true);
+
+    void updateAnim();
+
+    void fit(const glm::vec3& boxMin, const glm::vec3& boxMax, bool instantFit = true);
 
     void setWindowSize(int w, int h);
 
@@ -66,6 +71,8 @@ public:
 
     float getRoll() const;
 
+    void setMatrix(const glm::mat4& mat_, bool instantSet = true, float centerDistance = 1.f);
+
     const glm::mat4& getMatrix() const;
 
     void setSpeed(float speed);
@@ -76,7 +83,7 @@ public:
 
     void motion(int x, int y, int action = 0);
 
-    void wheel(int value);
+    void wheel(int value, const Inputs& inputs);
 
     int getWidth() const;
 
@@ -85,6 +92,10 @@ public:
     void setFov(float fov);
 
     float getFov() const;
+
+    double getDuration() const;
+
+    void   setDuration(double val);
 
 protected:
     Manipulator();
@@ -101,6 +112,10 @@ private:
     void trackball(int x, int y);
 
     double projectOntoTBSphere(const glm::vec2& p);
+    double getSystemTime();
+
+    glm::vec3 computeBezier(float t, glm::vec3& p0, glm::vec3& p1, glm::vec3& p2);
+    void      findBezierPoints();
 
 protected:
     struct Camera
@@ -117,6 +132,10 @@ protected:
     Camera m_current;  // current Camera Position
     Camera m_goal;     // Wish Camera Position
     Camera m_snapshot; // Current camera the moment a set lookat is done
+
+    std::array<glm::vec3, 3> m_bezier;
+    double                   m_start_time = 0;
+    double                   m_duration = 0.5;
 
     // Screen 
     int m_width = 1;

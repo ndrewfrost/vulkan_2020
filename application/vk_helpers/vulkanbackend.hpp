@@ -28,8 +28,13 @@
 #include "swapchain.hpp"
 #include "commands.hpp"
 #include "../general_helpers/manipulator.h"
+#include "../general_helpers/cameraintertia.hpp"
 
 namespace app {
+
+static float const s_keyTau = 0.10f;
+static float const s_cameraTau = 0.03f;
+static float const s_moveStep = 0.2f;
 
 ///////////////////////////////////////////////////////////////////////////
 // ContextCreateInfo                                                     //
@@ -115,6 +120,7 @@ public:
 
     bool isMinimized(bool doSleeping = true);
 
+
     ///////////////////////////////////////////////////////////////////////////
     // GLFW Callbacks / ImGUI                                                //
     ///////////////////////////////////////////////////////////////////////////
@@ -141,6 +147,8 @@ public:
     static  void onWindowSizeCallback(GLFWwindow* window, int w, int h);
 
     void initGUI(GLFWwindow* window);
+
+    void fitCamera(const glm::vec3& boxMin, const glm::vec3 boxMax, bool instantFit = true);
     
     vk::DescriptorPool m_imguiDescPool;
 
@@ -150,9 +158,9 @@ public:
 
     void setupDebugMessenger(bool enabelValidationLayers);
 
-    void destroyDebugUtilsMessengerEXT(vk::Instance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator);
+    //void destroyDebugUtilsMessengerEXT(vk::Instance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator);
 
-    VkResult createDebugUtilsMessengerEXT(vk::Instance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+    //VkResult createDebugUtilsMessengerEXT(vk::Instance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 
     bool checkValidationLayerSupport(const ContextCreateInfo& info);
 
@@ -220,6 +228,9 @@ protected:
     // Surface buffer formats
     vk::Format                     m_colorFormat{ vk::Format::eB8G8R8A8Unorm };
     vk::Format                     m_depthFormat{ vk::Format::eUndefined };
+
+    tools::Manipulator::Inputs     m_inputs;       // Camera manipulator
+    tools::InertiaCamera           m_inertCamera;  // Camera Inertia
 
 }; // class VulkanBackend
 

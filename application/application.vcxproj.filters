@@ -122,5 +122,8 @@
     <ClInclude Include="general_helpers\trangeallocator.hpp">
       <Filter>helper</Filter>
     </ClInclude>
+    <ClInclude Include="general_helpers\cameraintertia.hpp">
+      <Filter>helper</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

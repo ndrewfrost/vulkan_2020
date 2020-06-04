@@ -10,9 +10,23 @@
 
 namespace tools {
 
+constexpr float PI = 3.1415926535897f;
 //-------------------------------------------------------------------------
 // Math Functions
 //
+template<class T>
+inline T lerp(T t, T a, T b)
+{
+    return a * (T(1) - t) + t * b;
+}
+
+inline glm::vec3 lerp(const float& t, const glm::vec3& u, const glm::vec3& v)
+{
+    glm::vec3 w;
+    w.x = lerp(t, u.x, v.x); w.y = lerp(t, u.y, v.y); w.z = lerp(t, u.z, v.z); return w;
+}
+
+
 template <typename T>
 bool isZero(const T& _a)
 {
@@ -47,12 +61,23 @@ Manipulator::Manipulator()
 //
 void Manipulator::update()
 {
-    m_matrix = glm::lookAt(m_current.eye, m_current.ctr, m_current.up);
+    auto elapse = static_cast<float>(getSystemTime() - m_start_time) / 1000.f;
+    if (elapse > m_duration)
+        return;
 
-    if (!isZero(m_roll)) {
-        glm::mat4 rotate = glm::rotate(m_roll, glm::vec3(0, 0, 1));
-        m_matrix = m_matrix * rotate;
-    }
+    float t = elapse / float(m_duration);
+    // Evaluate polynomial 
+    t = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+
+    // Interpolate camera position and interest
+    // The distance of the camera between the interest is preserved to
+    // create a nicer interpolation
+    glm::vec3 vpos, vint, vup;
+    m_current.ctr = lerp(t, m_snapshot.ctr, m_goal.ctr);
+    m_current.up = lerp(t, m_snapshot.up, m_goal.up);
+    m_current.eye = computeBezier(t, m_bezier[0], m_bezier[1], m_bezier[2]);
+
+    update();
 }
 
 //-------------------------------------------------------------------------
@@ -264,44 +289,79 @@ double Manipulator::projectOntoTBSphere(const glm::vec2& p)
 }
 
 //-------------------------------------------------------------------------
+//
+//
+glm::vec3 Manipulator::computeBezier(float t, glm::vec3& p0, glm::vec3& p1, glm::vec3& p2)
+{
+    float u = 1.f - t;
+    float tt = t * t;
+    float uu = u * u;
+
+    glm::vec3 p = uu * p0;      // first term
+    p += 2 * u * t * p1;        // second term
+    p += tt * p2;               // third term
+
+    return p;
+}
+
+//-------------------------------------------------------------------------
+//
+//
+void Manipulator::findBezierPoints()
+{
+    glm::vec3 p0 = m_current.eye;
+    glm::vec3 p2 = m_goal.eye;
+    glm::vec3 p1, pc;
+
+    // point of interest
+    glm::vec3 pi = (m_goal.ctr + m_current.ctr) * 0.5f;
+
+    glm::vec3 p02 = (p0 + p2) * 0.5f;                               // mid p0-p2
+    float radius = (length(p0 - pi) + length(p2 - pi)) * 0.5f;      // Radius for p1
+    glm::vec3 p02pi(p02 - pi);                                      // Vector from interest to mid point
+    p02pi = glm::normalize(p02pi);
+    p02pi *= radius;
+    pc = pi + p02pi;                          // Calculated point to go through
+    p1 = 2.f * pc - p0 * 0.5f - p2 * 0.5f;    // Computing p1 for t=0.5
+    p1.y = p02.y;                             // Clamping the P1 to be in the same height as p0-p2
+
+    m_bezier[0] = p0;
+    m_bezier[1] = p1;
+    m_bezier[2] = p2;
+}
+
+//-------------------------------------------------------------------------
 // Call when mouse is moving
 // Finds the appropriate camera operator based on mouse button pressed
 // returns the action that was activated
 //
 Manipulator::Actions Manipulator::mouseMove(int x, int y, const Inputs& inputs)
 {
-    Actions currAction = None;
+    if (!inputs.lmb && !inputs.rmb && !inputs.mmb) {
+        setMousePosition(x, y);
+        return None;  // no mouse button pressed
+    }
 
+    Actions curAction = None;
     if (inputs.lmb) {
         if (((inputs.ctrl) && (inputs.shift)) || inputs.alt)
-        {
-            currAction = m_mode == Examine ? LookAround : Orbit;
-        }
+            curAction = m_mode == Examine ? LookAround : Orbit;
         else if (inputs.shift)
-        {
-            currAction = Dolly;
-        }
+            curAction = Dolly;
         else if (inputs.ctrl)
-        {
-            currAction = Pan;
-        }
+            curAction = Pan;
         else
-        {
-            currAction = m_mode == Examine ? Orbit : LookAround;
-        }
+            curAction = m_mode == Examine ? Orbit : LookAround;
     }
-    else if (inputs.mmb) {
-        currAction = Pan;
-    }
-    else if (inputs.rmb) {
-        currAction = Dolly;
-    }
+    else if (inputs.mmb)
+        curAction = Pan;
+    else if (inputs.rmb)
+        curAction = Dolly;
 
-    if (currAction != None) {
-        motion(x, y, currAction);
-    }
+    if (curAction != None)
+        motion(x, y, curAction);
 
-    return currAction;
+    return curAction;
 }
 
 //-------------------------------------------------------------------------
@@ -337,6 +397,9 @@ void Manipulator::motion(int x, int y, int action)
         break;
     }
 
+    // Resetting animation
+    m_start_time = 0;
+
     update();
 
     m_mouse[0] = static_cast<float>(x);
@@ -346,28 +409,74 @@ void Manipulator::motion(int x, int y, int action)
 //-------------------------------------------------------------------------
 // Trigger a dolly when the wheel changes
 //
-void Manipulator::wheel(int value)
+void Manipulator::wheel(int value, const Inputs& inputs)
 {
     auto fval(static_cast<float>(value));
     float dx = (fval * fabs(fval)) / static_cast<float>(m_width);
 
-    glm::vec3 z(m_current.eye - m_current.ctr);
-    float length = z.length() * 0.1f;
-    length = length < 0.001f ? 0.001f : length;
+    if (inputs.shift) {
+        m_fov += fval;
+    }
+    else {
+        glm::vec3 z(m_current.eye - m_current.ctr);
+        float length = z.length() * 0.1f;
+        length = length < 0.001f ? 0.001f : length;
 
-    dolly(dx * m_speed, dx * m_speed);
-    update();
+        dolly(dx * m_speed, dx * m_speed);
+        update();
+    }
 }
 
 //-------------------------------------------------------------------------
 // Set camera information and derive viewing matrix
 //
-void Manipulator::setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up)
+void Manipulator::setLookAt(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up, bool instantSet)
 {
-    m_current.eye = eye;
-    m_current.ctr = center;
-    m_current.up = up;
+    if (instantSet) {
+        m_current.eye = eye;
+        m_current.ctr = center;
+        m_current.up = up;
+        m_goal = m_current;
+        m_start_time = 0;
+    }
+    else {
+        m_goal.eye = eye;
+        m_goal.ctr = center;
+        m_goal.up = up;
+        m_snapshot = m_current;
+        m_start_time = getSystemTime();
+        findBezierPoints();
+    }
     update();
+}
+
+void Manipulator::updateAnim()
+{
+    auto elapse = static_cast<float>(getSystemTime() - m_start_time) / 1000.f;
+    if (elapse > m_duration)
+        return;
+
+    float t = elapse / float(m_duration);
+    // Evaluate polynomial (smoother step from Perlin)
+    t = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+
+    // Interpolate camera position and interest
+    // The distance of the camera between the interest is preserved to
+    // create a nicer interpolation
+    glm::vec3 vpos, vint, vup;
+    m_current.ctr = lerp(t, m_snapshot.ctr, m_goal.ctr);
+    m_current.up = lerp(t, m_snapshot.up, m_goal.up);
+    m_current.eye = computeBezier(t, m_bezier[0], m_bezier[1], m_bezier[2]);
+
+    update();
+}
+
+//-------------------------------------------------------------------------
+// Fit the camera to the Bounding box
+//
+void Manipulator::fit(const glm::vec3& boxMin, const glm::vec3& boxMax, bool instantFit)
+{
+    // TODO
 }
 
 //-------------------------------------------------------------------------
@@ -430,6 +539,10 @@ void Manipulator::setRoll(float roll)
 float Manipulator::getRoll() const
 {
     return m_roll;
+}
+
+void Manipulator::setMatrix(const glm::mat4& mat_, bool instantSet, float centerDistance)
+{
 }
 
 //-------------------------------------------------------------------------
@@ -495,6 +608,32 @@ void Manipulator::setFov(float fov)
 float Manipulator::getFov() const
 {
     return m_fov;
+}
+
+//-------------------------------------------------------------------------
+// Retreives Duration
+//
+double Manipulator::getDuration() const
+{
+    return m_duration;
+}
+
+//-------------------------------------------------------------------------
+// get System Time
+//
+double Manipulator::getSystemTime()
+{
+    auto now(std::chrono::system_clock::now());
+    auto duration = now.time_since_epoch();
+    return std::chrono::duration_cast<std::chrono::microseconds>(duration).count() / 1000.0;
+}
+
+//-------------------------------------------------------------------------
+// set Duration
+//
+void Manipulator::setDuration(double val)
+{
+    m_duration = val;
 }
 
 
