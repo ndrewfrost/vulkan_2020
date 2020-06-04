@@ -85,7 +85,7 @@ private:
     std::vector<Entry> m_entries;
 
     std::unordered_map<SamplerState, uint32_t, HashFn> m_stateMap;
-    std::unordered_map<vk::Sampler, uint32_t>          m_samplerMap;
+    std::unordered_map<VkSampler, uint32_t>          m_samplerMap;
 
 }; // class SamplerPool
 

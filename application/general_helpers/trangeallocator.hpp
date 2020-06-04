@@ -31,8 +31,9 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#if (defined(NV_X86) || defined(NV_X64)) && defined(_MSC_VER)
-#include <intrin.h>
+#ifdef _MSC_VER
+#  include <intrin.h>
+#  define __builtin_popcount __popcnt
 #endif
 
 namespace tools {

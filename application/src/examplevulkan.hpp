@@ -47,7 +47,7 @@ public:
 
     void destroyResources();
 
-    void onWindowResize(uint32_t width, uint32_t height) override;
+    void onResize(int /*w*/, int /*h*/) override;
 
     void loadModel(const std::string& filename, glm::mat4 transform = glm::mat4(1));
 

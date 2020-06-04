@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <vulkan/vulkan.hpp>
+#include <iostream>
 
 namespace app {
 
@@ -18,19 +19,86 @@ namespace app {
 ///////////////////////////////////////////////////////////////////////////
 namespace util {
 
+//-------------------------------------------------------------------------
+//
+//
 inline vk::DescriptorPool createDescriptorPool(
-    vk::Device device, size_t poolSizeCount, const vk::DescriptorPoolSize* poolSizes, uint32_t maxSets);
+    vk::Device device,
+    size_t poolSizeCount,
+    const vk::DescriptorPoolSize* poolSizes,
+    uint32_t maxSets)
+{
+    vk::DescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.maxSets = maxSets;
+    poolInfo.poolSizeCount = uint32_t(poolSizeCount);
+    poolInfo.pPoolSizes = poolSizes;
 
+    try {
+        return device.createDescriptorPool(poolInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to create descriptor pool!");
+    }
+}
+
+//-------------------------------------------------------------------------
+//
+//
 inline vk::DescriptorPool createDescriptorPool(
-    vk::Device device, const std::vector<vk::DescriptorPoolSize>& poolSizes, uint32_t maxSets);
+    vk::Device device,
+    const std::vector<vk::DescriptorPoolSize>& poolSizes,
+    uint32_t maxSets)
+{
+    return createDescriptorPool(device, poolSizes.size(), poolSizes.data(), maxSets);
+}
 
-
+//-------------------------------------------------------------------------
+//
+//
 inline vk::DescriptorSet allocateDescriptorSet(
-    vk::Device device, vk::DescriptorPool pool, vk::DescriptorSetLayout layout);
+    vk::Device device,
+    vk::DescriptorPool pool,
+    vk::DescriptorSetLayout layout)
+{
+    vk::DescriptorSetAllocateInfo allocInfo = {};
+    allocInfo.descriptorPool = pool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &layout;
 
+    try {
+        vk::DescriptorSet set = device.allocateDescriptorSets(allocInfo)[0];
+        return set;
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to allocate descriptor set!");
+    }
+}
+
+//-------------------------------------------------------------------------
+//
+//
 inline void allocateDescriptorSets(
-    vk::Device device, vk::DescriptorPool pool, vk::DescriptorSetLayout layout, uint32_t count,
-    std::vector<vk::DescriptorSet>& sets);
+    vk::Device device,
+    vk::DescriptorPool pool,
+    vk::DescriptorSetLayout layout,
+    uint32_t count,
+    std::vector<vk::DescriptorSet>& sets)
+{
+    sets.resize(count);
+    std::vector<vk::DescriptorSetLayout> layouts(count, layout);
+
+    vk::DescriptorSetAllocateInfo allocInfo = {};
+    allocInfo.descriptorPool = pool;
+    allocInfo.descriptorSetCount = count;
+    allocInfo.pSetLayouts = layouts.data();
+
+    try {
+        sets = device.allocateDescriptorSets(allocInfo);
+    }
+    catch (vk::SystemError err) {
+        throw std::runtime_error("failed to allocate descriptor sets!");
+    }
+}
 
 } // namespace util
 
@@ -77,7 +145,9 @@ public:
         m_bindings.push_back(binding);
     }
 
-    void addBinding(const VkDescriptorSetLayoutBinding& layoutBinding) { m_bindings.emplace_back(layoutBinding); }
+    void addBinding(const VkDescriptorSetLayoutBinding& layoutBinding) {
+        m_bindings.emplace_back(layoutBinding);
+    }
 
     void setBindings(const std::vector<vk::DescriptorSetLayoutBinding>& bindings) { m_bindings = bindings; }
 

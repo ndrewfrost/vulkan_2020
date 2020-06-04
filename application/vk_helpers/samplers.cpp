@@ -79,7 +79,7 @@ vk::Sampler SamplerPool::acquireSampler(const vk::SamplerCreateInfo& createInfo)
         vk::Sampler sampler = nullptr;
 
         try {
-            m_device.createSampler(createInfo);
+            sampler = m_device.createSampler(createInfo);
         }
         catch (vk::SystemError err){
             throw std::runtime_error("failed to create Sampler!");

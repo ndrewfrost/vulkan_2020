@@ -10,6 +10,10 @@
 
 namespace app {
 
+#ifdef max
+#undef max
+#endif
+
 ///////////////////////////////////////////////////////////////////////////
 // Staging Memory Manager                                                //
 ///////////////////////////////////////////////////////////////////////////
@@ -88,7 +92,7 @@ void* StagingMemoryManager::cmdToImage(
     vk::BufferImageCopy copy = {};
     copy.bufferOffset         = srcOffset;
     copy.bufferRowLength      = 0;
-    copy.setBufferImageHeight = 0;
+    copy.bufferImageHeight    = 0;
     copy.imageSubresource     = subresource;
     copy.imageOffset          = offset;
     copy.imageExtent          = extent;
@@ -106,7 +110,7 @@ void* StagingMemoryManager::cmdToBuffer(vk::CommandBuffer cmdBuffer, vk::Buffer 
     vk::DeviceSize offset, vk::DeviceSize size, const void* data)
 {
     if (!size)
-        return;
+        return nullptr;
 
     vk::Buffer     srcBuffer;
     vk::DeviceSize srcOffset;

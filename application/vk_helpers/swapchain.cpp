@@ -91,9 +91,9 @@ void SwapChain::deinitResources()
 void SwapChain::destroy()
 {
     deinitResources();
-    m_physicalDevice = vk::PhysicalDevice();
-    m_device         = vk::Device();
-    m_surface        = vk::SurfaceKHR();
+    m_physicalDevice = nullptr;
+    m_device         = nullptr;
+    m_surface        = nullptr;
     m_changeID       = 0;
 }
 

@@ -145,7 +145,7 @@ public:
     //-------------------------------------------------------------------------
     // Initialization of the allocator
     //
-    void init(vk::Device device, vk::PhysicalDevice physicalDevice, vk::Instance instance)
+    void init(vk::Device device, vk::PhysicalDevice physicalDevice, vk::Instance instance, vk::DeviceSize stagingBlockSize = APP_DEFAULT_STAGING_BLOCKSIZE)
     {
         m_device = device;
 
@@ -154,6 +154,9 @@ public:
         allocatorInfo.device = device;
         allocatorInfo.instance = instance;
         vmaCreateAllocator(&allocatorInfo, &m_allocator);
+
+        m_staging.init(device, physicalDevice, m_allocator, stagingBlockSize);
+        m_samplerPool.init(device);
     }
 
     //-------------------------------------------------------------------------
@@ -183,7 +186,7 @@ public:
         allocInfo.usage = memUsage;
 
         VkResult result = vmaCreateBuffer(m_allocator, &info, &allocInfo, &resultBuffer.buffer, &resultBuffer.allocation, nullptr);
-        assert(result = VK_SUCCESS);
+        assert(result == VK_SUCCESS);
         return resultBuffer;
     }
     
@@ -215,7 +218,7 @@ public:
                            vk::BufferUsageFlags      usage,
                            vk::MemoryPropertyFlags memProps)
     {
-        createBuffer(static_cast<VkDeviceSize>(size), static_cast<VkBufferUsageFlags>(usage), vkToVmaMemoryUsage(memProps));
+        return createBuffer(static_cast<VkDeviceSize>(size), static_cast<VkBufferUsageFlags>(usage), vkToVmaMemoryUsage(memProps));
     }
 
     //-------------------------------------------------------------------------
@@ -348,9 +351,8 @@ public:
         textureResult.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         assert(imageViewCreateInfo.image == image.image);
-
         try {
-            textureResult.descriptor.imageView = m_device.createImageView(imageViewCreateInfo);
+            textureResult.descriptor.imageView = m_device.createImageView(vk::ImageViewCreateInfo(imageViewCreateInfo));
         }
         catch (vk::SystemError err) {
             throw std::runtime_error("failed to create texture imageView!");
@@ -418,7 +420,7 @@ public:
     //-------------------------------------------------------------------------
     // Create the acceleration structure
     //
-    AccelerationDedicated createAcceleration(vk::AccelerationStructureCreateInfoNV& accel)
+    AccelerationDedicated createAcceleration(vk::AccelerationStructureInfoNV& accel)
     {
         AccelerationDedicated result;
         return result;
@@ -468,6 +470,7 @@ public:
 
         if (texture.descriptor.sampler)
             m_samplerPool.releaseSampler(texture.descriptor.sampler);
+
         if (texture.allocation)
             vmaFreeMemory(m_allocator, texture.allocation);
 

@@ -136,6 +136,7 @@ public:
     virtual void onScroll(int delta);
     static  void onScrollCallback(GLFWwindow* window, double x, double y);
 
+    virtual void onResize(int /*w*/, int /*h*/) {}  // To be overriden
     virtual void onWindowResize(uint32_t width, uint32_t height);
     static  void onWindowSizeCallback(GLFWwindow* window, int w, int h);
 

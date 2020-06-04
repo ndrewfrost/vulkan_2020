@@ -101,7 +101,7 @@ void application()
     // Imgui 
     vkExample.initGUI(window);
 
-    vkExample.loadModel(".../../media/scenes/cube_multi.obj");
+    vkExample.loadModel("../media/scenes/cube_multi.obj");
     vkExample.createOffscreenRender();
     vkExample.createDescriptorSetLayout();
     vkExample.createGraphicsPipeline();

@@ -78,8 +78,7 @@ void VulkanBackend::destroy()
 
     m_device.destroyPipelineCache(m_pipelineCache);
 
-    for (uint32_t i = 0; i < m_swapchain.getImageCount(); i++)
-    {
+    for (uint32_t i = 0; i < m_swapchain.getImageCount(); i++) {
 
         m_device.destroyFramebuffer(m_framebuffers[i]);
         m_device.destroyFence(m_fences[i]);
@@ -1000,6 +999,7 @@ void VulkanBackend::onWindowResize(uint32_t width, uint32_t height)
     m_graphicsQueue.waitIdle();
 
     m_swapchain.update(m_size.width, m_size.height, m_vsync);
+    onResize(width, height);
     createColorBuffer();
     createDepthBuffer();
     createFrameBuffers();
@@ -1065,11 +1065,11 @@ void VulkanBackend::initGUI(GLFWwindow* window)
     ImGui::StyleColorsDark();
 
     // Upload Fonts
-    app::SingleCommandBuffer cmdBufferGen(m_device, m_graphicsQueueIdx);
+    app::CommandPool cmdBufferGen(m_device, m_graphicsQueueIdx);
 
-    auto cmdBuffer = cmdBufferGen.createCommandBuffer();
+    auto cmdBuffer = cmdBufferGen.createBuffer();
     ImGui_ImplVulkan_CreateFontsTexture(cmdBuffer);
-    cmdBufferGen.flushCommandBuffer(cmdBuffer);
+    cmdBufferGen.submitAndWait(cmdBuffer);
 
     ImGui_ImplVulkan_DestroyFontUploadObjects();
 

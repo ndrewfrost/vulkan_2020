@@ -133,13 +133,13 @@ public:
     void submitAndWait(size_t count, const vk::CommandBuffer* commands, vk::Queue queue)
     {
         for (size_t i = 0; i < count; i++) {
-            vkEndCommandBuffer(commands[i]);
+            commands[i].end();
         }
         vk::SubmitInfo submitInfo = {};
         submitInfo.waitSemaphoreCount = 0;
         submitInfo.pWaitSemaphores    = nullptr;
         submitInfo.pWaitDstStageMask  = nullptr;
-        submitInfo.commandBufferCount = count;
+        submitInfo.commandBufferCount = static_cast<uint32_t>(count);
         submitInfo.pCommandBuffers    = commands;
 
         try {

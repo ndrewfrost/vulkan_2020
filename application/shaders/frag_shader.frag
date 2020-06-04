@@ -18,7 +18,7 @@ pushC;
 
 // clang-format off
 // Incoming 
-layout(location = 0) flat in int matIndex;
+//layout(location = 0) flat in int matIndex;
 layout(location = 1) in vec2 fragTexCoord;
 layout(location = 2) in vec3 fragNormal;
 layout(location = 3) in vec3 viewDir;
@@ -29,6 +29,8 @@ layout(location = 0) out vec4 outColor;
 layout(binding = 1, scalar) buffer MatColorBufferObject { WaveFrontMaterial m[]; } materials[];
 layout(binding = 2, scalar) buffer ScnDesc { sceneDesc i[]; } scnDesc;
 layout(binding = 3) uniform sampler2D[] textureSamplers;
+layout(binding = 4, scalar) buffer MatIndex { int i[]; } matIdx[];
+
 // clang-format on
 
 
@@ -38,7 +40,8 @@ void main()
   int objId = scnDesc.i[pushC.instanceId].objId;
 
   // Material of the object
-  WaveFrontMaterial mat = materials[objId].m[matIndex];
+  int               matIndex = matIdx[nonuniformEXT(objId)].i[gl_PrimitiveID];
+  WaveFrontMaterial mat      = materials[nonuniformEXT(objId)].m[matIndex];
 
   vec3 N = normalize(fragNormal);
 
@@ -64,7 +67,7 @@ void main()
   {
     int  txtOffset  = scnDesc.i[pushC.instanceId].txtOffset;
     uint txtId      = txtOffset + mat.textureId;
-    vec3 diffuseTxt = texture(textureSamplers[txtId], fragTexCoord).xyz;
+    vec3 diffuseTxt = texture(textureSamplers[nonuniformEXT(txtId)], fragTexCoord).xyz;
     diffuse *= diffuseTxt;
   }
 

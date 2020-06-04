@@ -147,7 +147,7 @@ protected:
     //-------------------------------------------------------------------------
     // must fill block.buffer, memory and mapping
     //
-    virtual vk::Result allocBlockMemory(uint32_t id, vk::DeviceSize size, bool toDevice, Block& block) {}
+    virtual vk::Result allocBlockMemory(uint32_t id, vk::DeviceSize size, bool toDevice, Block& block) { return vk::Result::eSuccess;  }
     virtual void       freeBlockMemory(uint32_t id, const Block& block) {}
     virtual void       resizeBlocks(uint32_t num) {}
 

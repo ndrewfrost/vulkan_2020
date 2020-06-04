@@ -7,7 +7,6 @@
  */
 
 #define VMA_IMPLEMENTATION
-#define TINYOBJLOADER_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "examplevulkan.hpp"
@@ -45,6 +44,7 @@ void ExampleVulkan::destroyResources()
         m_allocator.destroy(model.vertexBuffer);
         m_allocator.destroy(model.indexBuffer);
         m_allocator.destroy(model.matColorBuffer);
+        m_allocator.destroy(model.matIndexBuffer);
     }
 
     for (auto& texture : m_textures)
@@ -66,7 +66,7 @@ void ExampleVulkan::destroyResources()
 //-------------------------------------------------------------------------
 // called when resizing of the window
 //
-void ExampleVulkan::onWindowResize(uint32_t width, uint32_t height)
+void ExampleVulkan::onResize(int /*w*/, int /*h*/)
 {
     createOffscreenRender();
     updatePostDescriptorSet();
@@ -77,7 +77,7 @@ void ExampleVulkan::onWindowResize(uint32_t width, uint32_t height)
 //
 void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
 {
-    ObjLoader<Vertex> loader;
+    ObjLoader loader;
     loader.loadModel(filename);
 
     // convert srgb to linear
@@ -103,7 +103,7 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     model.vertexBuffer   = m_allocator.createBuffer(commandBuffer, loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     model.indexBuffer    = m_allocator.createBuffer(commandBuffer, loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
     model.matColorBuffer = m_allocator.createBuffer(commandBuffer, loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-
+    model.matIndexBuffer = m_allocator.createBuffer(commandBuffer, loader.m_matIndx, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     // creates all textures found
     createTextureImages(commandBuffer, loader.m_textures);
     cmdBufferGet.submitAndWait(commandBuffer);
@@ -114,6 +114,7 @@ void ExampleVulkan::loadModel(const std::string& filename, glm::mat4 transform)
     m_debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb).c_str()));
     m_debug.setObjectName(model.indexBuffer.buffer, (std::string("index_" + objNb).c_str()));
     m_debug.setObjectName(model.matColorBuffer.buffer, (std::string("mat_" + objNb).c_str()));
+    m_debug.setObjectName(model.matIndexBuffer.buffer, (std::string("matIdx_" + objNb).c_str()));
 #endif
 
     m_objModel.emplace_back(model);
@@ -232,12 +233,12 @@ void ExampleVulkan::createDescriptorSetLayout()
     m_descSetLayoutBind.addBinding(bindingTextures);
 
     // Materials (binding = 4)
-    vk::DescriptorSetLayoutBinding bindingMat = {};
-    bindingMat.binding         = 4;
-    bindingMat.descriptorType  = vk::DescriptorType::eStorageBuffer;
-    bindingMat.descriptorCount = nObjects;
-    bindingMat.stageFlags      = vk::ShaderStageFlagBits::eFragment;
-    m_descSetLayoutBind.addBinding(bindingMat);
+    vk::DescriptorSetLayoutBinding bindingMaterial = {};
+    bindingMaterial.binding         = 4;
+    bindingMaterial.descriptorType  = vk::DescriptorType::eStorageBuffer;
+    bindingMaterial.descriptorCount = nObjects;
+    bindingMaterial.stageFlags      = vk::ShaderStageFlagBits::eFragment;
+    m_descSetLayoutBind.addBinding(bindingMaterial);
 
     m_descriptorSetLayout = m_descSetLayoutBind.createLayout(m_device);
     m_descriptorPool      = m_descSetLayoutBind.createPool(m_device, 1);
@@ -465,7 +466,7 @@ void ExampleVulkan::createOffscreenRender()
         app::ImageVma image = {};
 
         try {
-            app::ImageVma image = m_allocator.createImage(depthCreateInfo);
+            image = m_allocator.createImage(depthCreateInfo);
         }
         catch (vk::SystemError err) {
             throw std::runtime_error("failed to create image!");
@@ -549,8 +550,8 @@ void ExampleVulkan::createPostDescriptor()
     postBinding.stageFlags      = vk::ShaderStageFlagBits::eFragment;
     m_postDescSetLayoutBind.addBinding(postBinding);
     
-    m_postDescriptorSetLayout = m_descSetLayoutBind.createLayout(m_device);
-    m_postDescriptorPool      = m_descSetLayoutBind.createPool(m_device);
+    m_postDescriptorSetLayout = m_postDescSetLayoutBind.createLayout(m_device);
+    m_postDescriptorPool      = m_postDescSetLayoutBind.createPool(m_device);
     m_postDescriptorSet       = app::util::allocateDescriptorSet(m_device, m_postDescriptorPool, m_postDescriptorSetLayout);
 }
 

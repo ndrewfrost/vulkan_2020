@@ -30,10 +30,9 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec3 inColor;
 layout(location = 3) in vec2 inTexCoord;
-layout(location = 4) in int inMatID;
 
 
-layout(location = 0) flat out int matIndex;
+//layout(location = 0) flat out int matIndex;
 layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out vec3 fragNormal;
 layout(location = 3) out vec3 viewDir;
@@ -56,7 +55,7 @@ void main()
   viewDir      = vec3(worldPos - origin);
   fragTexCoord = inTexCoord;
   fragNormal   = vec3(objMatrixIT * vec4(inNormal, 0.0));
-  matIndex     = inMatID;
+  //  matIndex     = inMatID;
 
   gl_Position = ubo.proj * ubo.view * vec4(worldPos, 1.0);
 }

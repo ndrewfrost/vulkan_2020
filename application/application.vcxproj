@@ -25,6 +25,7 @@
     <ClCompile Include="external\imgui\imgui_impl_glfw.cpp" />
     <ClCompile Include="external\imgui\imgui_impl_vulkan.cpp" />
     <ClCompile Include="external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="external\obj_loader.cpp" />
     <ClCompile Include="general_helpers\manipulator.cpp" />
     <ClCompile Include="src\examplevulkan.cpp" />
     <ClCompile Include="src\main.cpp" />

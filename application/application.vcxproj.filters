@@ -63,6 +63,9 @@
     <ClCompile Include="vk_helpers\samplers.cpp">
       <Filter>vk</Filter>
     </ClCompile>
+    <ClCompile Include="external\obj_loader.cpp">
+      <Filter>External</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\vk_mem_alloc.h">

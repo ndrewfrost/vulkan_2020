@@ -4,7 +4,6 @@ struct Vertex
   vec3 nrm;
   vec3 color;
   vec2 texCoord;
-  int  matIndex;
 };
 
 struct WaveFrontMaterial
