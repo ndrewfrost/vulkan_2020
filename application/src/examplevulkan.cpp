@@ -270,19 +270,20 @@ void ExampleVulkan::createGraphicsPipeline()
     }
 
     // Create the Pipeline
-    app::GraphicsPipelineGenerator pipelineGenerator(m_device, m_pipelineLayout, m_offscreenRenderPass);
-    pipelineGenerator.depthStencilState = { true };
+    app::GraphicsPipelineGeneratorCombined pipelineGenerator(m_device, m_pipelineLayout, m_offscreenRenderPass);
+    pipelineGenerator.depthStencilState.depthTestEnable =  true;
     pipelineGenerator.addShader(app::util::readFile("shaders/vert_shader.vert.spv"), vk::ShaderStageFlagBits::eVertex);
     pipelineGenerator.addShader(app::util::readFile("shaders/frag_shader.frag.spv"), vk::ShaderStageFlagBits::eFragment);
-    pipelineGenerator.multisampleState.rasterizationSamples  = vk::SampleCountFlagBits::e1;
-    pipelineGenerator.vertexInputState.bindingDescriptions   = { {0, sizeof(Vertex)} };
-    pipelineGenerator.vertexInputState.attributeDescriptions = {
-      {0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, position)},
-      {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, normal)},
-      {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)},
-      {3, 0, vk::Format::eR32G32Sfloat,    offsetof(Vertex, texCoord)}};
+    //pipelineGenerator.multisampleState.rasterizationSamples  = vk::SampleCountFlagBits::e1;
+    pipelineGenerator.addBindingDescription({0, sizeof(VertexObj)});
+    pipelineGenerator.addAttributeDescriptions(std::vector<vk::VertexInputAttributeDescription> {
+        {0, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexObj, pos)},
+        { 1, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexObj, nrm) },
+        { 2, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexObj, color) },
+        { 3, 0, vk::Format::eR32G32Sfloat, offsetof(VertexObj, texCoord) }});
 
-    m_graphicsPipeline = pipelineGenerator.create();
+    m_graphicsPipeline = pipelineGenerator.createPipeline();
+
 #if _DEBUG
     m_debug.setObjectName(m_graphicsPipeline, "graphicsPipeline");
 #endif
@@ -578,13 +579,13 @@ void ExampleVulkan::createPostPipeline()
     }
 
     // Create the Pipeline
-    app::GraphicsPipelineGenerator pipelineGenerator(m_device, m_postPipelineLayout, m_renderPass);
+    app::GraphicsPipelineGeneratorCombined  pipelineGenerator(m_device, m_postPipelineLayout, m_renderPass);
 
     pipelineGenerator.addShader(app::util::readFile("shaders/passthrough.vert.spv"), vk::ShaderStageFlagBits::eVertex);
     pipelineGenerator.addShader(app::util::readFile("shaders/post.frag.spv"), vk::ShaderStageFlagBits::eFragment);
     pipelineGenerator.multisampleState.setRasterizationSamples(m_sampleCount);
     pipelineGenerator.rasterizationState.setCullMode(vk::CullModeFlagBits::eNone);
-    m_postPipeline = pipelineGenerator.create();
+    m_postPipeline = pipelineGenerator.createPipeline();
 #if _DEBUG
     m_debug.setObjectName(m_postPipeline, "postPipeline");
 #endif

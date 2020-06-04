@@ -56,6 +56,7 @@ public:
     {
         init(device, physicalDevice, memAllocator, stagingBlockSize);
     }
+
     StagingMemoryManagerVma() {};
 
     //-------------------------------------------------------------------------

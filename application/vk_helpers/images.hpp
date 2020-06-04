@@ -81,25 +81,17 @@ vk::ImageViewCreateInfo makeImageViewCreateInfo(
     bool                       isCube = false);
 
 //-------------------------------------------------------------------------
-// creates vk::create2DDescriptor
-//
-vk::DescriptorImageInfo create2DDescriptor(
-    const vk::Device& device,
-    const vk::Image& image,
-    const vk::SamplerCreateInfo& samplerCreateInfo = vk::SamplerCreateInfo(),
-    const vk::Format& format = vk::Format::eR8G8B8A8Unorm,
-    const vk::ImageLayout& layout = vk::ImageLayout::eShaderReadOnlyOptimal);
-
-//-------------------------------------------------------------------------
 // mipmap generation relies on blitting
 // a more sophisticated version could be done with computer shader <-- TODO
 //
 void generateMipmaps(
-    const vk::CommandBuffer& cmdBuffer,
-    const vk::Image& image,
-    const vk::Format& imageFormat,
-    const vk::Extent2D& size,
-    const uint32_t& mipLevels);
+    vk::CommandBuffer cmdBuffer, 
+    vk::Image image, 
+    vk::Format imageFormat,
+    const VkExtent2D& size,
+    uint32_t levelCount, 
+    uint32_t layerCount = 1, 
+    vk::ImageLayout currentLayout = vk::ImageLayout::eShaderReadOnlyOptimal);
 
 } // namespace images
 } // namespace app
