@@ -23,7 +23,10 @@ inline T lerp(T t, T a, T b)
 inline glm::vec3 lerp(const float& t, const glm::vec3& u, const glm::vec3& v)
 {
     glm::vec3 w;
-    w.x = lerp(t, u.x, v.x); w.y = lerp(t, u.y, v.y); w.z = lerp(t, u.z, v.z); return w;
+    w.x = lerp(t, u.x, v.x); 
+    w.y = lerp(t, u.y, v.y); 
+    w.z = lerp(t, u.z, v.z); 
+    return w;
 }
 
 
@@ -129,7 +132,7 @@ void Manipulator::orbit(float dx, float dy, bool invert)
     float radius = glm::length(centerToEye);
     centerToEye = glm::normalize(centerToEye);
 
-    glm::mat4 rot_x, rot_y;
+    glm::mat4 rot_x = glm::mat4(), rot_y = glm::mat4();
 
     // Find the rotation around the UP axis (Y)
     glm::vec3 axe_z(glm::normalize(centerToEye));
@@ -541,8 +544,41 @@ float Manipulator::getRoll() const
     return m_roll;
 }
 
+//-------------------------------------------------------------------------
+// Set view Matrix
+//
 void Manipulator::setMatrix(const glm::mat4& mat_, bool instantSet, float centerDistance)
 {
+    glm::vec3 eye, center, up;
+
+    eye.x = mat_[0][3]; eye.y = mat_[1][3]; eye.z = mat_[2][3];
+
+    glm::mat3 rotMat;
+    rotMat[0][0] = mat_[0][0]; rotMat[1][0] = mat_[1][0]; rotMat[2][0] = mat_[2][0];
+    rotMat[0][1] = mat_[0][1]; rotMat[1][1] = mat_[1][1]; rotMat[2][1] = mat_[2][1];
+    rotMat[0][2] = mat_[0][2]; rotMat[1][2] = mat_[1][2]; rotMat[2][2] = mat_[2][2];
+
+    center = { 0, 0, -centerDistance };
+    center = eye + (rotMat * center);
+    up = { 0, 1, 0 };
+
+    if (instantSet) {
+        m_current.eye = eye;
+        m_current.ctr = center;
+        m_current.up = up;
+        m_goal = m_current;
+        m_start_time = 0;
+    }
+    else {
+        m_goal.eye = eye;
+        m_goal.ctr = center;
+        m_goal.up = up;
+        m_snapshot = m_current;
+        m_start_time = getSystemTime();
+        findBezierPoints();
+    }
+
+    update();
 }
 
 //-------------------------------------------------------------------------
