@@ -64,23 +64,12 @@ Manipulator::Manipulator()
 //
 void Manipulator::update()
 {
-    auto elapse = static_cast<float>(getSystemTime() - m_start_time) / 1000.f;
-    if (elapse > m_duration)
-        return;
+    m_matrix = glm::lookAt(m_current.eye, m_current.ctr, m_current.up);
 
-    float t = elapse / float(m_duration);
-    // Evaluate polynomial 
-    t = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
-
-    // Interpolate camera position and interest
-    // The distance of the camera between the interest is preserved to
-    // create a nicer interpolation
-    glm::vec3 vpos, vint, vup;
-    m_current.ctr = lerp(t, m_snapshot.ctr, m_goal.ctr);
-    m_current.up = lerp(t, m_snapshot.up, m_goal.up);
-    m_current.eye = computeBezier(t, m_bezier[0], m_bezier[1], m_bezier[2]);
-
-    update();
+    /*if (m_roll != 0.f){
+        glm::mat4 rotate = glm::rotate(m_roll, glm::vec3(0, 0, 1));
+        m_matrix = m_matrix * rotate;
+    }*/
 }
 
 //-------------------------------------------------------------------------
@@ -319,9 +308,9 @@ void Manipulator::findBezierPoints()
     // point of interest
     glm::vec3 pi = (m_goal.ctr + m_current.ctr) * 0.5f;
 
-    glm::vec3 p02 = (p0 + p2) * 0.5f;                               // mid p0-p2
-    float radius = (length(p0 - pi) + length(p2 - pi)) * 0.5f;      // Radius for p1
-    glm::vec3 p02pi(p02 - pi);                                      // Vector from interest to mid point
+    glm::vec3 p02 = (p0 + p2) * 0.5f;                                      // mid p0-p2
+    float radius = (glm::length(p0 - pi) + glm::length(p2 - pi)) * 0.5f;   // Radius for p1
+    glm::vec3 p02pi = (p02 - pi);                                          // Vector from interest to mid point
     p02pi = glm::normalize(p02pi);
     p02pi *= radius;
     pc = pi + p02pi;                          // Calculated point to go through
@@ -421,7 +410,7 @@ void Manipulator::wheel(int value, const Inputs& inputs)
         m_fov += fval;
     }
     else {
-        glm::vec3 z(m_current.eye - m_current.ctr);
+        glm::vec3 z = (m_current.eye - m_current.ctr);
         float length = z.length() * 0.1f;
         length = length < 0.001f ? 0.001f : length;
 
@@ -466,7 +455,6 @@ void Manipulator::updateAnim()
     // Interpolate camera position and interest
     // The distance of the camera between the interest is preserved to
     // create a nicer interpolation
-    glm::vec3 vpos, vint, vup;
     m_current.ctr = lerp(t, m_snapshot.ctr, m_goal.ctr);
     m_current.up = lerp(t, m_snapshot.up, m_goal.up);
     m_current.eye = computeBezier(t, m_bezier[0], m_bezier[1], m_bezier[2]);

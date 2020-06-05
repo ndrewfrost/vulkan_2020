@@ -83,7 +83,7 @@ struct InertiaCamera
         float l = glm::length(po);
         glm::vec3 dv = glm::cross(po, glm::vec3(0, -1, 0));
         dv = glm::normalize(dv);
-        glm::vec3 dv2 = cross(po, dv);
+        glm::vec3 dv2 = glm::cross(po, dv);
         dv2 *= s;
         p += dv2;
         po = p - o;
@@ -122,6 +122,7 @@ struct InertiaCamera
     {
         if (dt > (1.0f / 60.0f))
             dt = (1.0f / 60.0f);
+
         bool bContinue = false;
         static glm::vec3 eyeVel = glm::vec3(0, 0, 0);
         static glm::vec3 eyeAcc = glm::vec3(0, 0, 0);
