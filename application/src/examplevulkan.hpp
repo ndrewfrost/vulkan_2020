@@ -161,7 +161,9 @@ public:
 
     app::TextureVma            m_offscreenColor;
     app::TextureVma            m_offscreenDepth;
-    vk::Format                 m_offscreenColorFormat{ vk::Format::eR32G32B32A32Sfloat };
-    vk::Format                 m_offscreenDepthFormat{ vk::Format::eD32Sfloat };
+    app::TextureVma            m_offscreenResolve;
+    vk::Format                 m_offscreenColorFormat  { vk::Format::eR32G32B32A32Sfloat };
+    vk::Format                 m_offscreenDepthFormat  { vk::Format::eD32Sfloat };
+    vk::Format                 m_offscreenResolveFormat{ vk::Format::eR32G32B32A32Sfloat };
     
 }; // class ExampleVulkan

@@ -104,8 +104,6 @@ public:
 
     void createPipelineCache();
 
-    void createColorBuffer();
-
     virtual void createDepthBuffer();
 
     virtual void createFrameBuffers();
@@ -187,7 +185,7 @@ public:
     uint32_t                              getCurrentFrame() const { return m_swapchain.getActiveImageIndex(); }
     vk::Format                            getColorFormat()  const { return m_colorFormat; }
     vk::Format                            getDepthFormat()  const { return m_depthFormat; }
-    vk::SampleCountFlagBits               getSampleCount()        { return m_sampleCount;  }
+    vk::SampleCountFlagBits               getSampleCount()  const { return m_sampleCount; }
      
 protected:
     vk::Instance                   m_instance;
@@ -213,12 +211,7 @@ protected:
     vk::Image                      m_depthImage;        // Depth/Stencil
     vk::DeviceMemory               m_depthMemory;       // Depth/Stencil
     vk::ImageView                  m_depthView;         // Depth/Stencil
-
-    vk::SampleCountFlagBits        m_sampleCount{ vk::SampleCountFlagBits::e1 };
-    vk::Image                      m_colorImage;     
-    vk::DeviceMemory               m_colorMemory;      
-    vk::ImageView                  m_colorView;        
-
+    
     std::vector<vk::Fence>         m_fences;            // Fences per nb element in Swapchain
     
     vk::Extent2D                   m_size{ 0, 0 };      // Size of the window
@@ -228,6 +221,7 @@ protected:
     // Surface buffer formats
     vk::Format                     m_colorFormat{ vk::Format::eB8G8R8A8Unorm };
     vk::Format                     m_depthFormat{ vk::Format::eUndefined };
+    vk::SampleCountFlagBits        m_sampleCount{ vk::SampleCountFlagBits::e1 };
 
     tools::Manipulator::Inputs     m_inputs;       // Camera manipulator
     tools::InertiaCamera           m_inertCamera;  // Camera Inertia

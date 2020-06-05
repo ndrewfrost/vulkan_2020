@@ -110,12 +110,13 @@ vk::ImageCreateInfo create2DInfo(
     const vk::Extent2D& size,
     const vk::Format& format,
     const vk::ImageUsageFlags& usage,
-    const bool mipmaps)
+    const bool mipmaps,
+    const vk::SampleCountFlagBits samples)
 {
     vk::ImageCreateInfo createInfo = {};
     createInfo.imageType = vk::ImageType::e2D;
     createInfo.format = format;
-    createInfo.samples = vk::SampleCountFlagBits::e1;
+    createInfo.samples = samples;
     createInfo.mipLevels = mipmaps ? mipLevels(size) : 1;
     createInfo.arrayLayers = 1;
     createInfo.extent = vk::Extent3D{ size.width, size.height, 1 };

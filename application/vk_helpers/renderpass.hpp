@@ -21,6 +21,8 @@ inline vk::RenderPass createRenderPass(
     const vk::Device&              device,
     const std::vector<vk::Format>& colorAttachmentFormats,
     vk::Format                     depthAttachmentFormat,
+    vk::Format                     resolveAttachmentFormat,
+    vk::SampleCountFlagBits        sampleCount = vk::SampleCountFlagBits::e1,
     uint32_t                       subpassCount  = 1,
     bool                           clearColor    = true,
     bool                           clearDepth    = true,
@@ -31,16 +33,18 @@ inline vk::RenderPass createRenderPass(
     std::vector<vk::AttachmentReference>   colorAttachmentRefs;
 
     bool hasDepth = depthAttachmentFormat != vk::Format::eUndefined;
+    bool hasResolve = resolveAttachmentFormat != vk::Format::eUndefined;
 
     for (const auto& format : colorAttachmentFormats) {
         vk::AttachmentDescription colorAttachment = {};
         colorAttachment.format         = format;
+        colorAttachment.samples        = sampleCount;
         colorAttachment.loadOp         = clearColor ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare;
         colorAttachment.storeOp        = vk::AttachmentStoreOp::eStore;
         colorAttachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
         colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
         colorAttachment.initialLayout  = initialLayout;
-        colorAttachment.finalLayout    = finalLayout;
+        colorAttachment.finalLayout    = hasResolve ? finalLayout : vk::ImageLayout::eColorAttachmentOptimal ;
 
         vk::AttachmentReference colorAttachmentRef = {};
         colorAttachmentRef.attachment = static_cast<uint32_t>(allAttachments.size());
@@ -55,6 +59,7 @@ inline vk::RenderPass createRenderPass(
     if (hasDepth) {
         vk::AttachmentDescription depthAttachment = {};
         depthAttachment.format         = depthAttachmentFormat;
+        depthAttachment.samples        = sampleCount;
         depthAttachment.loadOp         = clearDepth ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad;
         depthAttachment.storeOp        = vk::AttachmentStoreOp::eStore;
         depthAttachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
@@ -68,6 +73,27 @@ inline vk::RenderPass createRenderPass(
         allAttachments.push_back(depthAttachment);
     }
 
+    vk::AttachmentReference resolveAttachmentRef;
+
+    if (hasResolve) {
+        vk::AttachmentDescription resolveAttachment = {};
+        resolveAttachment.format         = resolveAttachmentFormat;
+        resolveAttachment.samples        = vk::SampleCountFlagBits::e1;
+        resolveAttachment.loadOp         = clearColor ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare;
+        resolveAttachment.storeOp        = vk::AttachmentStoreOp::eStore;
+        resolveAttachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+        resolveAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+        resolveAttachment.initialLayout  = initialLayout;
+        resolveAttachment.finalLayout    = finalLayout;
+
+        resolveAttachmentRef.attachment = static_cast<uint32_t>(allAttachments.size());
+        resolveAttachmentRef.layout     = vk::ImageLayout::eColorAttachmentOptimal;
+
+        allAttachments.push_back(resolveAttachment);
+
+    }
+
+
     std::vector<vk::SubpassDescription> subpasses;
     std::vector<vk::SubpassDependency>  subpassDependencies;
 
@@ -77,6 +103,7 @@ inline vk::RenderPass createRenderPass(
         subpass.colorAttachmentCount    = static_cast<uint32_t>(colorAttachmentRefs.size());
         subpass.pColorAttachments       = colorAttachmentRefs.data();
         subpass.pDepthStencilAttachment = hasDepth ? &depthAttachmentRef : VK_NULL_HANDLE;
+        subpass.pResolveAttachments     = hasResolve ? &resolveAttachmentRef : VK_NULL_HANDLE;
 
         vk::SubpassDependency dependency = {};
         dependency.srcSubpass    = i == 0 ? (VK_SUBPASS_EXTERNAL) : (i - 1);

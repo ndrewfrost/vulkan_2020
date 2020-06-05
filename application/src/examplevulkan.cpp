@@ -59,6 +59,7 @@ void ExampleVulkan::destroyResources()
     m_device.destroy(m_postDescriptorSetLayout);
     m_allocator.destroy(m_offscreenColor);
     m_allocator.destroy(m_offscreenDepth);
+    m_allocator.destroy(m_offscreenResolve);
     m_device.destroy(m_offscreenRenderPass);
     m_device.destroy(m_offscreenFramebuffer);
 }
@@ -274,7 +275,7 @@ void ExampleVulkan::createGraphicsPipeline()
     pipelineGenerator.depthStencilState.depthTestEnable =  true;
     pipelineGenerator.addShader(app::util::readFile("shaders/vert_shader.vert.spv"), vk::ShaderStageFlagBits::eVertex);
     pipelineGenerator.addShader(app::util::readFile("shaders/frag_shader.frag.spv"), vk::ShaderStageFlagBits::eFragment);
-    //pipelineGenerator.multisampleState.rasterizationSamples  = vk::SampleCountFlagBits::e1;
+    pipelineGenerator.multisampleState.rasterizationSamples  = m_sampleCount;
     pipelineGenerator.addBindingDescription({0, sizeof(VertexObj)});
     pipelineGenerator.addAttributeDescriptions(std::vector<vk::VertexInputAttributeDescription> {
         {0, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexObj, pos)},
@@ -438,11 +439,13 @@ void ExampleVulkan::createOffscreenRender()
 {
     m_allocator.destroy(m_offscreenColor);
     m_allocator.destroy(m_offscreenDepth);
+    m_allocator.destroy(m_offscreenResolve);
 
     // creating the color image
     {
         vk::ImageCreateInfo colorCreateInfo = app::image::create2DInfo(m_size, m_offscreenColorFormat,
-            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage);
+            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage,
+            false, m_sampleCount);
 
         app::ImageVma image = {};
 
@@ -455,14 +458,15 @@ void ExampleVulkan::createOffscreenRender()
         
         vk::ImageViewCreateInfo imageViewCreateInfo = app::image::makeImageViewCreateInfo(image.image, colorCreateInfo);
         m_offscreenColor = m_allocator.createTexture(image, imageViewCreateInfo, vk::SamplerCreateInfo());
-        m_offscreenColor.descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        m_offscreenColor.descriptor.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
 
     // creating the depth buffer
     {
         vk::ImageCreateInfo depthCreateInfo = 
             app::image::create2DInfo(m_size, m_offscreenDepthFormat,
-                                     vk::ImageUsageFlagBits::eDepthStencilAttachment);
+                                     vk::ImageUsageFlagBits::eDepthStencilAttachment, 
+                                    false, m_sampleCount);
 
         app::ImageVma image = {};
 
@@ -485,30 +489,54 @@ void ExampleVulkan::createOffscreenRender()
         catch (vk::SystemError err) {
             throw std::runtime_error("failed to create image!");
         }
+        m_offscreenDepth.descriptor.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    }
+    // creating the resolve buffer
+    {
+        vk::ImageCreateInfo colorResolveInfo = app::image::create2DInfo(m_size, m_offscreenResolveFormat,
+            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage);
+
+        app::ImageVma image = {};
+
+        try {
+            image = m_allocator.createImage(colorResolveInfo);
+        }
+        catch (vk::SystemError err) {
+            throw std::runtime_error("failed to create image!");
+        }
+
+        vk::ImageViewCreateInfo imageViewCreateInfo = app::image::makeImageViewCreateInfo(image.image, colorResolveInfo);
+        m_offscreenResolve = m_allocator.createTexture(image, imageViewCreateInfo, vk::SamplerCreateInfo());
+        m_offscreenResolve.descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     }
 
-    // setting the image layout for both color and depth
+    // setting the image layout for color, depth and resolve
     {
         app::CommandPool commandBufferGen(m_device, m_graphicsQueueIdx);
         vk::CommandBuffer commandBuffer = commandBufferGen.createBuffer();
 
         app::image::cmdBarrierImageLayout(
             commandBuffer, m_offscreenColor.image,
-            vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
+            vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
         app::image::cmdBarrierImageLayout(
             commandBuffer, m_offscreenDepth.image, vk::ImageLayout::eUndefined,
             vk::ImageLayout::eDepthStencilAttachmentOptimal,
             vk::ImageAspectFlagBits::eDepth);
 
+        app::image::cmdBarrierImageLayout(
+            commandBuffer, m_offscreenResolve.image, vk::ImageLayout::eUndefined,
+            vk::ImageLayout::ePresentSrcKHR);
+       
         commandBufferGen.submitAndWait(commandBuffer);
     }
 
     // creating a render pass for the offscreen
     if (!m_offscreenRenderPass) {
         m_offscreenRenderPass = app::util::createRenderPass(
-            m_device, { m_offscreenColorFormat }, m_offscreenDepthFormat,
-            1, true, true, vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral);
+            m_device, { m_offscreenColorFormat }, m_offscreenDepthFormat, 
+            m_offscreenResolveFormat, m_sampleCount, 1, true, true, 
+            vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
 #if _DEBUG
         m_debug.setObjectName(m_offscreenRenderPass, "offscreenRenderPass");
 #endif
@@ -517,13 +545,14 @@ void ExampleVulkan::createOffscreenRender()
     // creating the frambuffer for offscreen
     {
         std::vector<vk::ImageView> attachments = { m_offscreenColor.descriptor.imageView,
-                                                   m_offscreenDepth.descriptor.imageView };
+                                                   m_offscreenDepth.descriptor.imageView,
+                                                   m_offscreenResolve.descriptor.imageView };
 
         m_device.destroy(m_offscreenFramebuffer);
 
         vk::FramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.renderPass      = m_offscreenRenderPass;
-        framebufferInfo.attachmentCount = 2;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
         framebufferInfo.pAttachments    = attachments.data();
         framebufferInfo.width           = m_size.width;
         framebufferInfo.height          = m_size.height;
@@ -583,7 +612,7 @@ void ExampleVulkan::createPostPipeline()
 
     pipelineGenerator.addShader(app::util::readFile("shaders/passthrough.vert.spv"), vk::ShaderStageFlagBits::eVertex);
     pipelineGenerator.addShader(app::util::readFile("shaders/post.frag.spv"), vk::ShaderStageFlagBits::eFragment);
-    pipelineGenerator.multisampleState.setRasterizationSamples(m_sampleCount);
+    pipelineGenerator.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e1);
     pipelineGenerator.rasterizationState.setCullMode(vk::CullModeFlagBits::eNone);
     m_postPipeline = pipelineGenerator.createPipeline();
 #if _DEBUG
@@ -597,7 +626,7 @@ void ExampleVulkan::createPostPipeline()
 void ExampleVulkan::updatePostDescriptorSet()
 {
     vk::WriteDescriptorSet writeDescSet =
-        m_postDescSetLayoutBind.makeWrite(m_postDescriptorSet, 0, reinterpret_cast<vk::DescriptorImageInfo*>(&m_offscreenColor.descriptor));
+        m_postDescSetLayoutBind.makeWrite(m_postDescriptorSet, 0, reinterpret_cast<vk::DescriptorImageInfo*>(&m_offscreenResolve.descriptor));
     m_device.updateDescriptorSets(writeDescSet, nullptr);
 }
 
@@ -630,6 +659,5 @@ void ExampleVulkan::drawPost(vk::CommandBuffer cmdBuffer)
 
     cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_postPipelineLayout, 
                                  0, m_postDescriptorSet, {});
-
     cmdBuffer.draw(3, 1, 0, 0);
 }

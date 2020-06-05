@@ -153,13 +153,14 @@ void application()
         cmdBuffer.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
 
         // clearing the screen
-        vk::ClearValue clearValues[2];
+        vk::ClearValue clearValues[3];
         clearValues[0].setColor(app::util::clearColor(clearColor));
         clearValues[1].setDepthStencil({ 1.0f, 0 });
+        clearValues[2].setColor(app::util::clearColor(clearColor));
 
         // Offscreen render pass
         vk::RenderPassBeginInfo offscreenRenderPassBeginInfo = {};
-        offscreenRenderPassBeginInfo.clearValueCount = 2;
+        offscreenRenderPassBeginInfo.clearValueCount = 3;
         offscreenRenderPassBeginInfo.pClearValues    = clearValues;
         offscreenRenderPassBeginInfo.renderPass      = vkExample.m_offscreenRenderPass;
         offscreenRenderPassBeginInfo.framebuffer     = vkExample.m_offscreenFramebuffer;
@@ -172,7 +173,7 @@ void application()
 
         // 2nd Render Pass : tone mapper, UI
         vk::RenderPassBeginInfo postRenderPassBeginInfo = {};
-        postRenderPassBeginInfo.clearValueCount = 2;
+        postRenderPassBeginInfo.clearValueCount = 3;
         postRenderPassBeginInfo.pClearValues    = clearValues;
         postRenderPassBeginInfo.renderPass      = vkExample.getRenderPass();
         postRenderPassBeginInfo.framebuffer     = vkExample.getFramebuffers()[currentFrame];

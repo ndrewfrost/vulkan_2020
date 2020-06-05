@@ -70,7 +70,8 @@ vk::ImageCreateInfo create2DInfo(
     const vk::Extent2D& size,
     const vk::Format& format = vk::Format::eR8G8B8A8Unorm,
     const vk::ImageUsageFlags& usage = vk::ImageUsageFlagBits::eSampled,
-    const bool mipmaps = false);
+    const bool mipmaps = false,
+    const vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1);
 
 //-------------------------------------------------------------------------
 // Create a vk::ImageViewCreateInfo

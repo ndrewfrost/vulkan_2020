@@ -37,8 +37,6 @@ void VulkanBackend::setupVulkan(const ContextCreateInfo& info, GLFWwindow* windo
 
     createCommandBuffer();
 
-    createColorBuffer();
-
     createDepthBuffer();
 
     createRenderPass();
@@ -71,10 +69,6 @@ void VulkanBackend::destroy()
     m_device.destroyImageView(m_depthView);
     m_device.destroyImage(m_depthImage);
     m_device.freeMemory(m_depthMemory);
-
-    m_device.destroyImageView(m_colorView);
-    m_device.destroyImage(m_colorImage);
-    m_device.freeMemory(m_colorMemory);
 
     m_device.destroyPipelineCache(m_pipelineCache);
 
@@ -215,7 +209,7 @@ void VulkanBackend::pickPhysicalDevice(const ContextCreateInfo& info)
             m_vsync = false;
             m_depthFormat = vk::Format::eD32SfloatS8Uint;
             m_colorFormat = vk::Format::eB8G8R8A8Unorm;
-
+            
             VkPhysicalDeviceProperties physicalDeviceProperties = m_physicalDevice.getProperties();
             VkSampleCountFlags rawCounts = (std::min)(physicalDeviceProperties.limits.framebufferColorSampleCounts, physicalDeviceProperties.limits.framebufferDepthSampleCounts);
             vk::SampleCountFlags counts(rawCounts);
@@ -357,7 +351,7 @@ void VulkanBackend::createCommandBuffer()
 
 #if _DEBUG
     for (size_t i = 0; i < m_commandBuffers.size(); i++) {
-        std::string name = std::string("VulkanBackend") + std::to_string(i);
+        std::string name = std::string("createCmdVulkanBackend") + std::to_string(i);
         m_device.setDebugUtilsObjectNameEXT(
             { vk::ObjectType::eCommandBuffer, 
             reinterpret_cast<const uint64_t&>(m_commandBuffers[i]), name.c_str() });
@@ -375,49 +369,35 @@ void VulkanBackend::createRenderPass()
     // Color Attachment
     vk::AttachmentDescription colorAttachment = {};
     colorAttachment.format = m_colorFormat;
-    colorAttachment.samples = m_sampleCount;
+    colorAttachment.samples = vk::SampleCountFlagBits::e1;
     colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
     colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
     colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
     colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    colorAttachment.finalLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
 
     // Depth Attachment
     vk::AttachmentDescription depthAttachment = {};
     depthAttachment.format = m_depthFormat;
-    depthAttachment.samples = m_sampleCount;
+    depthAttachment.samples = vk::SampleCountFlagBits::e1;
     depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     depthAttachment.storeOp = vk::AttachmentStoreOp::eStore;
     depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
     depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
     depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
     depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-
-    // multisampled images cannot be presented directly.
-    // We first need to resolve them to a regular image.
-    vk::AttachmentDescription resolveAttachment = {};
-    resolveAttachment.format = m_colorFormat;
-    resolveAttachment.samples = vk::SampleCountFlagBits::e1;
-    resolveAttachment.loadOp = vk::AttachmentLoadOp::eDontCare;
-    resolveAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-    resolveAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-    resolveAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-    resolveAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    resolveAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
-
+    
     const vk::AttachmentReference colorReference{ 0,  vk::ImageLayout::eColorAttachmentOptimal };
     const vk::AttachmentReference depthReference{ 1, vk::ImageLayout::eDepthStencilAttachmentOptimal };
-    const vk::AttachmentReference resolveReference{ 2,  vk::ImageLayout::eColorAttachmentOptimal };
-
-    std::array<vk::AttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, resolveAttachment };
+   
+    std::array<vk::AttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 
     vk::SubpassDescription subpass = {};
     subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorReference;
     subpass.pDepthStencilAttachment = &depthReference;
-    subpass.pResolveAttachments = &resolveReference;
 
     vk::SubpassDependency dependency = {};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -426,10 +406,10 @@ void VulkanBackend::createRenderPass()
     dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     dependency.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
     dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
-
+    dependency.dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
     vk::RenderPassCreateInfo renderPassInfo = {};
-    renderPassInfo.attachmentCount = 3;
+    renderPassInfo.attachmentCount = 2;
     renderPassInfo.pAttachments = attachments.data();
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
@@ -445,7 +425,7 @@ void VulkanBackend::createRenderPass()
 
 #ifdef _DEBUG
     m_device.setDebugUtilsObjectNameEXT(
-        { vk::ObjectType::eRenderPass, reinterpret_cast<const uint64_t&>(m_renderPass), "VulkanBackend" });
+        { vk::ObjectType::eRenderPass, reinterpret_cast<const uint64_t&>(m_renderPass), "renderPassVulkanBackend" });
 #endif  
 }
 
@@ -462,116 +442,6 @@ void VulkanBackend::createPipelineCache()
     }
 }
 
-//-------------------------------------------------------------------------
-// multisampled buffer 
-//
-void VulkanBackend::createColorBuffer()
-{
-    m_device.destroyImageView(m_colorView);
-    m_device.destroyImage(m_colorImage);
-    m_device.freeMemory(m_colorMemory);
-
-    // Color Info
-    vk::ImageCreateInfo colorImageInfo = {};
-    colorImageInfo.imageType = vk::ImageType::e2D;
-    colorImageInfo.extent = vk::Extent3D(m_size.width, m_size.height, 1);
-    colorImageInfo.format = m_colorFormat;
-    colorImageInfo.mipLevels = 1;
-    colorImageInfo.arrayLayers = 1;
-    colorImageInfo.samples = m_sampleCount;
-    colorImageInfo.usage = vk::ImageUsageFlagBits::eTransientAttachment
-        | vk::ImageUsageFlagBits::eColorAttachment;
-
-    try {
-        m_colorImage = m_device.createImage(colorImageInfo);
-    }
-    catch (vk::SystemError err) {
-        throw std::runtime_error("failed to create color image!");
-    }
-
-    // Allocate the memory
-    const vk::MemoryRequirements memReqs = m_device.getImageMemoryRequirements(m_colorImage);
-    uint32_t memoryTypeIdx = -1;
-    {
-        auto deviceMemoryProperties = m_physicalDevice.getMemoryProperties();
-        for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++) {
-            if ((memReqs.memoryTypeBits & (1 << i))
-                && (deviceMemoryProperties.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal) {
-                memoryTypeIdx = i;
-                break;
-            }
-        }
-        if (memoryTypeIdx == -1)
-            throw std::runtime_error("failed to find suitable memory type!");
-    }
-
-    vk::MemoryAllocateInfo memAllocInfo = {};
-    memAllocInfo.allocationSize = memReqs.size;
-    memAllocInfo.memoryTypeIndex = memoryTypeIdx;
-
-    try {
-        m_colorMemory = m_device.allocateMemory(memAllocInfo);
-    }
-    catch (vk::SystemError err) {
-        throw std::runtime_error("failed to allocate depth image memory!");
-    }
-
-    // Bind image and Memory
-    m_device.bindImageMemory(m_colorImage, m_colorMemory, 0);
-
-    // Create an image barrier to change the layout from undefined to Color/Transient Attachment
-    vk::CommandBufferAllocateInfo cmdBufAllocateInfo = {};
-    cmdBufAllocateInfo.commandPool = m_commandPool;
-    cmdBufAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
-    cmdBufAllocateInfo.commandBufferCount = 1;
-
-    vk::CommandBuffer cmdBuffer;
-    cmdBuffer = m_device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
-    cmdBuffer.begin(vk::CommandBufferBeginInfo{ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
-
-    // barrier on top, barrier inside set up cmdbuffer
-    vk::ImageSubresourceRange subresourceRange;
-    subresourceRange.aspectMask = { vk::ImageAspectFlagBits::eColor };
-    subresourceRange.levelCount = 1;
-    subresourceRange.layerCount = 1;
-
-    vk::ImageMemoryBarrier imageMemoryBarrier;
-    imageMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
-    imageMemoryBarrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
-    imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    imageMemoryBarrier.image = m_colorImage;
-    imageMemoryBarrier.subresourceRange = subresourceRange;
-    imageMemoryBarrier.srcAccessMask = vk::AccessFlags();
-    imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead
-        | vk::AccessFlagBits::eColorAttachmentWrite;
-
-    const vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eTopOfPipe;
-    const vk::PipelineStageFlags destStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-
-    cmdBuffer.pipelineBarrier(srcStageMask, destStageMask, vk::DependencyFlags(),
-        nullptr, nullptr, imageMemoryBarrier);
-    cmdBuffer.end();
-
-    m_graphicsQueue.submit(vk::SubmitInfo{ 0, nullptr, nullptr, 1, &cmdBuffer }, vk::Fence());
-
-    m_graphicsQueue.waitIdle();
-
-    m_device.freeCommandBuffers(m_commandPool, cmdBuffer);
-
-    // Setting up the view
-    vk::ImageViewCreateInfo colorView;
-    colorView.viewType = vk::ImageViewType::e2D;
-    colorView.format = m_colorFormat;
-    colorView.subresourceRange = { {vk::ImageAspectFlagBits::eColor}, 0, 1, 0, 1 };
-    colorView.image = m_colorImage;
-    try {
-        m_colorView = m_device.createImageView(colorView);
-    }
-    catch (vk::SystemError err) {
-        throw std::runtime_error("failed to create depth image view!");
-    }
-}
 
 //-------------------------------------------------------------------------
 // Image to be used as depth buffer
@@ -592,7 +462,7 @@ void VulkanBackend::createDepthBuffer()
     depthStencilCreateInfo.format = m_depthFormat;
     depthStencilCreateInfo.mipLevels = 1;
     depthStencilCreateInfo.arrayLayers = 1;
-    depthStencilCreateInfo.samples = m_sampleCount;
+    depthStencilCreateInfo.samples = vk::SampleCountFlagBits::e1;
     depthStencilCreateInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment
         | vk::ImageUsageFlagBits::eTransferSrc;
 
@@ -701,14 +571,13 @@ void VulkanBackend::createFrameBuffers()
 
     // create frame buffer for every swapchain image
     for (uint32_t i = 0; i < m_swapchain.getImageCount(); i++) {
-        std::array<vk::ImageView, 3> attachments;
-        attachments[0] = m_colorView;
+        std::array<vk::ImageView, 2> attachments;
+        attachments[0] = m_swapchain.getImageView(i);
         attachments[1] = m_depthView;
-        attachments[2] = m_swapchain.getImageView(i);
 
         vk::FramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.renderPass      = m_renderPass;
-        framebufferInfo.attachmentCount = 3;
+        framebufferInfo.attachmentCount = 2;
         framebufferInfo.pAttachments    = attachments.data();
         framebufferInfo.width           = m_size.width;
         framebufferInfo.height          = m_size.height;
@@ -724,7 +593,7 @@ void VulkanBackend::createFrameBuffers()
 
 #ifdef _DEBUG
     for (size_t i = 0; i < m_framebuffers.size(); i++) {
-        std::string name = std::string("VulkanBackend") + std::to_string(i);
+        std::string name = std::string("frameBufferVulkanBackend") + std::to_string(i);
         m_device.setDebugUtilsObjectNameEXT(
             { vk::ObjectType::eFramebuffer, reinterpret_cast<const uint64_t&>(m_framebuffers[i]), name.c_str() });
     }
@@ -1069,7 +938,6 @@ void VulkanBackend::onWindowResize(uint32_t width, uint32_t height)
 
     m_swapchain.update(m_size.width, m_size.height, m_vsync);
     onResize(width, height);
-    createColorBuffer();
     createDepthBuffer();
     createFrameBuffers();
 }
@@ -1125,7 +993,7 @@ void VulkanBackend::initGUI(GLFWwindow* window)
     imGuiInitInfo.PipelineCache   = m_pipelineCache;
     imGuiInitInfo.Queue           = m_graphicsQueue;
     imGuiInitInfo.QueueFamily     = m_graphicsQueueIdx;
-    imGuiInitInfo.MSAASamples     = VK_SAMPLE_COUNT_2_BIT;
+    imGuiInitInfo.MSAASamples     = VK_SAMPLE_COUNT_1_BIT;
     imGuiInitInfo.CheckVkResultFn = checkVkResult;
 
     ImGui_ImplVulkan_Init(&imGuiInitInfo, m_renderPass);
