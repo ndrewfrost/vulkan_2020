@@ -1,4 +1,4 @@
-# Ray Tracing Vulkan
+# Vulkan
 
 Learning vulkan from [Vulkan](https://developer.nvidia.com/rtx/raytracing/vkray)
 
